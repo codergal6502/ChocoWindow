@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="text/javascript" src="../../ChocoWindow.js"></script>
+        <script type="text/javascript">
+            // You'll notice console warnings about scale misalignments if you don't set this to
+            // true. In this sample, the purple window's dimensions are not a multiple of the
+            // scale.
+            ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
+            
+            const windowOptions = [
+                {
+                    sourceFileUrl: "window.png"
+                  , tileSize: 20
+                  , corners: { TL: { y: 0, x: 0 }, TR: { y: 0, x: 40 }, BL: { y: 40, x: 0 }, BR: { y: 40, x: 40 } }
+                  , edges: { T: [ { y: 0, x: 20 } ], L: [ { y: 20, x: 0 } ], R: [ { y: 20, x: 40 } ], B: [ { y: 40, x: 20 } ] }
+                  , patternRows: [
+                        [ { y: 20, x: 20 } ]
+                    ]
+                  , substitutableColors: [ { r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 }, { r: 255, g: 102, b: 163 } ]
+                }
+            ].map((wo) => new ChocoWinOption(wo));
+
+            window.onload = (event) => {
+                const generateWindows = () => {
+                    
+                    const blue   = new ChocoWin(windowOptions[0], 1,  20,  20, 400, 300).substituteColor(2, { r: 91,  g: 206, b: 250 }).substituteColor(1, {r: 245, g: 169, b: 184});
+                    const pink   = new ChocoWin(windowOptions[0], 2, 540,  20, 640, 240).substituteColor(2, { r: 245, g: 169, b: 184 }).substituteColor(1, {r: 91,  g: 206, b: 250});
+                    const purple = new ChocoWin(windowOptions[0], 3,  20, 500, 610, 380).substituteColor(2, { r: 156, g: 89,  b: 209 }).substituteColor(1, {r: 252, g: 244, b: 52 });
+                    const yellow = new ChocoWin(windowOptions[0], 2, 660, 500, 520, 380).substituteColor(2, { r: 252, g: 244, b: 52  }).substituteColor(1, {r: 156, g: 89,  b: 209});
+                    const white  = new ChocoWin(windowOptions[0], 2, 200, 120, 500, 480).substituteColor(2, { r: 255, g: 255, b: 255 }).substituteColor(1, {r: 50,  g: 50,  b: 50 });
+                    const black  = new ChocoWin(windowOptions[0], 2, 470, 200, 500, 480).substituteColor(2, { r: 0,   g: 0,   b: 0   });
+
+                    const wins = [ blue, pink, purple, yellow, white, black ];
+
+                    return wins;
+                };
+                
+                const wins = generateWindows(0);
+
+                Promise.all(wins.map((w) => w.isReady())).then(() => {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+
+                    canvas.width = 1200;
+                    canvas.height = 900;
+                    canvas.style.border = "2px dashed #FF9955";
+
+                    wins.forEach((w) => w.drawTo(ctx));
+
+                    document.body.append(canvas);
+                });
+            }
+        </script>
+    </head>
+    <body></body>
+</html>
