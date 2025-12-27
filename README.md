@@ -16,6 +16,10 @@ ChocoWindow exists to make it easier for retro streamers to create backgrounds r
 
 Download [`ChocoWindow.js`](ChocoWindow.js) and include it in your web page. You will have to supply your own spritesheet and corresponding `ChocoWinOption` definitions.
 
+### Examples
+
+For an example of using the library, please see the [Six Window Sample](examples/six-window-example/six-window-sample.html). It demonstrates tile scaling and color substitution.
+
 ## License
 
 Copyright 2025
@@ -24,7 +28,7 @@ This project is distributed under the terms of the [GPL-3.0 License](https://www
 
 ## Acknowledgments
 
-Special thanks to The Spriters Resource, which hosts sprites and other images. Thanks also to to Michael Hucka for the README template upon which this README is based. Thanks to vaibhav chandra for free, open-source window code used as the bases for the usage sample.
+Special thanks to The Spriters Resource, which hosts sprites and other images. Thanks also to to Michael Hucka for the README template upon which this README is based. Thanks to vaibhav chandra for free, open-source window code used as the basis for the example project.
 
 * [The Spriters Resource](https://www.spriters-resource.com/)
 * [READMINE: Suggested template for software READMEs](https://mhucka.github.io/readmine/)
