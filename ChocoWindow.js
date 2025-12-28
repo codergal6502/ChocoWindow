@@ -22,6 +22,26 @@ class ChocoWinColor {
             /** @type {number} */ this.b = 0;
         }
     }
+
+    toHexString() { return `#${this.r.toString(16).padStart(2, "0")}${this.g.toString(16).padStart(2, "0")}${this.b.toString(16).padStart(2, "0")}`; }
+
+    static fromHexString(/** @type {String} */ hexString) {
+        const regex = /^#[0-9A-Fa-f]{6}/;
+
+        hexString = String(hexString);
+        if (! regex.test(hexString)) {
+            return new ChocoWinColor({r: 0, g: 0, b: 0});
+        }
+        else {
+            hexString = hexString.replace(/^#/, '');
+    
+            return new ChocoWinColor({
+                r: parseInt(hexString.slice(0, 2), 16)
+              , g: parseInt(hexString.slice(2, 4), 16)
+              , b: parseInt(hexString.slice(4, 6), 16)
+            });
+        }       
+    }
 }
 
 class ChocoWinCoordinates {
@@ -44,13 +64,13 @@ class ChocoWinCoordinates {
     }
 }
 
-class ChocoWinOptionCorners {
+class ChocoWinTilesetCorners {
     /**
      * Default consturctor
      */
     /**
      * Copy constructor, useful for JSON objects.
-     * @param {ChocoWinOptionCorners} arg1
+     * @param {ChocoWinTilesetCorners} arg1
      */
     constructor(arg1) {
         if (arg1 && arg1.TL && arg1.TR && arg1.BL && arg1.BR) {
@@ -92,19 +112,21 @@ class ChocoWinOptionEdges {
     }
 }
 
-class ChocoWinOption {
+class ChocoWinTileSet {
     /**
      * Default consturctor
      */
     /**
      * Copy constructor, useful for JSON objects.
-     * @param {ChocoWinOption} arg1
+     * @param {ChocoWinTileSet} arg1
      */
     constructor(arg1) {
         if (arg1 && arg1.sourceFileUrl && !isNaN(arg1.tileSize) && arg1.corners && arg1.edges && arg1.patternRows) {
+            this.id = arg1.id || null; // might be null in original
+            this.name = arg1.name || null; // might be null in original
             this.sourceFileUrl = String(arg1.sourceFileUrl);
             this.tileSize = Number(arg1.tileSize);
-            this.corners = new ChocoWinOptionCorners(arg1.corners);
+            this.corners = new ChocoWinTilesetCorners(arg1.corners);
             this.edges =  new ChocoWinOptionEdges(arg1.edges);
             this.patternRows = arg1.patternRows.map((col) => col.map(coord => new ChocoWinCoordinates(coord)));
             if (arg1.substitutableColors) {
@@ -114,9 +136,11 @@ class ChocoWinOption {
         else {
             /** @type {String} */
             this.sourceFileUrl = "";
+            /** @type {String} */
+            this.name = "";
             /** @type {Number} */
             this.tileSize = 0;
-            /** @type {ChocoWinOptionCorners} */
+            /** @type {ChocoWinTilesetCorners} */
             this.corners = { TL: { y: 0, x: 0 }, TR: { y: 0, x: 0 }, BL: { y: 0, x: 0 }, BR: { y: 0, x: 0 } };
             /** @type {ChocoWinOptionEdges} */
             this.edges = { T: [ { y: 0, x: 0 } ], L: [ { y: 0, x: 0 } ], R: [ { y: 0, x: 0 } ], B: [ { y: 0, x: 0, } ] };
@@ -130,14 +154,14 @@ class ChocoWinOption {
 
 class ChocoWin {
     /** @type {HTMLImageElement} */ #pixmap;
-    /** @type {ChocoWinOption} */ #winOption;
+    /** @type {ChocoWinTileSet} */ #winOption;
     /** @type {Number} */ #tileScale;
     /** @type {Number} */ #x;
     /** @type {Number} */ #y;
     /** @type {Number} */ #w;
     /** @type {Number} */ #h;
     /** @type {Object<Number, ChocoWinColor>} */ #colorSubstitutions;
-    constructor(/** @type {ChocoWinOption} */ winOption, /** @type {Number} */ tileScale, /** @type {Number} */ x, /** @type {Number} */ y, /** @type {Number} */ w, /** @type {Number} */ h) {
+    constructor(/** @type {ChocoWinTileSet} */ winOption, /** @type {Number} */ tileScale, /** @type {Number} */ x, /** @type {Number} */ y, /** @type {Number} */ w, /** @type {Number} */ h) {
         this.#pixmap = new Image();
         this.#pixmap.src = winOption.sourceFileUrl;
     
@@ -169,7 +193,7 @@ class ChocoWin {
     drawTo(/** @type {CanvasRenderingContext2D} */ ctx) {
         const oldSmoothing = ctx.imageSmoothingEnabled;
         ctx.imageSmoothingEnabled = false;
-        this.#doDrawWindow(ctx, this.#pixmap);
+        this.#doDrawWindow(ctx);
         ctx.imageSmoothingEnabled = oldSmoothing
     }
 
@@ -187,7 +211,6 @@ class ChocoWin {
 
     #doDrawTile (
         /** @type {CanvasRenderingContext2D} */ ctx
-      , /** @type {HTMLImageElement} */ pixmap
       , /** @type {Number} */ tileSize
       , /** @type {Number} */ sx
       , /** @type {Number} */ sy
@@ -200,6 +223,7 @@ class ChocoWin {
         let destHeight = tileSize * this.#tileScale;
         let sw = tileSize;
         let sh = tileSize;
+        const pixmap = this.#pixmap;
 
         if ((true !== allowOverrunX) && (dxRelative + destWidth > this.#w - destWidth)) {
             const pixelsToDraw = this.#w - destWidth - dxRelative;
@@ -234,7 +258,17 @@ class ChocoWin {
                     if (index < 0) continue;
                     if (index >= this.#winOption.substitutableColors.length) continue;
                     const oldColor = this.#winOption.substitutableColors[index];
-                    if (imagePixelBytes[i] === oldColor.r && imagePixelBytes[i + 1] === oldColor.g && imagePixelBytes[i + 2] === oldColor.b) {
+
+                    const areColorsCloseEnough = (r1,r2,g1,g2,b1,b2) => {
+                        const maxDistance = 1;
+                        const dr = r2-r1;
+                        const dg = g2-g1;
+                        const db = b2-b1
+
+                        return Math.sqrt(0.33*dr*dr + 0.33*dg*dg + 0.33*db*db) < maxDistance
+                    }
+
+                    if (areColorsCloseEnough(imagePixelBytes[i], oldColor.r, imagePixelBytes[i + 1], oldColor.g, imagePixelBytes[i + 2], oldColor.b)) {
                         imagePixelBytes[i] = newColor.r;
                         imagePixelBytes[i + 1] = newColor.g;
                         imagePixelBytes[i + 2] = newColor.b;
@@ -245,39 +279,45 @@ class ChocoWin {
         }
     }
 
-    #doDrawWindow (/** @type {CanvasRenderingContext2D} */ ctx, /** @type {HTMLImageElement} */ pixmap) {
+    #doDrawWindow (/** @type {CanvasRenderingContext2D} */ ctx) {
         const wo = this.#winOption;
         const tileSize = wo.tileSize;
         const destSize = tileSize * this.#tileScale;
+
+        if (0 == tileSize) {
+            console.error("tile size cannot be zero");
+            return;
+        }
 
         for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.patternRows.length) {
             let row = wo.patternRows[i];
             for (let dx = destSize, j = 0; dx < this.#w - destSize; dx += destSize, j = (j + 1) % wo.patternRows[i].length) {
                 let tile = wo.patternRows[i][j];
-                this.#doDrawTile(ctx, pixmap, tileSize, tile.x, tile.y, dx, dy);
+                this.#doDrawTile(ctx, tileSize, tile.x, tile.y, dx, dy);
             }
         }
         for (let dx = destSize, i = 0; dx < this.#w - destSize; dx += destSize, i = (i + 1) % wo.edges.T.length) {
             let tile = wo.edges.T[i];
-            this.#doDrawTile(ctx, pixmap, tileSize, tile.x, tile.y, dx, 0, false, false);
+            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, dx, 0, false, false);
         }
         for (let dx = destSize, i = 0; dx < this.#w - destSize; dx += destSize, i = (i + 1) % wo.edges.B.length) {
             let tile = wo.edges.B[i];
-            this.#doDrawTile(ctx, pixmap, tileSize, tile.x, tile.y, dx, this.#h - destSize, false, true);
+            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, dx, this.#h - destSize, false, true);
         }
         for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.edges.L.length) {
             let tile = wo.edges.L[i];
-            this.#doDrawTile(ctx, pixmap, tileSize, tile.x, tile.y, 0, dy, false, false);
+            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, 0, dy, false, false);
         }
         for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.edges.R.length) {
             let tile = wo.edges.R[i];
-            this.#doDrawTile(ctx, pixmap, tileSize, tile.x, tile.y, this.#w - destSize, dy, true, false);
+            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, this.#w - destSize, dy, true, false);
         }
 
-        this.#doDrawTile(ctx, pixmap, tileSize, wo.corners.TL.x, wo.corners.TL.y, 0,                  0                 , false, false);
-        this.#doDrawTile(ctx, pixmap, tileSize, wo.corners.TR.x, wo.corners.TR.y, this.#w - destSize, 0                 , true,  false);
-        this.#doDrawTile(ctx, pixmap, tileSize, wo.corners.BL.x, wo.corners.BL.y, 0,                  this.#h - destSize, false, true);
-        this.#doDrawTile(ctx, pixmap, tileSize, wo.corners.BR.x, wo.corners.BR.y, this.#w - destSize, this.#h - destSize, true,  true);
-
+        this.#doDrawTile(ctx, tileSize, wo.corners.TL.x, wo.corners.TL.y, 0,                  0                 , false, false);
+        this.#doDrawTile(ctx, tileSize, wo.corners.TR.x, wo.corners.TR.y, this.#w - destSize, 0                 , true,  false);
+        this.#doDrawTile(ctx, tileSize, wo.corners.BL.x, wo.corners.BL.y, 0,                  this.#h - destSize, false, true);
+        this.#doDrawTile(ctx, tileSize, wo.corners.BR.x, wo.corners.BR.y, this.#w - destSize, this.#h - destSize, true,  true);
     };
 }
+
+export { ChocoWinSettings, ChocoWinColor, ChocoWinCoordinates, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinTileSet, ChocoWin }

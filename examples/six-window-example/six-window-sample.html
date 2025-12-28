@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script type="text/javascript" src="../../ChocoWindow.js"></script>
-        <script type="text/javascript">
+        <script type="module">
+            import { ChocoWin, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinSettings } from './ChocoWindow.js';
+
             // You'll notice console warnings about scale misalignments if you don't set this to
             // true. In this sample, the purple window's dimensions are not a multiple of the
             // scale.
@@ -19,7 +20,7 @@
                     ]
                   , substitutableColors: [ { r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 }, { r: 255, g: 102, b: 163 } ]
                 }
-            ].map((wo) => new ChocoWinOption(wo));
+            ].map((wo) => new ChocoWinTileSet(wo));
 
             window.onload = (event) => {
                 const generateWindows = () => {

@@ -14,11 +14,15 @@ ChocoWindow exists to make it easier for retro streamers to create backgrounds r
 
 ## Using ChocoWindow in your Projects
 
-Download [`ChocoWindow.js`](ChocoWindow.js) and include it in your web page. You will have to supply your own spritesheet and corresponding `ChocoWinOption` definitions.
+Download [`ChocoWindow.js`](ChocoWindow.js) and include it in your web page. You will have to supply your own spritesheet and corresponding `ChocoWinTileSet` definitions.
 
 ### Examples
 
 For an example of using the library, please see the [Six Window Sample](examples/six-window-example/six-window-sample.html). It demonstrates tile scaling and color substitution.
+
+## Running Examples or Studio Locally
+
+If you want to run the examples or Choco Window Studio locally, you first must make symbolic links for [`ChocoWindow.js`](ChocoWindow.js) in those applications' directories. This can be done by running [`make-javascript-shortcuts.sh`](make-javascript-shortcuts.sh). The `.gitignore` files are already set up to ignore the symbolic links.
 
 ## License
 
