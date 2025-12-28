@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
-import { ChocoWin, ChocoWinColor, ChocoWinCoordinates, ChocoWinOption as ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinSettings } from '../ChocoWindow.js';
+import { ChocoWin, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinSettings } from '../ChocoWindow.js';
 import ChocoStudioWorkspace from "../ChocoStudio.js";
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
 import TileSetPreview from "./modal-components/TileSetPreview.jsx";
@@ -16,7 +16,6 @@ const SettingsModal = ({ isModalHidden }) => {
                 const json = window.atob(b64);
                 const obj = JSON.parse(json)
                 const ws = new ChocoStudioWorkspace(obj)
-                console.log(`loaded from ${WORKSPACE_COOKIE_NAME}`, b64, json, obj, ws);
                 return ws;
             }
         }
@@ -47,6 +46,8 @@ const SettingsModal = ({ isModalHidden }) => {
     const [windowsNavOpen, setWindowsNavOpen] = useState(true);
     const [variablesNavOpen, setVariablesNavOpen] = useState(true);
 
+    const doSetActiveTileSet = (t) => { setActiveTileSet(t); }
+
     const [/** @type {ChocoWinTileSet} */ activeTileSet, setActiveTileSet] = useState(null);
 
 
@@ -69,6 +70,18 @@ const SettingsModal = ({ isModalHidden }) => {
     const doSetWorkspace = (workspace) => {
         setWorkspace(workspace);
         storeWorkspaceToCookie(workspace);
+    }
+
+    const onTileSetChange = (/** @type {ChocoWinTileSet} */ modifiedTileSet) => {
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        const idx = modifiedWorkspace.tileSets.findIndex((ts) => ts.id == modifiedTileSet.id);
+
+        if (idx >= 0) {
+            modifiedWorkspace.tileSets[idx] = modifiedTileSet
+        }
+
+        // todo: make this doSetWorkspace when we're done enough that we want to overwrite the stuff in browser storage
+        setWorkspace(modifiedWorkspace);
     }
 
     const importInputChange = (e1) => {
@@ -100,8 +113,10 @@ const SettingsModal = ({ isModalHidden }) => {
     }
 
     const tileSetNavOnClick = (/** @type {ChocoWinTileSet} */ tileSet) => {
-        setFormState(FormStates.TILE_SET);
-        setActiveTileSet(tileSet);
+        if (FormStates.TILE_SET != formState) {
+            setFormState(FormStates.TILE_SET);
+        }
+        doSetActiveTileSet(tileSet);
     }
 
     return (
@@ -218,7 +233,7 @@ const SettingsModal = ({ isModalHidden }) => {
 
                                         case FormStates.TILE_SET:
                                             return (!activeTileSet) ? "" : (
-                                                <TileSetPreview tileSet={activeTileSet} />
+                                                <TileSetPreview key={activeTileSet.id} tileSet={activeTileSet} onTileSetChange={onTileSetChange} />
                                             );
                                         case FormStates.WINDOW_PRESET:
                                             return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">window preset</h2>;

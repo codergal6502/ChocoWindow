@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWin, ChocoWinColor } from "../../ChocoWindow";
+import { ChocoWin, ChocoWinColor, ChocoWinTileSet } from "../../ChocoWindow";
 
-const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet }) => {
-    const [substituteColors, settileSetPreviewThing] = useState([]);
+// See https://bikeshedd.ing/posts/use_state_should_require_a_dependency_array/.
+
+const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetChange }) => {
+    const [substituteColors, setSubstituteColors] = useState([]);
     const [substituteColorsDelayed, setSubstituteColorsDelayed] = useState([]);
-    const [previewSrc, setPreviewSrc] = useState(null);
+
+    const imageRef = useRef(null);
 
     const [name, setName] = useState(tileSet.name);
 
@@ -13,54 +16,61 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet }) => {
 
     useEffect(() => {
         if (substituteColorsDelayed && substituteColorsDelayed.length) {
-            if (subColsTimedTimeout) {
+            if (subColsTimedTimeout) {   
                 clearTimeout(subColsTimedTimeout);
             }
 
-            setTimeout(() => { settileSetPreviewThing(substituteColorsDelayed); }, 50)
+            setTimeout(() => { setSubstituteColors(substituteColorsDelayed); }, 50)
         }
 
     }, [substituteColorsDelayed])
 
     useEffect(() => {
-        if (tileSet) {
-            let chocoWin = new ChocoWin(tileSet, 3, 0, 0, 450, 180);
+        if  (! imageRef.current) { return; }
+        let chocoWin = new ChocoWin(tileSet, 3, 0, 0, 450, 180);
 
-            if (substituteColors && substituteColors.length) {
-                substituteColors.forEach((col, idx) => {
-                    chocoWin.substituteColor(idx, col);
-                });
-            }
-
-            chocoWin.isReady().then(() => {
-                const canvas = document.createElement("canvas");
-                canvas.width = 450;
-                canvas.height = 180;
-                canvas.style.imageRendering = "pixelated";
-
-                const /** @type {CanvasRenderingContext2D} */ ctx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb" });
-                ctx.imageSmoothingEnabled = false;
-
-                chocoWin.drawTo(ctx);
-
-                let dataUrl = canvas.toDataURL("image/png", 1);
-
-                setPreviewSrc(dataUrl);
+        if (substituteColors && substituteColors.length) {
+            substituteColors.forEach((col, idx) => {
+                chocoWin.substituteColor(idx, col);
             });
         }
-    }, [tileSet, substituteColors])
+
+        chocoWin.isReady().then(() => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 450;
+            canvas.height = 180;
+            canvas.style.imageRendering = "pixelated";
+
+            const /** @type {CanvasRenderingContext2D} */ ctx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb" });
+            ctx.imageSmoothingEnabled = false;
+
+            chocoWin.drawTo(ctx);
+
+            let dataUrl = canvas.toDataURL("image/png", 1);
+            imageRef.current.src = dataUrl;
+        });
+    }, [tileSet, substituteColors, imageRef])
 
     const subColorOnChange = ((e, colorIndex) => {
         let newSubCols = substituteColors.slice();
         newSubCols[colorIndex] = ChocoWinColor.fromHexString(e.target.value);
         setSubstituteColorsDelayed(newSubCols);
-    })
+    });
+
+    const onNameChange = ((e) => {
+        setName(e.target.value);
+        const newTileset = new ChocoWinTileSet(tileSet);
+        newTileset.name = e.target.value;
+        if (onTileSetChange && typeof onTileSetChange === 'function') {
+            onTileSetChange(newTileset);
+        }
+    });
 
     return <>
         <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Set Settings</h2>
         <div className="mb-4 w-full">
             <label htmlFor="e4486061-7422-490d-be92-533ff31711a1">Name: </label>
-            <input placeholder="Tile Set Name" type="text" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={tileSet.name} />
+            <input placeholder="Tile Set Name" type="text" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
         </div>
 
         <div className="mb-4 w-full">
@@ -69,7 +79,7 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet }) => {
         </div>
 
         <h3>Preview</h3>
-        <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={previewSrc} /></div>
+        <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div>
 
         <h3>Substitutable Colors</h3>
         {tileSet.substitutableColors && tileSet.substitutableColors.map((color, index) =>
