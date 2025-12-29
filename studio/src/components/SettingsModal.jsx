@@ -81,8 +81,8 @@ const SettingsModal = ({ isModalHidden }) => {
             modifiedWorkspace.tileSets[idx] = modifiedTileSet
         }
 
-        // todo: make this doSetWorkspace when we're done enough that we want to overwrite the stuff in browser storage
-        setWorkspace(modifiedWorkspace);
+        doSetWorkspace(modifiedWorkspace);
+        setActiveTileSet(modifiedTileSet);
     }
 
     const onPresetChange = (/** @type {ChocoStudioPreset} */ modifiedPreset) => {
@@ -92,8 +92,7 @@ const SettingsModal = ({ isModalHidden }) => {
         if (idx >= 0) {
             modifiedWorkspace.presets[idx] = modifiedPreset
     
-            // todo: make this doSetWorkspace when we're done enough that we want to overwrite the stuff in browser storage
-            setWorkspace(modifiedWorkspace);
+            doSetWorkspace(modifiedWorkspace);
             setActivePreset(modifiedPreset);
         }
     }

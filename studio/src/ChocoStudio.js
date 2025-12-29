@@ -21,7 +21,7 @@ class ChocoStudioPreset {
             this.id               = arg1.id;
             this.tileSetId        = arg1.tileSetId
             this.tileScale        = arg1.tileScale
-            this.substituteColors = arg1.substituteColors?.slice() || [];
+            this.substituteColors = arg1.substituteColors?.map((c) => new ChocoWinColor(c)) || [];
         }
     }
 }

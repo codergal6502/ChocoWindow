@@ -4,9 +4,6 @@ import { ChocoStudioPreset } from "../../ChocoStudio"
 import { ChocoWin, ChocoWinColor } from "../../ChocoWindow";
 
 const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange }) => {
-
-    console.log(preset);
-
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
@@ -15,7 +12,7 @@ const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { A
     const [tileScale, setTileScale] = useState(preset.tileScale || 1);
 
     const [substituteColors, setSubstituteColors] = useState(preset.substituteColors || []);
-    const [substituteColorsDelayed, setSubstituteColorsDelayed] = useState([]);
+    const [substituteColorsDelayed, setSubstituteColorsDelayed] = useState(preset.substituteColors || []);
 
     let colorsTimeout = null;
 
@@ -140,7 +137,8 @@ const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { A
             {tileSet.substitutableColors.map((color, i) =>
                 <div key={i}>
                     <div className="text-sm w-full text-center">Color {i + 1}</div>
-                    <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
+                    {console.log(substituteColors, i, substituteColors[i], typeof(substituteColors[i]))}
+                    <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString?.() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
                     <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
                 </div>
             )}
