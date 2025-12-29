@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { ChocoWinSettings, ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioWorkspace } from "../ChocoStudio.js";
+import { ChocoStudioPreset, ChocoStudioWorkspace } from "../ChocoStudio.js";
 import TileSetPreview from "./modal-components/TileSetPreview.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 
@@ -85,16 +85,44 @@ const SettingsModal = ({ isModalHidden }) => {
         setActiveTileSet(modifiedTileSet);
     }
 
-    const onPresetChange = (/** @type {ChocoStudioPreset} */ modifiedPreset) => {
+    const onTileSetDelete = (id) => {
+        setFormState(FormStates.SETTINGS);
+
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.presets.findIndex((p) => p.id == modifiedPreset.id);
+        const idx = modifiedWorkspace.tileSets.findIndex((p) => p.id == id);
 
         if (idx >= 0) {
-            modifiedWorkspace.presets[idx] = modifiedPreset
-    
-            doSetWorkspace(modifiedWorkspace);
-            setActivePreset(modifiedPreset);
+            modifiedWorkspace.tileSets.splice(idx, 1);
         }
+
+        doSetWorkspace(modifiedWorkspace);
+        setActiveTileSet(null);
+    }
+
+    const onPresetChange = (/** @type {ChocoStudioPreset} */ modifiedPreset) => {
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        let idx = modifiedWorkspace.presets.findIndex((p) => p.id == modifiedPreset.id);
+
+        if (idx < 0) idx = modifiedWorkspace.presets.length;
+
+        modifiedWorkspace.presets[idx] = modifiedPreset
+
+        doSetWorkspace(modifiedWorkspace);
+        setActivePreset(modifiedPreset);
+    }
+
+    const onPresetDelete = (id) => {
+        setFormState(FormStates.SETTINGS);
+
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        const idx = modifiedWorkspace.presets.findIndex((p) => p.id == id);
+
+        if (idx >= 0) {
+            modifiedWorkspace.presets.splice(idx, 1);
+        }
+
+        doSetWorkspace(modifiedWorkspace);
+        setActivePreset(null);
     }
 
     const importInputChange = (e1) => {
@@ -132,6 +160,17 @@ const SettingsModal = ({ isModalHidden }) => {
         setActiveTileSet(tileSet);
     }
 
+    const newPresetNavOnClick = () => {
+        if (FormStates.PRESET != formState) {
+            setFormState(FormStates.PRESET);
+        }
+
+        const newPreset = new ChocoStudioPreset();
+        newPreset.id = crypto.randomUUID();
+
+        setActivePreset(newPreset);
+    }
+
     const presetNavOnClick = (/** @type {ChocoStudioPreset} */ preset) => {
         if (FormStates.PRESET != formState) {
             setFormState(FormStates.PRESET);
@@ -159,7 +198,7 @@ const SettingsModal = ({ isModalHidden }) => {
                                     <ul className={`ml-8 ${tileSetsNavOpen ? '' : 'hidden'}`}>
                                         <a href="#" className="block py-1 hover:bg-gray-600">Add New...</a>
                                         {workspace.tileSets.map((tileSet) => <li key={tileSet.id}>
-                                            <button onClick={() => tileSetNavOnClick(tileSet)} className="block py-1 hover:bg-gray-600">{tileSet.name}</button>
+                                            <button onClick={() => tileSetNavOnClick(tileSet)} className="block py-1 hover:bg-gray-600">{String(tileSet.name).trim() || <span className="italic">no name</span>}</button>
                                         </li>)
                                         }
                                     </ul>
@@ -170,11 +209,10 @@ const SettingsModal = ({ isModalHidden }) => {
                                         Presets
                                     </button>
                                     <ul className={`ml-8 ${presetsNavOpen ? '' : 'hidden'}`}>
-                                        <button className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        <button onClick={newPresetNavOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
                                         {workspace.presets.map((preset) => {
-                                            console.log('making button for preset ', preset)
                                             return (<li key={preset.id}>
-                                                <button onClick={() => presetNavOnClick(preset)} className="block py-1 hover:bg-gray-600">{preset.name}</button>
+                                                <button onClick={() => presetNavOnClick(preset)} className="block py-1 hover:bg-gray-600">{String(preset.name).trim() || <span className="italic">no name</span>}</button>
                                             </li>)
                                         })}
                                     </ul>
@@ -254,12 +292,11 @@ const SettingsModal = ({ isModalHidden }) => {
 
                                         case FormStates.TILE_SET:
                                             return (!activeTileSet) ? "" : (
-                                                <TileSetPreview key={activeTileSet.id} tileSet={activeTileSet} onTileSetChange={onTileSetChange} />
+                                                <TileSetPreview key={activeTileSet.id} tileSet={activeTileSet} onTileSetChange={onTileSetChange} onTileSetDelete={onTileSetDelete} />
                                             );
                                         case FormStates.PRESET:
-                                            console.log('before making preset editor: ', activePreset);
                                             return (!activePreset) ? "" : (
-                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSets={workspace.tileSets} onPresetChange={onPresetChange} />
+                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSets={workspace.tileSets} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} />
                                             );
                                         case FormStates.WINDOW:
                                             return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">WINDOWS!!!</h2>

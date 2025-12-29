@@ -4,7 +4,7 @@ import { ChocoWin, ChocoWinColor, ChocoWinTileSet } from "../../ChocoWindow";
 
 // See https://bikeshedd.ing/posts/use_state_should_require_a_dependency_array/.
 
-const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetChange }) => {
+const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetChange, onTileSetDelete }) => {
     const [substituteColors, setSubstituteColors] = useState([]);
     const [substituteColorsDelayed, setSubstituteColorsDelayed] = useState([]);
 
@@ -66,6 +66,16 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
         }
     });
 
+    const doOnTileSetDelete = (id) => {
+        if (onTileSetDelete && typeof onTileSetDelete === 'function') {
+            onTileSetDelete(tileSet.id);
+        }
+    }
+
+    const deleteTileSetOnClick = () => {
+        doOnTileSetDelete(tileSet.id);
+    };
+
     return <>
         <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Set Settings</h2>
         <div className="mb-4 w-full">
@@ -88,6 +98,9 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
                 <input type="color" id={`color-sub-${index}`} value={color.toHexString()} onChange={(e) => subColorOnChange(e, index)} />
             </div>
         )}
+
+        <h3 className="mb-2 mt-4 text-xl">Actions</h3>
+        <div><button onClick={deleteTileSetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set</button></div>
     </>
 }
 

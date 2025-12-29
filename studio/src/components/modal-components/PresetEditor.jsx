@@ -3,7 +3,7 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoStudioPreset } from "../../ChocoStudio"
 import { ChocoWin, ChocoWinColor } from "../../ChocoWindow";
 
-const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange }) => {
+const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange, onPresetDelete }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
@@ -109,6 +109,16 @@ const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { A
         doOnPresetChange(newPreset);
     }, [substituteColors])
 
+    const doOnPresetDelete = (id) => {
+        if (onPresetDelete && typeof onPresetDelete === 'function') {
+            onPresetDelete(preset.id);
+        }
+    }
+
+    const deletePresetOnClick = () => {
+        doOnPresetDelete(preset.id);
+    };
+
     return <>
         <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Preset Settings <span className="text-sm">({preset.id})</span></h2>
         <p className="mb-2 text-sm italic">You can use presets to reuse the same settings on multiple windows.</p>
@@ -127,25 +137,27 @@ const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { A
             </select> */}
         </div>
 
-        <div className="mb-4 w-full">
+        <div className="w-full">
             <label htmlFor="59731ce7-1ab4-4ea1-a08e-1bf5a43d1f4e">Tile Scale: </label>
             <input placeholder="Tile Scale" type="number" min={1} max={10} id="59731ce7-1ab4-4ea1-a08e-1bf5a43d1f4e" className={TAILWIND_INPUT_CLASS_NAME} value={tileScale} onChange={onTileScaleChange} />
         </div>
 
-        <h3>Color Substitutions</h3>
+        <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
         <div className={`grid grid-cols-${Math.max(4, tileSet.substitutableColors.length)} gap-4`}>
             {tileSet.substitutableColors.map((color, i) =>
                 <div key={i}>
                     <div className="text-sm w-full text-center">Color {i + 1}</div>
-                    {console.log(substituteColors, i, substituteColors[i], typeof(substituteColors[i]))}
                     <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString?.() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
                     <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
                 </div>
             )}
         </div>
 
-        <h3>Preview</h3>
+        <h3 className="mb-2 mt-4 text-xl">Preview</h3>
         <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div>
+
+        <h3 className="mb-2 mt-4 text-xl">Actions</h3>
+        <div><button onClick={deletePresetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button></div>
     </>
 }
 
