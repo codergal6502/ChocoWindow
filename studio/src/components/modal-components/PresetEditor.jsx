@@ -3,7 +3,7 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoStudioPreset } from "../../ChocoStudio"
 import { ChocoWin, ChocoWinColor } from "../../ChocoWindow";
 
-const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange, onPresetDelete }) => {
+const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange, onPresetDelete }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
@@ -120,21 +120,23 @@ const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { A
     };
 
     return <>
-        <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Preset Settings <span className="text-sm">({preset.id})</span></h2>
-        <p className="mb-2 text-sm italic">You can use presets to reuse the same settings on multiple windows.</p>
-        <div className="mb-4 w-full">
-            <label htmlFor="e4486061-7422-490d-be92-533ff31711a1">Name: </label>
-            <input placeholder="Preset Name" type="text" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
-        </div>
+        {
+            isSubordinate || <>
+                <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Preset Settings <span className="text-sm">({preset.id})</span></h2>
+                <p className="mb-2 text-sm italic">You can use presets to reuse the same settings on multiple windows.</p>
+        
+                <div className="mb-4 w-full">
+                    <label htmlFor="e4486061-7422-490d-be92-533ff31711a1">Name: </label>
+                    <input placeholder="Preset Name" type="text" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
+                </div>
+            </> 
+        }
 
         <div className="mb-4 w-full">
             <label htmlFor="7ed0e6ee-47bf-48ff-b54b-d919c60faad5">Tile Set: </label>
             <select id="7ed0e6ee-47bf-48ff-b54b-d919c60faad5" className={TAILWIND_INPUT_CLASS_NAME} onChange={onTileSetIdChange} value={tileSetId}>
                 {tileSets.map((ts) => <option key={ts.id} value={ts.id}>{ts.name}</option>)}
             </select>
-            {/* <select id="7ed0e6ee-47bf-48ff-b54b-d919c60faad5" className={TAILWIND_INPUT_CLASS_NAME} onChange={onTileSetIdChange}>
-                {tileSets.map((ts) => <option key={ts.id} value={ts.id} selected={ts.id === tileSetId}>{ts.name}</option>)}
-            </select> */}
         </div>
 
         <div className="w-full">
@@ -156,8 +158,12 @@ const PresetEditor = ({ /** @type { ChocoStudioPreset } */ preset, /** @type { A
         <h3 className="mb-2 mt-4 text-xl">Preview</h3>
         <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div>
 
-        <h3 className="mb-2 mt-4 text-xl">Actions</h3>
-        <div><button onClick={deletePresetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button></div>
+        {
+            isSubordinate || <>
+                <h3 className="mb-2 mt-4 text-xl">Actions</h3>
+                <div><button onClick={deletePresetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button></div>
+            </>
+        }
     </>
 }
 

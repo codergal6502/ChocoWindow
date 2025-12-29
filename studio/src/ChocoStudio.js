@@ -56,12 +56,22 @@ class ChocoStudioWindow {
      */
     constructor(arg1) {
         if (!arg1) {
-            this.name = "";
-            this.id = String(crypto.randomUUID());
+            this.name     = "";
+            this.id       = String(crypto.randomUUID());
+            this.presetId = null;
+            this.x        = 40;
+            this.y        = 30;
+            this.h        = 480;
+            this.w        = 640;
         }
         else {
-            this.name = arg1.name;
-            this.id = arg1.id;
+            /** @type { String } */ this.name     = arg1.name;
+            /** @type { String } */ this.id       = arg1.id;
+            /** @type { String } */ this.presetId = arg1.presetId;
+            /** @type { Number } */ this.x        = arg1.x;
+            /** @type { Number } */ this.y        = arg1.y;
+            /** @type { Number } */ this.w        = arg1.w;
+            /** @type { Number } */ this.h        = arg1.h;
         }
     }
 }
@@ -116,4 +126,4 @@ class ChocoStudioWorkspace {
     }
 }
 
-export { ChocoStudioWorkspace, ChocoStudioPreset };
+export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow };

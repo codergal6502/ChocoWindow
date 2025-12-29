@@ -77,15 +77,10 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
     };
 
     return <>
-        <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Set Settings</h2>
+        <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Set Settings <span className="text-sm">({tileSet.id})</span></h2>
         <div className="mb-4 w-full">
             <label htmlFor="e4486061-7422-490d-be92-533ff31711a1">Name: </label>
             <input placeholder="Tile Set Name" type="text" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
-        </div>
-
-        <div className="mb-4 w-full">
-            <label htmlFor="29752862-9fd3-49f7-8945-da2c76b31356">ID (Read Only)</label>
-            <input placeholder="Tile Set ID" readOnly={true} type="text" id="29752862-9fd3-49f7-8945-da2c76b31356" className={TAILWIND_INPUT_CLASS_NAME} value={tileSet.id} />
         </div>
 
         <h3>Preview</h3>

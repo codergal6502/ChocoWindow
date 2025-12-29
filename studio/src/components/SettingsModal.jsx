@@ -6,12 +6,14 @@ import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
 import { ChocoStudioPreset, ChocoStudioWorkspace } from "../ChocoStudio.js";
 import TileSetPreview from "./modal-components/TileSetPreview.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
+import LayoutEditor from "./modal-components/LayoutEditor.jsx";
+import WindowEditor from "./modal-components/WindowEditor.jsx";
 
 const WORKSPACE_COOKIE_NAME = 'workspace';
 ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
 
 const SettingsModal = ({ isModalHidden }) => {
-    
+
     const initialWorkspace = () => {
         try {
             const b64 = window.localStorage.getItem(WORKSPACE_COOKIE_NAME);
@@ -51,7 +53,9 @@ const SettingsModal = ({ isModalHidden }) => {
 
     // For each section, what is active (if anything).
     const [/** @type {ChocoWinTileSet}   */ activeTileSet, setActiveTileSet] = useState(null);
-    const [/** @type {ChocoStudioPreset} */ activePreset,  setActivePreset]  = useState(null);
+    const [/** @type {ChocoStudioPreset} */ activePreset, setActivePreset] = useState(null);
+    const [/** @type {ChocoStudioLayout} */ activeLayout, setActiveLayout] = useState(null);
+    const [/** @type {ChocoStudioWindow} */ activeWindow, setActiveWindow] = useState(null);
 
     const fileInputRef = useRef(null);
     const [workspaceName, setWorkspaceName] = useState("");
@@ -125,6 +129,12 @@ const SettingsModal = ({ isModalHidden }) => {
         setActivePreset(null);
     }
 
+    const onLayoutChange = (/** @type {ChocoStudioLayout} */ modifiedLayout) => { }
+    const onLayoutDelete = (id) => { }
+
+    const onWindowChange = (/** @type {ChocoStudioWindow} */ modifiedWindow) => { }
+    const onWindowDelete = (id) => { }
+
     const importInputChange = (e1) => {
         const file = e1.target.files[0];
 
@@ -178,6 +188,28 @@ const SettingsModal = ({ isModalHidden }) => {
         setActivePreset(preset);
     }
 
+    const newLayoutOnClick = () => {
+
+    }
+
+    const layoutNavOnClick = (layout) => {
+        if (FormStates.LAYOUT != formState) {
+            setFormState(FormStates.LAYOUT);
+        }
+        setActiveLayout(layout);
+    }
+
+    const newWindowOnClick = () => {
+
+    }
+
+    const windowNavOnClick = (window) => {
+        if (FormStates.WINDOW != formState) {
+            setFormState(FormStates.WINDOW);
+        }
+        setActiveWindow(window);
+    }
+
     return (
         <div id="modal" className={`fixed inset-0 ${isModalHidden ? 'hidden' : ''} bg-black bg-opacity-50 z-40`}>
             <div className="flex items-center justify-center w-full h-full">
@@ -218,29 +250,29 @@ const SettingsModal = ({ isModalHidden }) => {
                                     </ul>
                                 </li>
                                 <li>
-                                    <button onClick={() => setLayoutsNavOpen(!layoutsNavOpen)} className="block py-1 hover:bg-gray-700">
-                                        <FontAwesomeIcon icon={layoutsNavOpen ? faAngleDown : faAngleRight} />
-                                        Layouts
-                                    </button>
-                                    <ul className={`ml-8 ${layoutsNavOpen ? '' : 'hidden'}`}>
-                                        <a href="#" className="block py-1 hover:bg-gray-600">Add New...</a>
-                                        {workspace.layouts.map((layout) => {
-                                            return (<li key={layout.id}>
-                                                <a href="#" className="block py-1 hover:bg-gray-600">{layout.name}</a>
-                                            </li>)
-                                        })}
-                                    </ul>
-                                </li>
-                                <li>
                                     <button onClick={() => setWindowsNavOpen(!windowsNavOpen)} className="block py-1 hover:bg-gray-700">
                                         <FontAwesomeIcon icon={windowsNavOpen ? faAngleDown : faAngleRight} />
                                         Windows
                                     </button>
                                     <ul className={`ml-8 ${windowsNavOpen ? '' : 'hidden'}`}>
-                                        <a href="#" className="block py-1 hover:bg-gray-600">Add New...</a>
+                                        <button onClick={newWindowOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
                                         {workspace.windows.map((window) => {
                                             return (<li key={window.id}>
-                                                <a href="#" className="block py-1 hover:bg-gray-600">{window.name}</a>
+                                                <button onClick={() => windowNavOnClick(window)} className="block py-1 hover:bg-gray-600">{window.name}</button>
+                                            </li>)
+                                        })}
+                                    </ul>
+                                </li>
+                                <li>
+                                    <button onClick={() => setLayoutsNavOpen(!layoutsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                        <FontAwesomeIcon icon={layoutsNavOpen ? faAngleDown : faAngleRight} />
+                                        Layouts
+                                    </button>
+                                    <ul className={`ml-8 ${layoutsNavOpen ? '' : 'hidden'}`}>
+                                        <button onClick={newLayoutOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        {workspace.layouts.map((layout) => {
+                                            return (<li key={layout.id}>
+                                                <button onClick={() => layoutNavOnClick(layout)} className="block py-1 hover:bg-gray-600">{layout.name}</button>
                                             </li>)
                                         })}
                                     </ul>
@@ -299,7 +331,13 @@ const SettingsModal = ({ isModalHidden }) => {
                                                 <PresetEditor key={activePreset.id} preset={activePreset} tileSets={workspace.tileSets} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} />
                                             );
                                         case FormStates.WINDOW:
-                                            return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">WINDOWS!!!</h2>
+                                            return (!activeWindow) ? "" : (
+                                                <WindowEditor key={activeWindow.id} window={activeWindow} presets={workspace.presets} tileSets={workspace.tileSets} onWindowChange={onWindowChange} onWindowDelete={onWindowDelete} />
+                                            )
+                                        case FormStates.LAYOUT:
+                                            return (!activeLayout) ? "" : (
+                                                <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} />
+                                            )
                                         case FormStates.VARIABLE:
                                             return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">variable</h2>;
                                     }
