@@ -60,6 +60,20 @@ const SettingsModal = ({ isModalHidden }) => {
     const fileInputRef = useRef(null);
     const [workspaceName, setWorkspaceName] = useState("");
 
+    const exportButtonClick = () => {
+        const json = JSON.stringify(workspace);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = `${workspace.workspaceName}.choco.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
     const importButtonClick = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
@@ -358,7 +372,7 @@ const SettingsModal = ({ isModalHidden }) => {
                                             return (<>
                                                 <h2 className="mb-3 bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Export/Load Workspace</h2>
                                                 <div className="flex justify-around items-center w-full">
-                                                    <button className="flex flex-col items-center">
+                                                    <button className="flex flex-col items-center" onClick={exportButtonClick}>
                                                         <FontAwesomeIcon className="text-6xl" icon={faFloppyDisk} />
                                                         <div>Export Workspace...</div>
                                                     </button>
