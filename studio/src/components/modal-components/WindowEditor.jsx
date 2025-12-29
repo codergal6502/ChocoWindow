@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { ChocoStudioPreset, ChocoStudioWindow } from "../../ChocoStudio"
-import PresetEditor from "./PresetEditor";
 import { ChocoWin } from "../../ChocoWindow";
+import PresetEditor from "./PresetEditor";
 
 const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { Array<ChocoStudioPreset> } */ presets, /** @type { Array<ChocoWinTileSet } */ tileSets, onWindowChange, onWindowDelete }) => {
     const imageRef = useRef(null);
@@ -65,6 +65,15 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         setPresetId(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.presetId = value;
+        doOnWindowChange(newWindow);
+    }
+
+    const onSingularPresetChange = (singularPreset) => {
+        const modifiedPreset = new ChocoStudioPreset(singularPreset);
+        // No "setting" necessary since the React state is in the sub-component.
+        const newWindow = new ChocoStudioWindow(window);
+        newWindow.singularPreset = modifiedPreset;
+        doOnWindowChange(newWindow)
     }
 
     useEffect(() => {
@@ -147,7 +156,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
             </select>
         </div>
 
-        {(!presetId) && <PresetEditor isSubordinate={true} preset={new ChocoStudioPreset()} tileSets={tileSets} />}
+        {(!presetId) && <PresetEditor isSubordinate={true} preset={window.singularPreset || new ChocoStudioPreset()} tileSets={tileSets} onPresetChange={onSingularPresetChange} />}
         {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div></>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>

@@ -63,6 +63,7 @@ class ChocoStudioWindow {
             this.y        = 30;
             this.h        = 480;
             this.w        = 640;
+            this.singularPreset = null;
         }
         else {
             /** @type { String } */ this.name     = arg1.name;
@@ -72,6 +73,7 @@ class ChocoStudioWindow {
             /** @type { Number } */ this.y        = arg1.y;
             /** @type { Number } */ this.w        = arg1.w;
             /** @type { Number } */ this.h        = arg1.h;
+            /** @type { ChocoStudioPreset } */ this.singularPreset = arg1.singularPreset && new ChocoStudioPreset(arg1.singularPreset)
         }
     }
 }
@@ -109,7 +111,7 @@ class ChocoStudioWorkspace {
             this.workspaceName = "";
             this.id = String(crypto.randomUUID());
             /** @type {Array<ChocoWinTileSet>} */ this.tileSets = [ ];
-            /** @type {Array<ChocoPreset} */ this.presets = [ ]
+            /** @type {Array<ChocoStudioPreset} */ this.presets = [ ]
             /** @type {Array<ChocoStudioLayout} */ this.layouts = [ ]
             /** @type {Array<ChocoStudioWindow} */ this.windows = [ ]
             /** @type {Array<ChocoStudioVariable} */ this.variables = [ ]
