@@ -53,7 +53,7 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
 
     const subColorOnChange = ((e, colorIndex) => {
         let newSubCols = substituteColors.slice();
-        newSubCols[colorIndex] = ChocoWinColor.fromHexString(e.target.value);
+        newSubCols[colorIndex] = new ChocoWinColor(e.target.value);
         setSubstituteColorsDelayed(newSubCols);
     });
 
@@ -85,7 +85,7 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
         {tileSet.substitutableColors && tileSet.substitutableColors.map((color, index) =>
             <div className="mb-4 w-full" key={index}>
                 <label htmlFor={`color-sub-${index}`}>Color {index}: </label>
-                <input type="color" id={`color-sub-${index}`} value={`${color.toHexString()}`} onChange={(e) => subColorOnChange(e, index)} />
+                <input type="color" id={`color-sub-${index}`} value={color.toHexString()} onChange={(e) => subColorOnChange(e, index)} />
             </div>
         )}
     </>

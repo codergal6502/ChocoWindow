@@ -1,14 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
-import { ChocoWin, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinSettings } from '../ChocoWindow.js';
-import ChocoStudioWorkspace from "../ChocoStudio.js";
+import { ChocoWinSettings, ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
+import { ChocoStudioWorkspace } from "../ChocoStudio.js";
 import TileSetPreview from "./modal-components/TileSetPreview.jsx";
+import PresetEditor from "./modal-components/PresetEditor.jsx";
 
 const WORKSPACE_COOKIE_NAME = 'workspace';
+ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
 
 const SettingsModal = ({ isModalHidden }) => {
+    
     const initialWorkspace = () => {
         try {
             const b64 = window.localStorage.getItem(WORKSPACE_COOKIE_NAME);
@@ -23,34 +26,32 @@ const SettingsModal = ({ isModalHidden }) => {
             console.error(e);
             alert('An unexpected error occurred; check the console log for details.')
         }
-        
+
         return new ChocoStudioWorkspace();
     }
-    
+
     const [workspace, setWorkspace] = useState(initialWorkspace());
 
     const FormStates = Object.freeze({
         SETTINGS: 'SETTINGS',
         TILE_SET: 'TILE_SET',
-        WINDOW_PRESET: 'WINDOW_PRESET',
+        PRESET: 'PRESET',
         LAYOUT: 'LAYOUT',
         WINDOW: 'WINDOW',
         VARIABLE: 'VARIABLE',
     });
 
+    // Total state of the form; default to Settings with the entire nav tree open. 
     const [formState, setFormState] = useState(FormStates.SETTINGS);
-
     const [tileSetsNavOpen, setTileSetsNavOpen] = useState(true);
-    const [windowPresetsNavOpen, setWindowPresetsNavOpen] = useState(true);
+    const [presetsNavOpen, setPresetsNavOpen] = useState(true);
     const [layoutsNavOpen, setLayoutsNavOpen] = useState(true);
     const [windowsNavOpen, setWindowsNavOpen] = useState(true);
     const [variablesNavOpen, setVariablesNavOpen] = useState(true);
 
-    const doSetActiveTileSet = (t) => { setActiveTileSet(t); }
-
-    const [/** @type {ChocoWinTileSet} */ activeTileSet, setActiveTileSet] = useState(null);
-
-
+    // For each section, what is active (if anything).
+    const [/** @type {ChocoWinTileSet}   */ activeTileSet, setActiveTileSet] = useState(null);
+    const [/** @type {ChocoStudioPreset} */ activePreset,  setActivePreset]  = useState(null);
 
     const fileInputRef = useRef(null);
     const [workspaceName, setWorkspaceName] = useState("");
@@ -82,6 +83,19 @@ const SettingsModal = ({ isModalHidden }) => {
 
         // todo: make this doSetWorkspace when we're done enough that we want to overwrite the stuff in browser storage
         setWorkspace(modifiedWorkspace);
+    }
+
+    const onPresetChange = (/** @type {ChocoStudioPreset} */ modifiedPreset) => {
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        const idx = modifiedWorkspace.presets.findIndex((p) => p.id == modifiedPreset.id);
+
+        if (idx >= 0) {
+            modifiedWorkspace.presets[idx] = modifiedPreset
+    
+            // todo: make this doSetWorkspace when we're done enough that we want to overwrite the stuff in browser storage
+            setWorkspace(modifiedWorkspace);
+            setActivePreset(modifiedPreset);
+        }
     }
 
     const importInputChange = (e1) => {
@@ -116,7 +130,14 @@ const SettingsModal = ({ isModalHidden }) => {
         if (FormStates.TILE_SET != formState) {
             setFormState(FormStates.TILE_SET);
         }
-        doSetActiveTileSet(tileSet);
+        setActiveTileSet(tileSet);
+    }
+
+    const presetNavOnClick = (/** @type {ChocoStudioPreset} */ preset) => {
+        if (FormStates.PRESET != formState) {
+            setFormState(FormStates.PRESET);
+        }
+        setActivePreset(preset);
     }
 
     return (
@@ -145,15 +166,16 @@ const SettingsModal = ({ isModalHidden }) => {
                                     </ul>
                                 </li>
                                 <li>
-                                    <button onClick={() => setWindowPresetsNavOpen(!windowPresetsNavOpen)} className="block py-1 hover:bg-gray-700">
-                                        <FontAwesomeIcon icon={windowPresetsNavOpen ? faAngleDown : faAngleRight} />
-                                        Window Presets
+                                    <button onClick={() => setPresetsNavOpen(!presetsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                        <FontAwesomeIcon icon={presetsNavOpen ? faAngleDown : faAngleRight} />
+                                        Presets
                                     </button>
-                                    <ul className={`ml-8 ${windowPresetsNavOpen ? '' : 'hidden'}`}>
-                                        <a href="#" className="block py-1 hover:bg-gray-600">Add New...</a>
+                                    <ul className={`ml-8 ${presetsNavOpen ? '' : 'hidden'}`}>
+                                        <button className="block py-1 hover:bg-gray-600">Add New...</button>
                                         {workspace.presets.map((preset) => {
+                                            console.log('making button for preset ', preset)
                                             return (<li key={preset.id}>
-                                                <a href="#" className="block py-1 hover:bg-gray-600">{preset.name}</a>
+                                                <button onClick={() => presetNavOnClick(preset)} className="block py-1 hover:bg-gray-600">{preset.name}</button>
                                             </li>)
                                         })}
                                     </ul>
@@ -235,8 +257,11 @@ const SettingsModal = ({ isModalHidden }) => {
                                             return (!activeTileSet) ? "" : (
                                                 <TileSetPreview key={activeTileSet.id} tileSet={activeTileSet} onTileSetChange={onTileSetChange} />
                                             );
-                                        case FormStates.WINDOW_PRESET:
-                                            return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">window preset</h2>;
+                                        case FormStates.PRESET:
+                                            console.log('before making preset editor: ', activePreset);
+                                            return (!activePreset) ? "" : (
+                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSets={workspace.tileSets} onPresetChange={onPresetChange} />
+                                            );
                                         case FormStates.WINDOW:
                                             return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">WINDOWS!!!</h2>
                                         case FormStates.VARIABLE:

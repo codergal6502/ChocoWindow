@@ -10,12 +10,18 @@ class ChocoStudioPreset {
      */
     constructor(arg1) {
         if (!arg1) {
-            this.name = "";
-            this.id = String(crypto.randomUUID());
+            /** @type {String} */ this.name = "";
+            /** @type {String} */ this.id = String(crypto.randomUUID());
+            /** @type {String} */ this.tileSetId = null;
+            /** @type {Number} */ this.tileScale = 1;
+            /** @type {Array<ChocoWinColor} */ this.substituteColors = [];
         }
         else {
-            this.name = arg1.name;
-            this.id = arg1.id;
+            this.name             = arg1.name;
+            this.id               = arg1.id;
+            this.tileSetId        = arg1.tileSetId
+            this.tileScale        = arg1.tileScale
+            this.substituteColors = arg1.substituteColors?.slice() || [];
         }
     }
 }
@@ -110,4 +116,4 @@ class ChocoStudioWorkspace {
     }
 }
 
-export default ChocoStudioWorkspace;
+export { ChocoStudioWorkspace, ChocoStudioPreset };
