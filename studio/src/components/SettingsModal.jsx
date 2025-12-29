@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { ChocoWinSettings, ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioPreset, ChocoStudioWorkspace } from "../ChocoStudio.js";
+import { ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
 import TileSetPreview from "./modal-components/TileSetPreview.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
@@ -109,7 +109,7 @@ const SettingsModal = ({ isModalHidden }) => {
 
         if (idx < 0) idx = modifiedWorkspace.presets.length;
 
-        modifiedWorkspace.presets[idx] = modifiedPreset
+        modifiedWorkspace.presets[idx] = modifiedPreset;
 
         doSetWorkspace(modifiedWorkspace);
         setActivePreset(modifiedPreset);
@@ -129,11 +129,57 @@ const SettingsModal = ({ isModalHidden }) => {
         setActivePreset(null);
     }
 
-    const onLayoutChange = (/** @type {ChocoStudioLayout} */ modifiedLayout) => { }
-    const onLayoutDelete = (id) => { }
+    const onLayoutChange = (/** @type {ChocoStudioLayout} */ modifiedLayout) => {
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        let idx = modifiedWorkspace.layouts.findIndex((p) => p.id == modifiedLayout.id);
 
-    const onWindowChange = (/** @type {ChocoStudioWindow} */ modifiedWindow) => { }
-    const onWindowDelete = (id) => { }
+        if (idx < 0) idx = modifiedWorkspace.layouts.length;
+
+        modifiedWorkspace.layouts[idx] = modifiedLayout;
+
+        doSetWorkspace(modifiedWorkspace);
+        setActiveLayout(modifiedLayout);
+    }
+
+    const onLayoutDelete = (id) => {
+        setFormState(FormStates.SETTINGS);
+
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        const idx = modifiedWorkspace.layouts.findIndex((p) => p.id == id);
+
+        if (idx >= 0) {
+            modifiedWorkspace.layouts.splice(idx, 1);
+        }
+
+        doSetWorkspace(modifiedWorkspace);
+        // setActivelayout(null);
+    }
+
+    const onWindowChange = (/** @type {ChocoStudioWindow} */ modifiedWindow) => {
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        let idx = modifiedWorkspace.windows.findIndex((p) => p.id == modifiedWindow.id);
+
+        if (idx < 0) idx = modifiedWorkspace.windows.length;
+
+        modifiedWorkspace.windows[idx] = modifiedWindow;
+
+        doSetWorkspace(modifiedWorkspace);
+        setActiveWindow(modifiedWindow);
+    }
+
+    const onWindowDelete = (id) => {
+        setFormState(FormStates.SETTINGS);
+
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        const idx = modifiedWorkspace.windows.findIndex((p) => p.id == id);
+
+        if (idx >= 0) {
+            modifiedWorkspace.windows.splice(idx, 1);
+        }
+
+        doSetWorkspace(modifiedWorkspace);
+        setActiveWindow(null);
+    }
 
     const importInputChange = (e1) => {
         const file = e1.target.files[0];
@@ -200,7 +246,14 @@ const SettingsModal = ({ isModalHidden }) => {
     }
 
     const newWindowOnClick = () => {
+        if (FormStates.WINDOW != formState) {
+            setFormState(FormStates.WINDOW);
+        }
 
+        const newWindow = new ChocoStudioWindow();
+        newWindow.id = crypto.randomUUID();
+
+        setActiveWindow(newWindow);
     }
 
     const windowNavOnClick = (window) => {
@@ -258,7 +311,7 @@ const SettingsModal = ({ isModalHidden }) => {
                                         <button onClick={newWindowOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
                                         {workspace.windows.map((window) => {
                                             return (<li key={window.id}>
-                                                <button onClick={() => windowNavOnClick(window)} className="block py-1 hover:bg-gray-600">{window.name}</button>
+                                                <button onClick={() => windowNavOnClick(window)} className="block py-1 hover:bg-gray-600">{String(window.name).trim() || <span className="italic">no name</span>}</button>
                                             </li>)
                                         })}
                                     </ul>

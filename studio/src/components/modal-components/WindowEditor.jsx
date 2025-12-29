@@ -12,14 +12,20 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
     const [geometryY, setGeometryY] = useState(window.y);
     const [geometryW, setGeometryW] = useState(window.w);
     const [geometryH, setGeometryH] = useState(window.h);
-    const [presetId,  setPresetId]  = useState(window.presetId);
+    const [presetId, setPresetId] = useState(window.presetId);
+
+    const doOnWindowChange = (newPreset) => {
+        if (onWindowChange && typeof onWindowChange === 'function') {
+            onWindowChange(newPreset);
+        }
+    }
 
     const onNameChange = (e) => {
         const value = e.target.value;
         setName(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.name = value;
-        // doOnPresetChange(newPreset);
+        doOnWindowChange(newWindow);
     }
 
     const onGeometryXChange = (e) => {
@@ -27,7 +33,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         setGeometryX(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.x = value;
-        // doOnPresetChange(newPreset);
+        doOnWindowChange(newWindow);
     }
 
     const onGeometryYChange = (e) => {
@@ -35,7 +41,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         setGeometryY(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.y = value;
-        // doOnPresetChange(newPreset);
+        doOnWindowChange(newWindow);
     }
 
     const onGeometryWChange = (e) => {
@@ -43,7 +49,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         setGeometryW(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.w = value;
-        // doOnPresetChange(newPreset);
+        doOnWindowChange(newWindow);
     }
 
     const onGeometryHChange = (e) => {
@@ -51,7 +57,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         setGeometryH(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.h = value;
-        // doOnPresetChange(newPreset);
+        doOnWindowChange(newWindow);
     }
 
     const onPresetIdChange = (e) => {
@@ -60,7 +66,6 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         const newWindow = new ChocoStudioWindow(window);
         newWindow.presetId = value;
     }
-
 
     useEffect(() => {
         if (!imageRef.current) { return; }
@@ -93,6 +98,16 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
             imageRef.current.src = dataUrl;
         });
     }, [presetId, imageRef])
+
+    const doDeleteWindowOnClick = (id) => {
+        if (onWindowDelete && typeof onWindowDelete === 'function') {
+            onWindowDelete(window.id);
+        }
+    }
+
+    const deleteWindowOnClick = () => {
+        doDeleteWindowOnClick(window.id);
+    }
 
     return <>
         <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Window Settings <span className="text-sm">({window.id})</span></h2>
@@ -132,8 +147,11 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
             </select>
         </div>
 
-        {(! presetId) && <PresetEditor isSubordinate={true} preset={new ChocoStudioPreset()} tileSets={tileSets} />}
+        {(!presetId) && <PresetEditor isSubordinate={true} preset={new ChocoStudioPreset()} tileSets={tileSets} />}
         {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div></>}
+
+        <h3 className="mb-2 mt-4 text-xl">Actions</h3>
+        <div><button onClick={deleteWindowOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Window</button></div>
     </>
 }
 
