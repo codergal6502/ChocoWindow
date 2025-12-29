@@ -22,7 +22,7 @@ For an example of using the library, please see the [Six Window Sample](examples
 
 ## Running Examples or Studio Locally
 
-If you want to run the examples or Choco Window Studio locally, you first must make symbolic links for [`ChocoWindow.js`](ChocoWindow.js) in those applications' directories. This can be done by running [`make-javascript-shortcuts.sh`](make-javascript-shortcuts.sh). The `.gitignore` files are already set up to ignore the symbolic links.
+If you want to run the examples or Choco Window Studio locally, you first must make symbolic links for [`ChocoWindow.js`](ChocoWindow.js) in those applications' directories. This can be done by running [`make-javascript-shortcuts.sh`](make-javascript-shortcuts.sh). The `.gitignore` files are already set up to ignore the symbolic links. Examples can be run using your favorite simple static HTTP server such as [`http-server`](https://github.com/http-party/http-server). Choco Window Studio requires npm.
 
 ## License
 
