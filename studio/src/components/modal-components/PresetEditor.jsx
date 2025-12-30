@@ -127,7 +127,7 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
         
                 <div className="mb-4 w-full">
                     <label htmlFor="e4486061-7422-490d-be92-533ff31711a1">Name: </label>
-                    <input placeholder="Preset Name" type="text" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
+                    <input placeholder="Preset Name" type="text" autocomplete="off" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
                 </div>
             </> 
         }

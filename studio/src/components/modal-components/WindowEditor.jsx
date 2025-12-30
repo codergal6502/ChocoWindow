@@ -14,9 +14,9 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
     const [geometryH, setGeometryH] = useState(window.h);
     const [presetId, setPresetId] = useState(window.presetId);
 
-    const doOnWindowChange = (newPreset) => {
+    const doOnWindowChange = (newWindow) => {
         if (onWindowChange && typeof onWindowChange === 'function') {
-            onWindowChange(newPreset);
+            onWindowChange(newWindow);
         }
     }
 
@@ -108,7 +108,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         });
     }, [presetId, imageRef])
 
-    const doDeleteWindowOnClick = (id) => {
+    const doDeleteWindowOnClick = () => {
         if (onWindowDelete && typeof onWindowDelete === 'function') {
             onWindowDelete(window.id);
         }
@@ -123,7 +123,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         <p className="mb-2 text-sm italic"></p>
         <div className="mb-4 w-full">
             <label htmlFor="c2c6dc82-1188-41ae-a8ba-24b3c3748b95">Name: </label>
-            <input placeholder="Preset Name" type="text" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
+            <input placeholder="Preset Name" type="text" autocomplete="off" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
         </div>
 
         <div className={`grid grid-cols-4 gap-4`}>

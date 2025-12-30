@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { ChocoWinSettings, ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
+import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
 import TileSetPreview from "./modal-components/TileSetPreview.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
@@ -236,7 +236,6 @@ const SettingsModal = ({ isModalHidden }) => {
         }
 
         const newPreset = new ChocoStudioPreset();
-        newPreset.id = crypto.randomUUID();
 
         setActivePreset(newPreset);
     }
@@ -249,7 +248,13 @@ const SettingsModal = ({ isModalHidden }) => {
     }
 
     const newLayoutOnClick = () => {
+        if (FormStates.LAYOUT != formState) {
+            setFormState(FormStates.LAYOUT);
+        }
 
+        const newLayout = new ChocoStudioLayout();
+
+        setActiveLayout(newLayout);
     }
 
     const layoutNavOnClick = (layout) => {
@@ -265,7 +270,6 @@ const SettingsModal = ({ isModalHidden }) => {
         }
 
         const newWindow = new ChocoStudioWindow();
-        newWindow.id = crypto.randomUUID();
 
         setActiveWindow(newWindow);
     }
@@ -339,7 +343,7 @@ const SettingsModal = ({ isModalHidden }) => {
                                         <button onClick={newLayoutOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
                                         {workspace.layouts.map((layout) => {
                                             return (<li key={layout.id}>
-                                                <button onClick={() => layoutNavOnClick(layout)} className="block py-1 hover:bg-gray-600">{layout.name}</button>
+                                                <button onClick={() => layoutNavOnClick(layout)} className="block py-1 hover:bg-gray-600">{String(layout.name).trim() || <span className="italic">no name</span>}</button>
                                             </li>)
                                         })}
                                     </ul>
@@ -385,7 +389,7 @@ const SettingsModal = ({ isModalHidden }) => {
                                                 <h2 className="mt-3 mb-3 bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Workspace Settings</h2>
                                                 <div className="mb-4 w-full">
                                                     <label htmlFor="ccd163fa-8b14-4f68-9b0d-753b093c28ff">Name: </label>
-                                                    <input placeholder="Workspace Name" type="text" id="ccd163fa-8b14-4f68-9b0d-753b093c28ff" className={TAILWIND_INPUT_CLASS_NAME} onChange={workspaceNameChange} value={workspace.workspaceName} />
+                                                    <input placeholder="Workspace Name" type="text" autocomplete="off" id="ccd163fa-8b14-4f68-9b0d-753b093c28ff" className={TAILWIND_INPUT_CLASS_NAME} onChange={workspaceNameChange} value={workspace.workspaceName} />
                                                 </div>
                                             </>);
 

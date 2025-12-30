@@ -36,8 +36,8 @@ class ChocoStudioLayout {
      */
     constructor(arg1) {
         if (!arg1) {
-            this.name = "";
-            this.id = String(crypto.randomUUID());
+            /** @type { String } */ this.name = "";
+            /** @type { String } */ this.id = String(crypto.randomUUID());
         }
         else {
             this.name = arg1.name;
@@ -128,4 +128,4 @@ class ChocoStudioWorkspace {
     }
 }
 
-export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow };
+export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable };
