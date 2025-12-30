@@ -1,4 +1,4 @@
-import { ChocoWin, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinSettings } from './ChocoWindow.js';
+import { ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinSettings } from './ChocoWindow.js';
 
 class ChocoStudioPreset {
     /**
@@ -38,10 +38,12 @@ class ChocoStudioLayout {
         if (!arg1) {
             /** @type { String } */ this.name = "";
             /** @type { String } */ this.id = String(crypto.randomUUID());
+            /** @type { Array<String>} */ this.windowIds = [];
         }
         else {
             this.name = arg1.name;
             this.id = arg1.id;
+            this.windowIds = (arg1.windowIds || []).slice();
         }
     }
 }

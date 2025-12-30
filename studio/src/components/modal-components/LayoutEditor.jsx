@@ -118,7 +118,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
                     windowIds.map((windowId) => {
                         const window = windows.find((w) => w.id == windowId);
                         return (
-                            <tr className="even:bg-gray-600 odd:bg-gray-700">
+                            <tr key={windowId} className="even:bg-gray-600 odd:bg-gray-700">
                                 <td className="p-1">
                                     <button className="hover:text-yellow-400" key={`u-${window.id}`} onClick={() => moveWindowUpClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowUp} /></button>
                                     <button className="hover:text-yellow-400" key={`d-${window.id}`} onClick={() => moveWindowDownClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowDown} /></button>

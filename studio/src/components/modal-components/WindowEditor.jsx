@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { ChocoStudioPreset, ChocoStudioWindow } from "../../ChocoStudio"
-import { ChocoWin } from "../../ChocoWindow";
+import { ChocoWinWindow } from "../../ChocoWindow";
 import PresetEditor from "./PresetEditor";
 
 const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { Array<ChocoStudioPreset> } */ presets, /** @type { Array<ChocoWinTileSet } */ tileSets, onWindowChange, onWindowDelete, onReturnToCanvas }) => {
@@ -84,7 +84,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         if (!preset) { return; }
         let tileSet = tileSets.find((ts) => ts.id == preset.tileSetId);
 
-        let chocoWin = new ChocoWin(tileSet, preset.tileScale, 0, 0, 450, 180);
+        let chocoWin = new ChocoWinWindow(tileSet, preset.tileScale, 0, 0, 450, 180);
 
         if (preset.substituteColors && preset.substituteColors.length) {
             preset.substituteColors.forEach((col, idx) => {

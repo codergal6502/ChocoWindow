@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoStudioPreset } from "../../ChocoStudio"
-import { ChocoWin, ChocoWinColor } from "../../ChocoWindow";
+import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
 
 const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange, onPresetDelete, onReturnToCanvas }) => {
     const imageRef = useRef(null);
@@ -35,7 +35,7 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
         if (!imageRef.current) { return; }
         if (!tileSet) { alert('err'); return; }
 
-        let chocoWin = new ChocoWin(tileSet, tileScale, 0, 0, 450, 180);
+        let chocoWin = new ChocoWinWindow(tileSet, tileScale, 0, 0, 450, 180);
 
         if (substituteColors && substituteColors.length) {
             substituteColors.forEach((col, idx) => {

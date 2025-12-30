@@ -150,7 +150,7 @@ class ChocoWinTileSet {
     }
 }
 
-class ChocoWin {
+class ChocoWinWindow {
     /** @type {HTMLImageElement} */ #pixmap;
     /** @type {ChocoWinTileSet} */ #winOption;
     /** @type {Number} */ #tileScale;
@@ -196,7 +196,7 @@ class ChocoWin {
     }
 
     /**
-     * @returns {ChocoWin} The same object, for method chaining.
+     * @returns {ChocoWinWindow} The same object, for method chaining.
      */
     substituteColor(/** @type {Number} */ index, /** @type {ChocoWinColor} */ color) {
         this.#colorSubstitutions[index] = new ChocoWinColor(color);
@@ -321,4 +321,4 @@ class ChocoWin {
     };
 }
 
-export { ChocoWinSettings, ChocoWinColor, ChocoWinCoordinates, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinTileSet, ChocoWin }
+export { ChocoWinSettings, ChocoWinColor, ChocoWinCoordinates, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinTileSet, ChocoWinWindow }

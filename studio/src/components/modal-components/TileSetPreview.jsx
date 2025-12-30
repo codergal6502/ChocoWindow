@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWin, ChocoWinColor, ChocoWinTileSet } from "../../ChocoWindow";
+import { ChocoWinWindow, ChocoWinColor, ChocoWinTileSet } from "../../ChocoWindow";
 
 // See https://bikeshedd.ing/posts/use_state_should_require_a_dependency_array/.
 
@@ -27,7 +27,7 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
 
     useEffect(() => {
         if (!imageRef.current) { return; }
-        let chocoWin = new ChocoWin(tileSet, 3, 0, 0, 450, 180);
+        let chocoWin = new ChocoWinWindow(tileSet, 3, 0, 0, 450, 180);
 
         if (substituteColors && substituteColors.length) {
             substituteColors.forEach((col, idx) => {

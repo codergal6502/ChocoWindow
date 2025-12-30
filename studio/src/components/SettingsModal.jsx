@@ -9,31 +9,7 @@ import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
 import WindowEditor from "./modal-components/WindowEditor.jsx";
 
-const WORKSPACE_COOKIE_NAME = 'workspace';
-ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
-
-const SettingsModal = ({ isModalHidden, onReturnToCanvas }) => {
-
-    const initialWorkspace = () => {
-        try {
-            const b64 = window.localStorage.getItem(WORKSPACE_COOKIE_NAME);
-            if (b64) {
-                const json = window.atob(b64);
-                const obj = JSON.parse(json)
-                const ws = new ChocoStudioWorkspace(obj)
-                return ws;
-            }
-        }
-        catch (e) {
-            console.error(e);
-            alert('An unexpected error occurred; check the console log for details.')
-        }
-
-        return new ChocoStudioWorkspace();
-    }
-
-    const [workspace, setWorkspace] = useState(initialWorkspace());
-
+const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, workspace }) => {
     const FormStates = Object.freeze({
         SETTINGS: 'SETTINGS',
         TILE_SET: 'TILE_SET',
@@ -82,15 +58,8 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas }) => {
         }
     }
 
-    const storeWorkspaceToCookie = (workspace) => {
-        const json = JSON.stringify(workspace);
-        const b64 = btoa(json);
-        window.localStorage.setItem(WORKSPACE_COOKIE_NAME, b64);
-    }
-
     const doSetWorkspace = (workspace) => {
-        setWorkspace(workspace);
-        storeWorkspaceToCookie(workspace);
+        onWorkspaceChange(workspace)
     }
 
     const onTileSetChange = (/** @type {ChocoWinTileSet} */ modifiedTileSet) => {
@@ -421,7 +390,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas }) => {
                                                 </div>
                                                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                                                 <div className="flex justify-between">
-                                                    <button onClick={() => { onReturnToCanvas && onReturnToCanvas(workspace) }} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+                                                    <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
                                                 </div>
                                             </>);
 

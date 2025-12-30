@@ -1,0 +1,7 @@
+.chocoWinBoundingBox {
+    opacity: .75;
+}
+
+.chocoWinBoundingBox:hover {
+    border: 20px dashed yellow;
+}
