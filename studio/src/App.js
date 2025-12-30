@@ -55,11 +55,13 @@ const App = () => {
     setIsModalHidden(true);
   }
 
+  const onWorkspaceInstanceModified = () => { }
+
   return (
     <div>
       <SettingsFloater onGearClick={openModalOnClick} />
       {isModalHidden || <SettingsModal isModalHidden={isModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onWorkspaceChange} workspace={workspace} />}
-      <ChocoWinCanvas workspace={workspace} />
+      <ChocoWinCanvas workspace={workspace} onWorkspaceInstanceModified={onWorkspaceInstanceModified} />
     </div>
   );
 };
