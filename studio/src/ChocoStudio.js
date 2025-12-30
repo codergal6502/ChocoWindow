@@ -108,8 +108,10 @@ class ChocoStudioWorkspace {
      */
     constructor(arg1) {
         if (!arg1) {
-            this.workspaceName = "";
-            this.id = String(crypto.randomUUID());
+            /** @type { String } */ this.workspaceName = "";
+            /** @type { String } */ this.id = String(crypto.randomUUID());
+            /** @type { Number } */ this.width = 1920;
+            /** @type { Number } */ this.height = 1080;
             /** @type {Array<ChocoWinTileSet>} */ this.tileSets = [ ];
             /** @type {Array<ChocoStudioPreset} */ this.presets = [ ]
             /** @type {Array<ChocoStudioLayout} */ this.layouts = [ ]
@@ -119,6 +121,8 @@ class ChocoStudioWorkspace {
         else {
             this.workspaceName = arg1.workspaceName;
             this.id = arg1.id;
+            this.width = arg1.width;
+            this.height = arg1.height;
             this.tileSets = arg1.tileSets.map((ts) => new ChocoWinTileSet(ts));
             this.presets = arg1.presets.map((wp) => new ChocoStudioPreset(wp));
             this.layouts = arg1.layouts.map((wp) => new ChocoStudioLayout(wp));

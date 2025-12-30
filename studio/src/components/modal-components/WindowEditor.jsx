@@ -4,7 +4,7 @@ import { ChocoStudioPreset, ChocoStudioWindow } from "../../ChocoStudio"
 import { ChocoWin } from "../../ChocoWindow";
 import PresetEditor from "./PresetEditor";
 
-const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { Array<ChocoStudioPreset> } */ presets, /** @type { Array<ChocoWinTileSet } */ tileSets, onWindowChange, onWindowDelete }) => {
+const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { Array<ChocoStudioPreset> } */ presets, /** @type { Array<ChocoWinTileSet } */ tileSets, onWindowChange, onWindowDelete, onReturnToCanvas }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(window.name)
@@ -123,7 +123,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         <p className="mb-2 text-sm italic"></p>
         <div className="mb-4 w-full">
             <label htmlFor="c2c6dc82-1188-41ae-a8ba-24b3c3748b95">Name: </label>
-            <input placeholder="Preset Name" type="text" autocomplete="off" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
+            <input placeholder="Preset Name" type="text" autoComplete="off" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
         </div>
 
         <div className={`grid grid-cols-4 gap-4`}>
@@ -160,7 +160,10 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div></>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
-        <div><button onClick={deleteWindowOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Window</button></div>
+        <div className="flex justify-between">
+            <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+            <button onClick={deleteWindowOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Window</button>
+        </div>
     </>
 }
 

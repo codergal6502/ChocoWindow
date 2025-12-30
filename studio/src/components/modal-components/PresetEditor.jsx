@@ -3,7 +3,7 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoStudioPreset } from "../../ChocoStudio"
 import { ChocoWin, ChocoWinColor } from "../../ChocoWindow";
 
-const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange, onPresetDelete }) => {
+const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange, onPresetDelete, onReturnToCanvas }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
@@ -127,7 +127,7 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
         
                 <div className="mb-4 w-full">
                     <label htmlFor="e4486061-7422-490d-be92-533ff31711a1">Name: </label>
-                    <input placeholder="Preset Name" type="text" autocomplete="off" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
+                    <input placeholder="Preset Name" type="text" autoComplete="off" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
                 </div>
             </> 
         }
@@ -145,7 +145,7 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
         </div>
 
         <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
-        <div className={`grid grid-cols-${Math.max(4, tileSet.substitutableColors.length)} gap-4`}>
+        <div className={`grid grid-cols-4 gap-4`}>
             {tileSet.substitutableColors.map((color, i) =>
                 <div key={i}>
                     <div className="text-sm w-full text-center">Color {i + 1}</div>
@@ -161,7 +161,10 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
         {
             isSubordinate || <>
                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
-                <div><button onClick={deletePresetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button></div>
+                <div className="flex justify-between">
+                    <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+                    <button onClick={deletePresetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button>
+                </div>
             </>
         }
     </>

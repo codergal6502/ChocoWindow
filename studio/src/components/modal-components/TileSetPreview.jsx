@@ -16,7 +16,7 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
 
     useEffect(() => {
         if (substituteColorsDelayed && substituteColorsDelayed.length) {
-            if (subColsTimedTimeout) {   
+            if (subColsTimedTimeout) {
                 clearTimeout(subColsTimedTimeout);
             }
 
@@ -26,7 +26,7 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
     }, [substituteColorsDelayed])
 
     useEffect(() => {
-        if  (! imageRef.current) { return; }
+        if (!imageRef.current) { return; }
         let chocoWin = new ChocoWin(tileSet, 3, 0, 0, 450, 180);
 
         if (substituteColors && substituteColors.length) {
@@ -95,7 +95,10 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
         )}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
-        <div><button onClick={deleteTileSetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set</button></div>
+        <div className="flex justify-between">
+            <button className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+            <button onClick={deleteTileSetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set</button>
+        </div>
     </>
 }
 

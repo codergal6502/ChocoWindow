@@ -11,10 +11,15 @@ const App = () => {
     setIsModalHidden(false);
   }
 
+  const onModalReturn = (workspace) => {
+    console.log('canvas got', workspace)
+    setIsModalHidden(true);
+  }
+
   return (
     <div>
       <SettingsFloater onGearClick={openModalOnClick} />
-      { isModalHidden === false ? <SettingsModal isModalHidden={isModalHidden} /> : "" }
+      { isModalHidden || <SettingsModal isModalHidden={isModalHidden} onReturnToCanvas={onModalReturn} />}
     </div>
   );
 };

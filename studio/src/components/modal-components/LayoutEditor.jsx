@@ -4,7 +4,7 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp, faCircleMinus, faTrash } from "@fortawesome/free-solid-svg-icons";
 
-const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { Array<ChocoStudioWindow> } */ windows, onLayoutChange, onLayoutDelete }) => {
+const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { Array<ChocoStudioWindow> } */ windows, onLayoutChange, onLayoutDelete, onReturnToCanvas }) => {
     const windowSelectRef = useRef();
 
     const [name, setName] = useState(layout.name || "")
@@ -47,8 +47,8 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         if (idx == 0) return;
 
         let newWindowIds = windowIds.slice();
-        newWindowIds[idx] = newWindowIds[idx-1];
-        newWindowIds[idx-1] = windowId;
+        newWindowIds[idx] = newWindowIds[idx - 1];
+        newWindowIds[idx - 1] = windowId;
         setWindowIds(newWindowIds);
 
         const newLayout = new ChocoStudioLayout(layout);
@@ -62,15 +62,15 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         if (idx == windowIds.length - 1) return;
 
         let newWindowIds = windowIds.slice();
-        newWindowIds[idx] = newWindowIds[idx+1];
-        newWindowIds[idx+1] = windowId;
+        newWindowIds[idx] = newWindowIds[idx + 1];
+        newWindowIds[idx + 1] = windowId;
         setWindowIds(newWindowIds);
 
         const newLayout = new ChocoStudioLayout(layout);
         newLayout.windowIds = newWindowIds.slice();
         doOnLayoutChange(newLayout);
     }
-    
+
     const removeWindowClicked = (windowId) => {
         const idx = windowIds.indexOf(windowId);
 
@@ -100,7 +100,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         <p className="mb-2 text-sm italic">A layout is a collection of windows, analogous to a scene.</p>
         <div className="mb-4 w-full">
             <label htmlFor="c2c6dc82-1188-41ae-a8ba-24b3c3748b95">Name: </label>
-            <input placeholder="Layout Name" type="text" autocomplete="off" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
+            <input placeholder="Layout Name" type="text" autoComplete="off" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
         </div>
 
         <h3 className="mb-2 mt-4 text-xl">Window List</h3>
@@ -115,7 +115,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
             </thead>
             <tbody>
                 {
-                    windowIds.map((windowId) => {                        
+                    windowIds.map((windowId) => {
                         const window = windows.find((w) => w.id == windowId);
                         return (
                             <tr className="even:bg-gray-600 odd:bg-gray-700">
@@ -154,7 +154,10 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         </div>
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
-        <div><button onClick={deleteLayoutOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Layout</button></div>
+        <div className="flex justify-between">
+            <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+            <button onClick={deleteLayoutOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Layout</button>
+        </div>
     </>)
 }
 

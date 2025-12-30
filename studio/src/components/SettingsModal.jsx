@@ -12,7 +12,7 @@ import WindowEditor from "./modal-components/WindowEditor.jsx";
 const WORKSPACE_COOKIE_NAME = 'workspace';
 ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
 
-const SettingsModal = ({ isModalHidden }) => {
+const SettingsModal = ({ isModalHidden, onReturnToCanvas }) => {
 
     const initialWorkspace = () => {
         try {
@@ -59,6 +59,8 @@ const SettingsModal = ({ isModalHidden }) => {
 
     const fileInputRef = useRef(null);
     const [workspaceName, setWorkspaceName] = useState("");
+    const [width, setWidth] = useState(1920);
+    const [height, setHeight] = useState(1080);
 
     const exportButtonClick = () => {
         const json = JSON.stringify(workspace);
@@ -221,6 +223,21 @@ const SettingsModal = ({ isModalHidden }) => {
         const newWorkspaceName = e.target.value;
         workspace.workspaceName = newWorkspaceName;
         setWorkspaceName(newWorkspaceName);
+        doSetWorkspace(workspace);
+    }
+
+    const widthChange = (e) => {
+        const newWidth = e.target.value;
+        workspace.width = newWidth;
+        setWidth(newWidth);
+        doSetWorkspace(workspace);
+    }
+
+    const heightChange = (e) => {
+        const newHeight = e.target.value;
+        workspace.height = newHeight;
+        setHeight(newHeight);
+        doSetWorkspace(workspace);
     }
 
     const tileSetNavOnClick = (/** @type {ChocoWinTileSet} */ tileSet) => {
@@ -389,25 +406,40 @@ const SettingsModal = ({ isModalHidden }) => {
                                                 <h2 className="mt-3 mb-3 bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Workspace Settings</h2>
                                                 <div className="mb-4 w-full">
                                                     <label htmlFor="ccd163fa-8b14-4f68-9b0d-753b093c28ff">Name: </label>
-                                                    <input placeholder="Workspace Name" type="text" autocomplete="off" id="ccd163fa-8b14-4f68-9b0d-753b093c28ff" className={TAILWIND_INPUT_CLASS_NAME} onChange={workspaceNameChange} value={workspace.workspaceName} />
+                                                    <input placeholder="Workspace Name" type="text" autoComplete="off" id="ccd163fa-8b14-4f68-9b0d-753b093c28ff" className={TAILWIND_INPUT_CLASS_NAME} onChange={workspaceNameChange} value={workspace.workspaceName} />
+                                                </div>
+                                                <div className={`grid grid-cols-2 gap-4`}>
+                                                    <div className="mb-4 w-full">
+                                                        <label htmlFor="063ce7b6-c327-4ab2-b343-0556f0e7158d">Width: </label>
+                                                        <input placeholder="Preset Name" type="number" id="063ce7b6-c327-4ab2-b343-0556f0e7158d" className={TAILWIND_INPUT_CLASS_NAME} value={width} onChange={widthChange} />
+                                                    </div>
+
+                                                    <div className="mb-4 w-full">
+                                                        <label htmlFor="c3efc55a-36cd-4f12-b546-308893448ade">Y Position: </label>
+                                                        <input placeholder="Preset Name" type="number" id="c3efc55a-36cd-4f12-b546-308893448ade" className={TAILWIND_INPUT_CLASS_NAME} value={height} onChange={heightChange} />
+                                                    </div>
+                                                </div>
+                                                <h3 className="mb-2 mt-4 text-xl">Actions</h3>
+                                                <div className="flex justify-between">
+                                                    <button onClick={() => { onReturnToCanvas && onReturnToCanvas(workspace) }} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
                                                 </div>
                                             </>);
 
                                         case FormStates.TILE_SET:
                                             return (!activeTileSet) ? "" : (
-                                                <TileSetPreview key={activeTileSet.id} tileSet={activeTileSet} onTileSetChange={onTileSetChange} onTileSetDelete={onTileSetDelete} />
+                                                <TileSetPreview key={activeTileSet.id} tileSet={activeTileSet} onTileSetChange={onTileSetChange} onTileSetDelete={onTileSetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.PRESET:
                                             return (!activePreset) ? "" : (
-                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSets={workspace.tileSets} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} />
+                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSets={workspace.tileSets} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.WINDOW:
                                             return (!activeWindow) ? "" : (
-                                                <WindowEditor key={activeWindow.id} window={activeWindow} presets={workspace.presets} tileSets={workspace.tileSets} onWindowChange={onWindowChange} onWindowDelete={onWindowDelete} />
+                                                <WindowEditor key={activeWindow.id} window={activeWindow} presets={workspace.presets} tileSets={workspace.tileSets} onWindowChange={onWindowChange} onWindowDelete={onWindowDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             )
                                         case FormStates.LAYOUT:
                                             return (!activeLayout) ? "" : (
-                                                <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} />
+                                                <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             )
                                         case FormStates.VARIABLE:
                                             return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">variable</h2>;
