@@ -8,9 +8,19 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
 
+    const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
+
     useEffect(() => { // empty-dependency useEffect for on load
         /** @type {Object<string, { x: number, y: number }>} */ const positions = {} // associative array from element IDs to 
 
+        if (mainCanvasDivRef.current) { mainCanvasDivRef.current.onclick = (e) => { if (e.target == mainCanvasDivRef.current) { makeNoWindowActive(); } } }
+
+        document.addEventListener("keydown", (evt) => {
+            if (evt.key == 'Escape') {
+                makeNoWindowActive();
+            }
+        })
+        
         const makeDraggable = (selector) => {
             interact(selector)
                 .draggable({
@@ -149,8 +159,6 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                 })
         }
 
-        makeDraggable(".choco-win-draggable");
-
         if (workspace) {
             const /** @type { ChocoStudioWorkspace } */ ws = workspace;
             const /** @type { ChocoStudioLayout } */ initialLayout = ws.layouts[0];
@@ -240,7 +248,7 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
     }, []);
 
     return (
-        <div ref={mainCanvasDivRef} style={{ transform: "", border: "1px dashed white" }}>
+        <div ref={mainCanvasDivRef} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}>
             <style ref={styleRef}>
                 .chocoWinBoundingBox {
 
