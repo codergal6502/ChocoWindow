@@ -8,14 +8,8 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
 
-    const [readyToDrag, setReadyToDrag] = useState(false);
-
-
     useEffect(() => { // empty-dependency useEffect for on load
-        const positions = {
-            "40dd32d2-2b15-45f9-bc91-10e3516397d8": { x: 0, y: 0 },
-            "17fbf734-92d8-4170-b40b-0b6669bb8709": { x: 0, y: 0 },
-        };
+        /** @type {Object<string, { x: number, y: number }>} */ const positions = {} // associative array from element IDs to 
 
         const makeDraggable = (selector) => {
             interact(selector).on(['resizeend'], (e) => console.log('resizeend', e))
@@ -42,7 +36,24 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                             e.target.removeAttribute("data-drag-start-x");
                             e.target.removeAttribute("data-drag-start-y");
 
-                            console.log('drag delta', { x: e.pageX - startX, y: e.pageY - startY });
+                            const deltaX = e.pageX - startX;
+                            const deltaY = e.pageY - startY;
+
+                            // e.target.style.top += `${studioWindow.y}px`;
+                            // e.target.style.left += `${studioWindow.x}px`;
+
+                            // e.target.style.left = `${Math.round(windowX + deltaX)}px`;
+                            // e.target.style.top  = `${Math.round(windowY + deltaY)}px`;
+
+                            const chocoWinDiv = document.getElementById(e.target.getAttribute('data-choco-win-id'));
+
+                            const windowX = Number(chocoWinDiv.style.left.replace("px", ""))
+                            const windowY = Number(chocoWinDiv.style.top.replace("px", ""))
+
+                            chocoWinDiv.style.left = `${Math.round(windowX + deltaX)}px`;
+                            chocoWinDiv.style.top = `${Math.round(windowY + deltaY)}px`;
+
+                            console.log('drag delta', { x: deltaX, y: deltaY }, ' from', { x: windowX, y: windowY });
                         },
                     }
                 })
@@ -98,12 +109,19 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                 initialLayout.windowIds.forEach((windowId) => {
                     const studioWindow = ws.windows.find((w) => w.id == windowId);
                     if (studioWindow) {
+                        const chocoWindowDivId = `win-${studioWindow.id}`;
+
                         const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
                         if (preset) {
                             const tileSet = ws.tileSets.find((ts) => ts.id == preset.tileSetId);
                             const renderWindow = new ChocoWinWindow(tileSet, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
 
                             renderWindow.isReady().then(() => {
+                                if (document.getElementById(chocoWindowDivId)) {
+                                    console.log(`${chocoWindowDivId} already exists`);
+                                    return;
+                                }
+
                                 const canvas = document.createElement("canvas");
                                 const ctx = canvas.getContext("2d", { willReadFrequently: true });
                                 canvas.width = studioWindow.w;
@@ -111,7 +129,6 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                                 renderWindow.drawTo(ctx);
                                 const imageData = canvas.toDataURL();
 
-                                const chocoWindowDivId = `win-${studioWindow.id}`;
                                 const chocoWinDiv = document.createElement("div");
                                 chocoWinDiv.setAttribute("id", chocoWindowDivId);
                                 chocoWinDiv.style.position = "absolute";
@@ -131,6 +148,7 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                                 const boundingBoxDivId = `bnd-${studioWindow.id}`;
                                 const boundingBoxDiv = document.createElement("div");
                                 boundingBoxDiv.setAttribute("id", boundingBoxDivId);
+                                boundingBoxDiv.setAttribute("data-choco-win-id", chocoWindowDivId);
                                 boundingBoxDiv.classList.add("chocoWinBoundingBox");
                                 boundingBoxDiv.style.position = "absolute";
                                 boundingBoxDiv.style.top = `${studioWindow.y}px`;
@@ -138,6 +156,11 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                                 boundingBoxDiv.style.width = `${studioWindow.w}px`;
                                 boundingBoxDiv.style.height = `${studioWindow.h}px`;
                                 mainCanvasDivRef.current.append(boundingBoxDiv);
+
+                                boundingBoxDiv.onclick = (e) => {
+                                    Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); })
+                                    e.target.classList.add('active');
+                                }
 
                                 const styleSheet = styleRef.current.sheet;
                                 const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
@@ -162,8 +185,6 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
 
                 }
             </style>
-            <div id="40dd32d2-2b15-45f9-bc91-10e3516397d8" className='choco-win-draggable' style={{ position: "absolute", width: "120px", borderRadius: "8px", padding: "20px", margin: "1rem", backgroundColor: "#29e", color: "white", fontSize: "20px", fontFamily: "sans-serif", touchAction: "none", boxSizing: "border-box" }}>Drag & Resize 1</div>
-            <div id="17fbf734-92d8-4170-b40b-0b6669bb8709" className='choco-win-draggable' style={{ position: "absolute", width: "120px", borderRadius: "8px", padding: "20px", margin: "1rem", backgroundColor: "#29e", color: "white", fontSize: "20px", fontFamily: "sans-serif", touchAction: "none", boxSizing: "border-box" }}>Drag & Resize 2</div>
         </div>
     );
 };

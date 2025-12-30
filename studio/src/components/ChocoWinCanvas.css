@@ -1,7 +1,26 @@
 .chocoWinBoundingBox {
-    opacity: .75;
+    opacity: .5;
 }
 
 .chocoWinBoundingBox:hover {
     border: 20px dashed yellow;
+}
+
+@keyframes chocoWinBoundingBoxOscillation {
+    0% {
+        border-color: #FFFF00;
+    }
+    50% {
+        border-color: #FFFF99;
+    }
+    100% {
+        border-color: #FFFF00;
+    }
+}
+
+.chocoWinBoundingBox.active {
+    border: 20px solid yellow;
+    z-index: 999;
+    background: #FFFF0088;
+    animation: chocoWinBoundingBoxOscillation 2s infinite;
 }
