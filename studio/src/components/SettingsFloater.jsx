@@ -61,13 +61,13 @@ const SettingsFloater = ({ onGearClick }) => {
 
     return (
         <div id="settingsGearContainer" className={`absolute ${positionClassNames} w-32 h-32 rounded-lg flex flex-col items-center justify-center z-20 dark:text-white`}>
-            <button id="settingsSlideUp"   onClick={onUpArrowClick} className="mb-auto text-3xl opacity-25 hover:opacity-75"><FontAwesomeIcon icon={faCircleUp} /></button>
-            <button id="settingsButton"    onClick={onGearClick} className="text-6xl opacity-25 hover:opacity-75"><FontAwesomeIcon icon={faGear} /></button>
-            <button id="settingsSlideDown" onClick={onDownArrowClick} className="mt-auto text-3xl opacity-25 hover:opacity-75"><FontAwesomeIcon icon={faCircleDown} /></button>
+            <button id="settingsSlideUp"   onClick={onUpArrowClick} className="mb-auto text-3xl opacity-50 hover:opacity-75"><FontAwesomeIcon icon={faCircleUp} /></button>
+            <button id="settingsButton"    onClick={onGearClick} className="text-6xl opacity-50 hover:opacity-75"><FontAwesomeIcon icon={faGear} /></button>
+            <button id="settingsSlideDown" onClick={onDownArrowClick} className="mt-auto text-3xl opacity-50 hover:opacity-75"><FontAwesomeIcon icon={faCircleDown} /></button>
 
             <div className="absolute left-0 right-0 flex justify-between w-full">
-                <button id="settingsSlideLeft" onClick={onLeftArrowClick} className="text-3xl opacity-25 hover:opacity-75"><FontAwesomeIcon icon={faCircleLeft} /></button>
-                <button id="settingsSlideRight" onClick={onRightArrowClick} className="text-3xl opacity-25 hover:opacity-75"><FontAwesomeIcon icon={faCircleRight} /></button>
+                <button id="settingsSlideLeft" onClick={onLeftArrowClick} className="text-3xl opacity-50 hover:opacity-75"><FontAwesomeIcon icon={faCircleLeft} /></button>
+                <button id="settingsSlideRight" onClick={onRightArrowClick} className="text-3xl opacity-50 hover:opacity-75"><FontAwesomeIcon icon={faCircleRight} /></button>
             </div>
         </div>
     );

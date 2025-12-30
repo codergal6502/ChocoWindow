@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import SettingsFloater from './components/SettingsFloater';
 import SettingsModal from './components/SettingsModal';
+import ChocoWinCanvas from './components/ChocoWInCanvas';
 
 const App = () => {
 
@@ -20,6 +21,7 @@ const App = () => {
     <div>
       <SettingsFloater onGearClick={openModalOnClick} />
       { isModalHidden || <SettingsModal isModalHidden={isModalHidden} onReturnToCanvas={onModalReturn} />}
+      <ChocoWinCanvas />
     </div>
   );
 };
