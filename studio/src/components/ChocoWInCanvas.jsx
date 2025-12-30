@@ -7,8 +7,31 @@ import './ChocoWinCanvas.css'
 const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => {
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
+    const SNAP_SIZE = 10;
 
     const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
+
+    const isGridSnapModifierHeld = (event) => {
+        // See https://www.xjavascript.com/blog/detect-macos-ios-windows-android-and-linux-os-with-js/#detecting-specific-operating-systems.
+        function isMacOS() {
+            const userAgent = navigator.userAgent;
+            // Check for "Macintosh" (excludes iOS)
+            return /Macintosh/.test(userAgent);
+        }
+
+        function isWindows() {
+            const userAgent = navigator.userAgent;
+            return /Windows/.test(userAgent);
+        }
+
+        function isLinux() {
+            const userAgent = navigator.userAgent;
+            // Check for Linux, but exclude Android and Chrome OS
+            return /Linux/.test(userAgent) && !/Android|CrOS/.test(userAgent);
+        }
+
+        return (isMacOS() && event.metaKey) || (isLinux() && event.controlKey) || (isWindows() && event.controlKey);
+    }
 
     useEffect(() => { // empty-dependency useEffect for on load
         /** @type {Object<string, { x: number, y: number }>} */ const positions = {} // associative array from element IDs to 
@@ -20,7 +43,7 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                 makeNoWindowActive();
             }
         })
-        
+
         const makeDraggable = (selector) => {
             interact(selector)
                 .draggable({
@@ -28,8 +51,8 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                         move(event) {
                             const id = event.target.id;
 
-                            positions[id].x += event.dx
-                            positions[id].y += event.dy
+                            positions[id].x += event.dx;
+                            positions[id].y += event.dy;
 
                             event.target.style.transform =
                                 `translate(${positions[id].x}px, ${positions[id].y}px)`;
