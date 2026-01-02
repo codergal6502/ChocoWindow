@@ -6,6 +6,10 @@
     border: 20px dashed yellow;
 }
 
+.chocoWinBoundingBox .dimensions {
+    display: none;
+}
+
 @keyframes chocoWinBoundingBoxOscillation {
     0% {
         border-color: #FFFF00;

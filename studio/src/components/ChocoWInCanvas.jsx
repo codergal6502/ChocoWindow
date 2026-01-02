@@ -14,7 +14,7 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
 
     const updateCoordinates = (boundingBoxDiv) => {
         const /** @type {HTMLElement} */ div = boundingBoxDiv;
-        const /** @type {HTMLElement} */ textDiv = Array.from(div.childNodes).filter((c) => c.classList.contains("dimensions"))[0];
+        const /** @type {HTMLElement} */ textDiv = Array.from(div.childNodes).filter((c) => c.classList && c.classList.contains("dimensions"))[0];
         const width = Math.floor(div.style.width.replace("px", ""));
         const height = Math.floor(div.style.height.replace("px", ""));
         const x = Math.floor(div.style.left.replace("px", ""))
@@ -61,12 +61,60 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
         updateCoordinates(e.target);
     }
 
+    let lastKeydownTimeStamp = 0;
+
     useEffect(() => { // empty-dependency useEffect for on load
         if (mainCanvasDivRef.current) { mainCanvasDivRef.current.onclick = (e) => { if (e.target == mainCanvasDivRef.current) { makeNoWindowActive(); } } }
 
-        document.addEventListener("keydown", (evt) => {
-            if (evt.key == 'Escape') {
-                makeNoWindowActive();
+        document.addEventListener("keydown", (e) => {
+            if (e.timeStamp == lastKeydownTimeStamp) { return; }
+            lastKeydownTimeStamp = e.timeStamp;
+
+            switch (e.key) {
+                case 'Escape': {
+                    makeNoWindowActive();
+                    break;
+                }
+                case 'ArrowUp': {
+                    const activeDiv = document.querySelector("div.chocoWinBoundingBox.active");
+                    if (activeDiv) {
+                        activeDiv.style.top = `${Number(activeDiv.style.top.replace("px", "")) - 1}px`;
+                        const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
+                        chocoWinDiv.style.top = activeDiv.style.top;
+                        updateCoordinates(activeDiv);
+                    }
+                    break;
+                }
+                case 'ArrowDown': {
+                    const activeDiv = document.querySelector("div.chocoWinBoundingBox.active");
+                    if (activeDiv) {
+                        activeDiv.style.top = `${Number(activeDiv.style.top.replace("px", "")) + 1}px`;
+                        const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
+                        chocoWinDiv.style.top = activeDiv.style.top;
+                        updateCoordinates(activeDiv);
+                    }
+                    break;
+                }
+                case 'ArrowLeft': {
+                    const activeDiv = document.querySelector("div.chocoWinBoundingBox.active");
+                    if (activeDiv) {
+                        activeDiv.style.left = `${Number(activeDiv.style.left.replace("px", "")) - 1}px`;
+                        const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
+                        chocoWinDiv.style.left = activeDiv.style.left;
+                        updateCoordinates(activeDiv);
+                    }
+                    break;
+                }
+                case 'ArrowRight': {
+                    const activeDiv = document.querySelector("div.chocoWinBoundingBox.active");
+                    if (activeDiv) {
+                        activeDiv.style.left = `${Number(activeDiv.style.left.replace("px", "")) + 1}px`;
+                        const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
+                        chocoWinDiv.style.left = activeDiv.style.left;
+                        updateCoordinates(activeDiv);
+                    }
+                    break;
+                }
             }
         })
 
