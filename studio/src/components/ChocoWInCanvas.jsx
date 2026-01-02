@@ -33,9 +33,23 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
         return (isMacOS() && event.metaKey) || (isLinux() && event.controlKey) || (isWindows() && event.controlKey);
     }
 
-    useEffect(() => { // empty-dependency useEffect for on load
-        /** @type {Object<string, { x: number, y: number }>} */ const positions = {} // associative array from element IDs to 
+    const snapCoordinate = (x) => Math.floor(1.0 * x / SNAP_SIZE) * SNAP_SIZE;
 
+    const toGridSnap = ({ x, y }, event) => {
+        if (isGridSnapModifierHeld(event)) {
+            return { x: snapCoordinate(x), y: snapCoordinate(y) };
+        }
+        else {
+            return { x: x, y: y };
+        }
+    }
+
+    const makeChocoWinBoundingBoxActive = (e) => {
+        Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); })
+        e.target.classList.add('active');
+    }
+
+    useEffect(() => { // empty-dependency useEffect for on load
         if (mainCanvasDivRef.current) { mainCanvasDivRef.current.onclick = (e) => { if (e.target == mainCanvasDivRef.current) { makeNoWindowActive(); } } }
 
         document.addEventListener("keydown", (evt) => {
@@ -48,56 +62,65 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
             interact(selector)
                 .draggable({
                     listeners: {
-                        move(event) {
-                            const id = event.target.id;
-
-                            positions[id].x += event.dx;
-                            positions[id].y += event.dy;
-
-                            event.target.style.transform =
-                                `translate(${positions[id].x}px, ${positions[id].y}px)`;
-                        },
                         start(e) {
                             e.target.setAttribute("data-drag-start-x", e.pageX);
                             e.target.setAttribute("data-drag-start-y", e.pageY);
+                            e.target.setAttribute("data-drag-delta-x", 0);
+                            e.target.setAttribute("data-drag-delta-y", 0);
+                            e.target.setAttribute("data-window-start-x", e.target.style.left.replace("px", ""));
+                            e.target.setAttribute("data-window-start-y", e.target.style.top.replace("px", ""));
+                        },
+                        move(e) {
+                            makeChocoWinBoundingBoxActive(e);
+
+                            const windowStartX = Number(e.target.getAttribute("data-window-start-x").replace("px", ""));
+                            const windowStartY = Number(e.target.getAttribute("data-window-start-y").replace("px", ""));
+
+                            const deltaX = Number(e.target.getAttribute("data-drag-delta-x")) + e.dx;
+                            const deltaY = Number(e.target.getAttribute("data-drag-delta-y")) + e.dy;
+
+                            e.target.setAttribute("data-drag-delta-x", deltaX);
+                            e.target.setAttribute("data-drag-delta-y", deltaY);
+
+                            const { x: endX, y: endY } = toGridSnap({ x: windowStartX + deltaX, y: windowStartY + deltaY }, e);
+
+                            e.target.style.left = `${Math.round(endX)}px`;
+                            e.target.style.top = `${Math.round(endY)}px`;
                         },
                         end(e) {
-                            const startX = e.target.getAttribute("data-drag-start-x");
-                            const startY = e.target.getAttribute("data-drag-start-y");
+                            const dragStartX = e.target.getAttribute("data-drag-start-x");
+                            const dragStartY = e.target.getAttribute("data-drag-start-y");
 
                             e.target.removeAttribute("data-drag-start-x");
                             e.target.removeAttribute("data-drag-start-y");
+                            e.target.removeAttribute("data-window-start-x");
+                            e.target.removeAttribute("data-window-start-y");
 
-                            const deltaX = e.pageX - startX;
-                            const deltaY = e.pageY - startY;
+                            const deltaX = e.pageX - dragStartX;
+                            const deltaY = e.pageY - dragStartY;
 
                             const chocoWinDiv = document.getElementById(e.target.getAttribute('data-choco-win-id'));
 
                             const windowX = Number(chocoWinDiv.style.left.replace("px", ""))
                             const windowY = Number(chocoWinDiv.style.top.replace("px", ""))
 
-                            chocoWinDiv.style.left = `${Math.round(windowX + deltaX)}px`;
-                            chocoWinDiv.style.top = `${Math.round(windowY + deltaY)}px`;
+                            const { x: newLeft, y: newTop } = toGridSnap({ x: windowX + deltaX, y: windowY + deltaY }, e)
+
+                            chocoWinDiv.style.left = `${Math.round(newLeft)}px`;
+                            chocoWinDiv.style.top = `${Math.round(newTop)}px`;
+
+                            e.target.style.transform = "";
+                            e.target.style.top = chocoWinDiv.style.top;
+                            e.target.style.left = chocoWinDiv.style.left
+                            const id = e.target.id;
                         },
                     }
                 })
                 .resizable({
                     edges: { top: true, left: true, bottom: true, right: true },
                     listeners: {
-                        move: function (event) {
-                            const id = event.target.id;
-                            let { x, y } = event.target.dataset;
-
-                            positions[id].x += (parseFloat(x) || 0) + event.deltaRect.left
-                            positions[id].y += (parseFloat(y) || 0) + event.deltaRect.top
-
-                            Object.assign(event.target.style, {
-                                width: `${event.rect.width}px`,
-                                height: `${event.rect.height}px`,
-                                transform: `translate(${positions[id].x}px, ${positions[id].y}px)`
-                            })
-                        },
                         start(e) {
+                            makeChocoWinBoundingBoxActive(e);
                             const edges = e.interaction.prepared.edges;
 
                             e.target.setAttribute("data-resize-start-x", e.pageX);
@@ -106,40 +129,60 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                             e.target.setAttribute("data-resize-right", edges.right);
                             e.target.setAttribute("data-resize-top", edges.top);
                             e.target.setAttribute("data-resize-bottom", edges.bottom);
+                            e.target.setAttribute("data-drag-delta-x", 0);
+                            e.target.setAttribute("data-drag-delta-y", 0);
+                        },
+                        move: function (e) {
+                            // console.log(e.interaction.prepared.edges);
+                            const doResizeLeft = e.interaction.prepared.edges.left;
+                            const doResizeRight = e.interaction.prepared.edges.right;
+                            const doResizeTop = e.interaction.prepared.edges.top;
+                            const doResizeBottom = e.interaction.prepared.edges.bottom;
+
+                            if (isGridSnapModifierHeld(e) && doResizeTop) {
+                                const newTop = snapCoordinate(e.rect.top)
+                                const deltaTop = e.rect.top - newTop;
+                                const newHeight = e.rect.height + deltaTop;
+                                e.target.style.top = `${newTop}px`;
+                                e.target.style.height = `${newHeight}px`;
+                            }
+                            else if (isGridSnapModifierHeld(e) && doResizeBottom) {
+                                const newTop = e.rect.top;
+                                const newBottom = snapCoordinate(newTop + e.rect.height);
+                                const newHeight = newBottom - e.rect.top;
+                                e.target.style.top = `${newTop}px`;
+                                e.target.style.height = `${newHeight}px`;
+                            }
+                            else {
+                                e.target.style.top = `${e.rect.top}px`;
+                                e.target.style.height = `${e.rect.height}px`;
+                            }
+
+                            if (isGridSnapModifierHeld(e) && doResizeLeft) {
+                                const newLeft = snapCoordinate(e.rect.left)
+                                const deltaLeft = e.rect.left - newLeft;
+                                const newWidth = e.rect.width + deltaLeft;
+                                e.target.style.left = `${newLeft}px`;
+                                e.target.style.width = `${newWidth}px`;
+                            }
+                            else if (isGridSnapModifierHeld(e) && doResizeRight) {
+                                const newLeft = e.rect.left;
+                                const newBottom = snapCoordinate(newLeft + e.rect.width);
+                                const newWidth = newBottom - e.rect.left;
+                                e.target.style.left = `${newLeft}px`;
+                                e.target.style.width = `${newWidth}px`;
+                            }
+                            else {
+                                e.target.style.left = `${e.rect.left}px`;
+                                e.target.style.width = `${e.rect.width}px`;
+                            }
                         },
                         end(e) {
-                            const startX = Number(e.target.getAttribute("data-resize-start-x"));
-                            const startY = Number(e.target.getAttribute("data-resize-start-y"));
-                            const left = "true" == e.target.getAttribute("data-resize-left");
-                            const right = "true" == e.target.getAttribute("data-resize-right");
-                            const top = "true" == e.target.getAttribute("data-resize-top");
-                            const bottom = "true" == e.target.getAttribute("data-resize-bottom");
-
-                            const deltaX = e.pageX - startX;
-                            const deltaY = e.pageY - startY;
-
                             const chocoWinDiv = document.getElementById(e.target.getAttribute('data-choco-win-id'));
-
-                            const windowX = Number(chocoWinDiv.style.left.replace("px", ""))
-                            const windowY = Number(chocoWinDiv.style.top.replace("px", ""))
-                            const windowW = Number(chocoWinDiv.style.width.replace("px", ""))
-                            const windowH = Number(chocoWinDiv.style.height.replace("px", ""))
-
-                            if (right) {
-                                chocoWinDiv.style.width = `${Math.round(windowW + deltaX)}px`;
-                            }
-                            else if (left) {
-                                chocoWinDiv.style.left = `${Math.round(windowX + deltaX)}px`;
-                                chocoWinDiv.style.width = `${Math.round(windowW - deltaX)}px`;
-                            }
-
-                            if (bottom) {
-                                chocoWinDiv.style.height = `${Math.round(windowH + deltaY)}px`;
-                            }
-                            else if (top) {
-                                chocoWinDiv.style.top = `${Math.round(windowY + deltaY)}px`;
-                                chocoWinDiv.style.height = `${Math.round(windowH - deltaY)}px`;
-                            }
+                            chocoWinDiv.style.top = e.target.style.top;
+                            chocoWinDiv.style.height = e.target.style.height;
+                            chocoWinDiv.style.left = e.target.style.left;
+                            chocoWinDiv.style.width = e.target.style.width;
 
                             const /** @type { ChocoStudioWorkspace } */ ws = workspace;
                             const studioWindow = ws.windows.find((w) => `win-${w.id}` == e.target.dataset.chocoWinId);
@@ -184,6 +227,8 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
 
         if (workspace) {
             const /** @type { ChocoStudioWorkspace } */ ws = workspace;
+            mainCanvasDivRef.current.style.width = `${ws.width}px`;
+            mainCanvasDivRef.current.style.height = `${ws.height}px`;
             const /** @type { ChocoStudioLayout } */ initialLayout = ws.layouts[0];
             if (mainCanvasDivRef.current && styleRef.current && initialLayout) {
                 initialLayout.windowIds.forEach((windowId) => {
@@ -229,10 +274,7 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                     boundingBoxDiv.style.height = `${studioWindow.h}px`;
                     mainCanvasDivRef.current.append(boundingBoxDiv);
 
-                    boundingBoxDiv.onclick = (e) => {
-                        Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); })
-                        e.target.classList.add('active');
-                    }
+                    boundingBoxDiv.onclick = makeChocoWinBoundingBoxActive;
 
                     if (studioWindow) {
                         const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
@@ -258,8 +300,6 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                                 }
 
                                 styleSheet.insertRule(newRule);
-
-                                positions[boundingBoxDivId] = { x: 0, y: 0 };
 
                                 makeDraggable(boundingBoxDiv);
                             });
