@@ -12,13 +12,23 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
 
     const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
 
-    const updateCoordinates = (boundingBoxDiv) => {
-        const /** @type {HTMLElement} */ div = boundingBoxDiv;
-        const /** @type {HTMLElement} */ textDiv = Array.from(div.childNodes).filter((c) => c.classList && c.classList.contains("dimensions"))[0];
-        const width = Math.floor(div.style.width.replace("px", ""));
-        const height = Math.floor(div.style.height.replace("px", ""));
-        const x = Math.floor(div.style.left.replace("px", ""))
-        const y = Math.floor(div.style.top.replace("px", ""))
+    const updateCoordinates = (dd) => {
+        let /** @type {HTMLElement} */ textDiv;
+        let /** @type {HTMLElement} */ boundingBoxDiv;
+
+        if (dd.classList && dd.classList.contains("dimensions")) {
+            // The text was clicked directly, not the parent.
+            textDiv = dd;
+            boundingBoxDiv = textDiv.parentNode;
+        }
+        else {
+            boundingBoxDiv = dd;
+            textDiv = Array.from(boundingBoxDiv.childNodes).filter((c) => c.classList.contains("dimensions"))[0];
+        }
+        const width = Math.floor(boundingBoxDiv.style.width.replace("px", ""));
+        const height = Math.floor(boundingBoxDiv.style.height.replace("px", ""));
+        const x = Math.floor(boundingBoxDiv.style.left.replace("px", ""))
+        const y = Math.floor(boundingBoxDiv.style.top.replace("px", ""))
         textDiv.innerText = `${width} x ${height} @ (${x}, ${y})`;
     }
 
@@ -56,9 +66,10 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
     }
 
     const makeChocoWinBoundingBoxActive = (e) => {
+        let div = e.target.classList && e.target.classList.contains("dimensions") ? e.target.parentNode : e.target;
         Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); })
-        e.target.classList.add('active');
-        updateCoordinates(e.target);
+        div.classList.add('active');
+        updateCoordinates(div);
     }
 
     let lastKeydownTimeStamp = 0;
