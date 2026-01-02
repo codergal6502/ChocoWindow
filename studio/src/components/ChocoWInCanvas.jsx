@@ -3,6 +3,7 @@ import { ChocoStudioLayout, ChocoStudioWorkspace } from '../ChocoStudio';
 import interact from 'interactjs';
 import { ChocoWinWindow } from '../ChocoWindow';
 import './ChocoWinCanvas.css'
+import { text } from '@fortawesome/fontawesome-svg-core';
 
 const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => {
     const mainCanvasDivRef = useRef(null);
@@ -10,6 +11,16 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
     const SNAP_SIZE = 10;
 
     const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
+
+    const updateCoordinates = (boundingBoxDiv) => {
+        const /** @type {HTMLElement} */ div = boundingBoxDiv;
+        const /** @type {HTMLElement} */ textDiv = Array.from(div.childNodes).filter((c) => c.classList.contains("dimensions"))[0];
+        const width = Math.floor(div.style.width.replace("px", ""));
+        const height = Math.floor(div.style.height.replace("px", ""));
+        const x = Math.floor(div.style.left.replace("px", ""))
+        const y = Math.floor(div.style.top.replace("px", ""))
+        textDiv.innerText = `${width} x ${height} @ (${x}, ${y})`;
+    }
 
     const isGridSnapModifierHeld = (event) => {
         // See https://www.xjavascript.com/blog/detect-macos-ios-windows-android-and-linux-os-with-js/#detecting-specific-operating-systems.
@@ -47,6 +58,7 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
     const makeChocoWinBoundingBoxActive = (e) => {
         Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); })
         e.target.classList.add('active');
+        updateCoordinates(e.target);
     }
 
     useEffect(() => { // empty-dependency useEffect for on load
@@ -86,6 +98,8 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
 
                             e.target.style.left = `${Math.round(endX)}px`;
                             e.target.style.top = `${Math.round(endY)}px`;
+
+                            updateCoordinates(e.target);
                         },
                         end(e) {
                             const dragStartX = e.target.getAttribute("data-drag-start-x");
@@ -112,7 +126,6 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                             e.target.style.transform = "";
                             e.target.style.top = chocoWinDiv.style.top;
                             e.target.style.left = chocoWinDiv.style.left
-                            const id = e.target.id;
                         },
                     }
                 })
@@ -176,6 +189,8 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                                 e.target.style.left = `${e.rect.left}px`;
                                 e.target.style.width = `${e.rect.width}px`;
                             }
+
+                            updateCoordinates(e.target);
                         },
                         end(e) {
                             const chocoWinDiv = document.getElementById(e.target.getAttribute('data-choco-win-id'));
@@ -272,6 +287,12 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                     boundingBoxDiv.style.left = `${studioWindow.x}px`;
                     boundingBoxDiv.style.width = `${studioWindow.w}px`;
                     boundingBoxDiv.style.height = `${studioWindow.h}px`;
+
+                    const dimensionsDiv = document.createElement("div");
+                    dimensionsDiv.classList.add("dimensions");
+
+                    boundingBoxDiv.appendChild(dimensionsDiv);
+
                     mainCanvasDivRef.current.append(boundingBoxDiv);
 
                     boundingBoxDiv.onclick = makeChocoWinBoundingBoxActive;

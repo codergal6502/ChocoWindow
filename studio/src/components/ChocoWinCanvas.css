@@ -24,3 +24,17 @@
     background: #FFFF0088;
     animation: chocoWinBoundingBoxOscillation 2s infinite;
 }
+
+.chocoWinBoundingBox.active .dimensions {
+    margin: 0px;
+    position: absolute;
+    top: 50%;
+    transform: translate(-0, -50%);
+    font-family: monospace;
+    font-size: 48px;
+    font-weight: bolder;
+    color: rgb(166 0 0);
+    display: block;
+    width: 100%;
+    text-align: center;
+}
