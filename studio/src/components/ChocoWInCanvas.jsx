@@ -5,7 +5,7 @@ import { ChocoWinWindow } from '../ChocoWindow';
 import './ChocoWinCanvas.css'
 import { text } from '@fortawesome/fontawesome-svg-core';
 
-const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => {
+const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
@@ -184,7 +184,17 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
 
                             e.target.style.transform = "";
                             e.target.style.top = chocoWinDiv.style.top;
-                            e.target.style.left = chocoWinDiv.style.left
+                            e.target.style.left = chocoWinDiv.style.left;
+
+                            /** @type { ChocoStudioWorkspace } */ const  ws = workspace;
+
+                            if (ws) {
+                                const studioWindow = ws.windows.filter((w) => chocoWinDiv.dataset.studioWindowId == w.id)[0];
+
+                                studioWindow.x = Math.round(newLeft);
+                                studioWindow.y = Math.round(newTop);
+                                onWorkspaceChange(workspace);
+                            }
                         },
                     }
                 })
@@ -215,38 +225,38 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                                 const newTop = snapCoordinate(e.rect.top)
                                 const deltaTop = e.rect.top - newTop;
                                 const newHeight = e.rect.height + deltaTop;
-                                e.target.style.top = `${newTop}px`;
-                                e.target.style.height = `${newHeight}px`;
+                                e.target.style.top = `${Math.floor(newTop)}px`;
+                                e.target.style.height = `${Math.floor(newHeight)}px`;
                             }
                             else if (isGridSnapModifierHeld(e) && doResizeBottom) {
                                 const newTop = e.rect.top;
                                 const newBottom = snapCoordinate(newTop + e.rect.height);
                                 const newHeight = newBottom - e.rect.top;
-                                e.target.style.top = `${newTop}px`;
-                                e.target.style.height = `${newHeight}px`;
+                                e.target.style.top = `${Math.floor(newTop)}px`;
+                                e.target.style.height = `${Math.floor(newHeight)}px`;
                             }
                             else {
-                                e.target.style.top = `${e.rect.top}px`;
-                                e.target.style.height = `${e.rect.height}px`;
+                                e.target.style.top = `${Math.floor(e.rect.top)}px`;
+                                e.target.style.height = `${Math.floor(e.rect.height)}px`;
                             }
 
                             if (isGridSnapModifierHeld(e) && doResizeLeft) {
                                 const newLeft = snapCoordinate(e.rect.left)
                                 const deltaLeft = e.rect.left - newLeft;
                                 const newWidth = e.rect.width + deltaLeft;
-                                e.target.style.left = `${newLeft}px`;
-                                e.target.style.width = `${newWidth}px`;
+                                e.target.style.left = `${Math.floor(newLeft)}px`;
+                                e.target.style.width = `${Math.floor(newWidth)}px`;
                             }
                             else if (isGridSnapModifierHeld(e) && doResizeRight) {
                                 const newLeft = e.rect.left;
                                 const newBottom = snapCoordinate(newLeft + e.rect.width);
                                 const newWidth = newBottom - e.rect.left;
-                                e.target.style.left = `${newLeft}px`;
-                                e.target.style.width = `${newWidth}px`;
+                                e.target.style.left = `${Math.floor(newLeft)}px`;
+                                e.target.style.width = `${Math.floor(newWidth)}px`;
                             }
                             else {
-                                e.target.style.left = `${e.rect.left}px`;
-                                e.target.style.width = `${e.rect.width}px`;
+                                e.target.style.left = `${Math.floor(e.rect.left)}px`;
+                                e.target.style.width = `${Math.floor(e.rect.width)}px`;
                             }
 
                             updateCoordinates(e.target);
@@ -258,12 +268,14 @@ const ChocoWinCanvas = ({ /** @type { ChocoStudioWorkspace } */ workspace }) => 
                             chocoWinDiv.style.left = e.target.style.left;
                             chocoWinDiv.style.width = e.target.style.width;
 
-                            const /** @type { ChocoStudioWorkspace } */ ws = workspace;
+                            const /** @type { ChocoStudio } */ ws = workspace;
                             const studioWindow = ws.windows.find((w) => `win-${w.id}` == e.target.dataset.chocoWinId);
                             const chocoWindowDivId = `win-${studioWindow.id}`;
 
                             studioWindow.w = Number(chocoWinDiv.style.width.replace("px", ""));
                             studioWindow.h = Number(chocoWinDiv.style.height.replace("px", ""))
+
+                            if (onWorkspaceChange) onWorkspaceChange(ws);
 
                             const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
                             if (preset) {

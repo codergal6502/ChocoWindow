@@ -24,7 +24,7 @@
 
 .chocoWinBoundingBox.active {
     border: 20px solid yellow;
-    z-index: 999;
+    z-index: 20;
     background: #FFFF0088;
     animation: chocoWinBoundingBoxOscillation 2s infinite;
 }

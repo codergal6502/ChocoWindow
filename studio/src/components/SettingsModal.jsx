@@ -268,7 +268,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
     }
 
     return (
-        <div id="modal" className={`fixed inset-0 ${isModalHidden ? 'hidden' : ''} bg-black bg-opacity-50 z-40`}>
+        <div id="modal" className={`settings-modal fixed inset-0 ${isModalHidden ? 'hidden' : ''} bg-black bg-opacity-50 z-40`}>
             <div className="flex items-center justify-center w-full h-full">
                 <div className="bg-white rounded-lg shadow-lg w-5/6 h-5/6 flex relative dark:bg-gray-600">
                     <button id="closeModal" className="mt-2 mr-2 text-red-300 text-xl absolute top-0 right-0"><i className="fa-solid fa-square-xmark"></i></button>
