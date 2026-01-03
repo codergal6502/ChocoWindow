@@ -1,8 +1,9 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAnglesDown, faAnglesUp, faCircleLeft, faCircleRight, faDownload, faGear, faPenToSquare } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react';
+import { ChocoWorkspaceRenderer } from '../ChocoRender';
 
-const SettingsFloater = ({ onGearClick, onSelectLayoutClick }) => {
+const SettingsFloater = ({ onGearClick, onSelectLayoutClick, onDownloadPngClick }) => {
     const Positions = Object.freeze({
         LEFT: 'LEFT',
         RIGHT: 'RIGHT',
@@ -84,7 +85,7 @@ const SettingsFloater = ({ onGearClick, onSelectLayoutClick }) => {
                         <div>Select Layout</div>
                     </button>
                     <button className="flex flex-col items-center mr-2 w-[12em]">
-                        <FontAwesomeIcon className="text-3xl" icon={faDownload} />
+                        <FontAwesomeIcon className="text-3xl" icon={faDownload} onClick={onDownloadPngClick} />
                         <div>Download Layout PNG</div>
                     </button>
                     <button className="flex flex-col items-center mr-2 w-[12em]" onClick={onCloseMenuClick}>

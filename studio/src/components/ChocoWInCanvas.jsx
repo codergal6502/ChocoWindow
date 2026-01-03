@@ -6,7 +6,6 @@ import './ChocoWinCanvas.css'
 import { text } from '@fortawesome/fontawesome-svg-core';
 
 const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
-    console.log("render choco win canvas");
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
@@ -242,7 +241,6 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                             e.target.setAttribute("data-drag-delta-y", 0);
                         },
                         move: function (e) {
-                            // console.log(e.interaction.prepared.edges);
                             const doResizeLeft = e.interaction.prepared.edges.left;
                             const doResizeRight = e.interaction.prepared.edges.right;
                             const doResizeTop = e.interaction.prepared.edges.top;
@@ -348,7 +346,6 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                 document.querySelectorAll("[data-studio-window-id], [data-choco-win-id]").forEach((el) => el.remove());
                 const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
                 let rules = new Array(styleSheet.cssRules);
-                console.log(rules);
 
                 layout.windowIds.forEach((windowId) => {
                     const studioWindow = ws.windows.find((w) => w.id == windowId);
@@ -398,7 +395,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
 
                     const nameDiv = document.createElement("div");
                     nameDiv.classList.add("window-name");
-                    nameDiv.textContent = studioWindow.name + " " + canvasLayoutId;
+                    nameDiv.textContent = studioWindow.name;
                     boundingBoxDiv.appendChild(nameDiv);
 
                     mainCanvasDivRef.current.append(boundingBoxDiv);

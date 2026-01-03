@@ -6,6 +6,8 @@ import ChocoWinCanvas from './components/ChocoWInCanvas';
 import { ChocoStudioWorkspace } from './ChocoStudio';
 import { ChocoWinSettings } from './ChocoWindow';
 import LayoutPickerModal from './components/LayoutPickerModal';
+import { ChocoWorkspaceRenderer } from './ChocoRender';
+import LayoutRenderResult from './components/LayoutRenderResult';
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
@@ -42,6 +44,10 @@ const App = () => {
   const [modalWorkspace, setModalWorkspace] = useState(initialWorkspace());
   const [canvasWorkspace, setCanvasWorkspace] = useState(initialWorkspace());
 
+  const [hasRenderResult, setHasRenderResult] = useState(false);
+  const [renderResultDataUrl, setRenderResultDataUrl] = useState(null);
+  const [renderDownloadName, setRenderDownloadName] = useState(null);
+
   const openModalOnClick = () => {
     setIsConfigModalHidden(false);
   }
@@ -73,11 +79,29 @@ const App = () => {
     storeWorkspaceToCookie(modalWorkspace);
   }
 
+  const onDownloadPngClick = () => {
+    const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(canvasWorkspace);
+    const layoutId = canvasLayoutId || canvasWorkspace.layouts[0].id;
+    const downloadName = (canvasWorkspace.layouts.find((l) => l.id == layoutId)?.name || "window") + ".png";
+    setRenderDownloadName(downloadName);
+    renderer.generateLayoutImageDataUrl(layoutId, (dataUrl) => {
+      setRenderResultDataUrl(dataUrl);
+      setHasRenderResult(true);
+    });
+  }
+
+  const onRenderResultReturn = () => {
+    setHasRenderResult(false);
+    setRenderResultDataUrl(null);
+    setRenderDownloadName("");
+  }
+
   return (
     <div id="app-div">
-      <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} />
+      <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} onDownloadPngClick={onDownloadPngClick} />
       {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
-      {isLayoutPickerModalHidden || <LayoutPickerModal workspace={canvasWorkspace} currentLayoutId={canvasLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToCanvas={onLayoutPickerReturn} /> }
+      {isLayoutPickerModalHidden || <LayoutPickerModal workspace={canvasWorkspace} currentLayoutId={canvasLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToCanvas={onLayoutPickerReturn} />}
+      {hasRenderResult && <LayoutRenderResult isModalHidden={! hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToCanvas={onRenderResultReturn} />}
       <ChocoWinCanvas workspace={canvasWorkspace} onWorkspaceChange={onCanvasWorkspaceChange} canvasLayoutId={canvasLayoutId} />
     </div>
   );
