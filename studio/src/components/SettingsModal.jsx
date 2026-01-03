@@ -408,7 +408,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                             )
                                         case FormStates.LAYOUT:
                                             return (!activeLayout) ? "" : (
-                                                <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} onEditThisLayout={(layoutId) => { onReturnToCanvas(workspace, layoutId) }} />
                                             )
                                         case FormStates.VARIABLE:
                                             return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">variable</h2>;

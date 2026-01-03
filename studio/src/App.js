@@ -36,32 +36,35 @@ const App = () => {
   }
 
   const [isModalHidden, setIsModalHidden] = useState(true);
-  const [workspace, setWorkspace] = useState(initialWorkspace());
-
-  const doSetWorkspace = (modifiedWorkspace) => {
-    setWorkspace(modifiedWorkspace)
-    storeWorkspaceToCookie(modifiedWorkspace);
-  }
+  const [canvasLayoutId, setCanvasLayoutId] = useState(null);
+  const [modalWorkspace, setModalWorkspace] = useState(initialWorkspace());
+  const [canvasWorkspace, setCanvasWorkspace] = useState(initialWorkspace());
 
   const openModalOnClick = () => {
     setIsModalHidden(false);
   }
 
-  const onWorkspaceChange = (modifiedWorkspace) => {
-    doSetWorkspace(new ChocoStudioWorkspace(modifiedWorkspace));
+  const onModalWorkspaceChange = (modifiedWorkspace) => {
+    setModalWorkspace(modifiedWorkspace)
+    storeWorkspaceToCookie(modifiedWorkspace);
   }
 
-  const onModalReturn = () => {
+  const onModalReturn = (workspace, layoutId) => {
     setIsModalHidden(true);
+    setCanvasWorkspace(new ChocoStudioWorkspace(workspace));
+    if (layoutId) setCanvasLayoutId(layoutId);
   }
 
-  const onWorkspaceInstanceModified = () => { }
+  const onCanvasWorkspaceChange = (modifiedWorkspace) => {
+    setModalWorkspace(new ChocoStudioWorkspace(modifiedWorkspace));
+    storeWorkspaceToCookie(modalWorkspace);
+  }
 
   return (
     <div id="app-div">
       <SettingsFloater onGearClick={openModalOnClick} />
-      {isModalHidden || <SettingsModal isModalHidden={isModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onWorkspaceChange} workspace={workspace} />}
-      <ChocoWinCanvas workspace={workspace} onWorkspaceInstanceModified={onWorkspaceInstanceModified} onWorkspaceChange={onWorkspaceChange} />
+      {isModalHidden || <SettingsModal isModalHidden={isModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
+      <ChocoWinCanvas workspace={canvasWorkspace} onWorkspaceChange={onCanvasWorkspaceChange} canvasLayoutId={canvasLayoutId} />
     </div>
   );
 };

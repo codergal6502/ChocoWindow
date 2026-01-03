@@ -5,7 +5,7 @@ import { ChocoWinWindow } from '../ChocoWindow';
 import './ChocoWinCanvas.css'
 import { text } from '@fortawesome/fontawesome-svg-core';
 
-const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
+const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
     console.log("render choco win canvas");
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
@@ -76,8 +76,8 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
     }
 
     const resizeCanvas = () => {
-        /** @type { ChocoStudioWorkspace } */ const  ws = workspace;
-        
+        /** @type { ChocoStudioWorkspace } */ const ws = workspace;
+
         const menuBarHeight = 0;
         const clientWidth = window.innerWidth;
         const clientHeight = window.innerHeight;
@@ -89,7 +89,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
 
         if (uiScale < 1) {
             const /** @type {HTMLElement} */ chocoStudioCanvasDiv = document.getElementById("choco-studio-canvas-div");
-            chocoStudioCanvasDiv.style.scale = `${100.0*uiScale}%`;
+            chocoStudioCanvasDiv.style.scale = `${100.0 * uiScale}%`;
             chocoStudioCanvasDiv.style.width = Math.floor(1.0 * ws.width * uiScale);
             chocoStudioCanvasDiv.style.height = Math.floor(1.0 * ws.height * uiScale);
             chocoStudioCanvasDiv.style.left = `${-0.25 * ws.width * uiScale}px`;
@@ -213,7 +213,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                             e.target.style.top = chocoWinDiv.style.top;
                             e.target.style.left = chocoWinDiv.style.left;
 
-                            /** @type { ChocoStudioWorkspace } */ const  ws = workspace;
+                            /** @type { ChocoStudioWorkspace } */ const ws = workspace;
 
                             if (ws) {
                                 const studioWindow = ws.windows.filter((w) => chocoWinDiv.dataset.studioWindowId == w.id)[0];
@@ -323,11 +323,11 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                                     const imageData = canvas.toDataURL();
                                     const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
 
-                                    /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.rules);
-                                    const ruleIdx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
+                                    /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
+                                    const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
 
-                                    if (ruleIdx >= 0) {
-                                        styleSheet.removeRule(ruleIdx);
+                                    if (oldRuleInx >= 0) {
+                                        styleSheet.deleteRule(oldRuleInx);
                                     }
 
                                     styleSheet.insertRule(newRule);
@@ -342,9 +342,15 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
             const /** @type { ChocoStudioWorkspace } */ ws = workspace;
             mainCanvasDivRef.current.style.width = `${ws.width}px`;
             mainCanvasDivRef.current.style.height = `${ws.height}px`;
-            const /** @type { ChocoStudioLayout } */ initialLayout = ws.layouts[0];
-            if (mainCanvasDivRef.current && styleRef.current && initialLayout) {
-                initialLayout.windowIds.forEach((windowId) => {
+            const /** @type { ChocoStudioLayout } */ layout = ws.layouts.filter((l) => canvasLayoutId == l.id)[0] || ws.layouts[0];
+
+            if (mainCanvasDivRef.current && styleRef.current && layout) {
+                document.querySelectorAll("[data-studio-window-id], [data-choco-win-id]").forEach((el) => el.remove());
+                const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
+                let rules = new Array(styleSheet.cssRules);
+                console.log(rules);
+
+                layout.windowIds.forEach((windowId) => {
                     const studioWindow = ws.windows.find((w) => w.id == windowId);
                     const chocoWindowDivId = `win-${studioWindow.id}`;
 
@@ -392,7 +398,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
 
                     const nameDiv = document.createElement("div");
                     nameDiv.classList.add("window-name");
-                    nameDiv.textContent = studioWindow.name;
+                    nameDiv.textContent = studioWindow.name + " " + canvasLayoutId;
                     boundingBoxDiv.appendChild(nameDiv);
 
                     mainCanvasDivRef.current.append(boundingBoxDiv);
@@ -415,11 +421,11 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                                 const imageData = canvas.toDataURL();
                                 const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
 
-                                /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.rules);
-                                const ruleIdx = ruleArray.find((r) => r.selectorText == `#${chocoWindowDivId}`);
+                                /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
+                                const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
 
-                                if (ruleIdx >= 0) {
-                                    styleSheet.removeRule(ruleIdx);
+                                if (oldRuleInx >= 0) {
+                                    styleSheet.deleteRule(oldRuleInx);
                                 }
 
                                 styleSheet.insertRule(newRule);
@@ -431,15 +437,11 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                 })
             }
         }
-    }, [workspace]);
+    }, [workspace, canvasLayoutId]);
 
     return (
         <div id='choco-studio-canvas-div' ref={mainCanvasDivRef}>
-            <style ref={styleRef}>
-                .chocoWinBoundingBox {
-
-                }
-            </style>
+            <style ref={styleRef}></style>
         </div>
     );
 };
