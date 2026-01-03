@@ -58,7 +58,7 @@ const App = () => {
   const onWorkspaceInstanceModified = () => { }
 
   return (
-    <div>
+    <div id="app-div">
       <SettingsFloater onGearClick={openModalOnClick} />
       {isModalHidden || <SettingsModal isModalHidden={isModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onWorkspaceChange} workspace={workspace} />}
       <ChocoWinCanvas workspace={workspace} onWorkspaceInstanceModified={onWorkspaceInstanceModified} onWorkspaceChange={onWorkspaceChange} />

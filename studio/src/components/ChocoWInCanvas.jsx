@@ -6,9 +6,11 @@ import './ChocoWinCanvas.css'
 import { text } from '@fortawesome/fontawesome-svg-core';
 
 const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
+    console.log("render choco win canvas");
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
+    let uiScale = 1.0;
 
     const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
 
@@ -16,10 +18,11 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
         let /** @type {HTMLElement} */ textDiv;
         let /** @type {HTMLElement} */ boundingBoxDiv;
 
-        if (dd.classList && dd.classList.contains("dimensions")) {
+        if (dd.classList && (dd.classList.contains("dimensions") || dd.classList.contains("window-name"))) {
             // The text was clicked directly, not the parent.
-            textDiv = dd;
-            boundingBoxDiv = textDiv.parentNode;
+            const clickedDiv = dd;
+            boundingBoxDiv = clickedDiv.parentNode;
+            textDiv = Array.from(boundingBoxDiv.childNodes).filter((c) => c.classList.contains("dimensions"))[0];
         }
         else {
             boundingBoxDiv = dd;
@@ -72,10 +75,34 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
         updateCoordinates(div);
     }
 
+    const resizeCanvas = () => {
+        /** @type { ChocoStudioWorkspace } */ const  ws = workspace;
+        
+        const menuBarHeight = 0;
+        const clientWidth = window.innerWidth;
+        const clientHeight = window.innerHeight;
+
+        const widthRatio = 1.0 * clientWidth / ws.width;
+        const heightRatio = 1.0 * (clientHeight - menuBarHeight) / ws.height;
+
+        uiScale = Math.min(widthRatio, heightRatio);
+
+        if (uiScale < 1) {
+            const /** @type {HTMLElement} */ chocoStudioCanvasDiv = document.getElementById("choco-studio-canvas-div");
+            chocoStudioCanvasDiv.style.scale = `${100.0*uiScale}%`;
+            chocoStudioCanvasDiv.style.width = Math.floor(1.0 * ws.width * uiScale);
+            chocoStudioCanvasDiv.style.height = Math.floor(1.0 * ws.height * uiScale);
+            chocoStudioCanvasDiv.style.left = `${-0.25 * ws.width * uiScale}px`;
+            chocoStudioCanvasDiv.style.top = `${-0.25 * ws.height * uiScale + menuBarHeight}px`;
+        }
+    }
+
     let lastKeydownTimeStamp = 0;
 
     useEffect(() => { // empty-dependency useEffect for on load
         if (mainCanvasDivRef.current) { mainCanvasDivRef.current.onclick = (e) => { if (e.target == mainCanvasDivRef.current) { makeNoWindowActive(); } } }
+
+        resizeCanvas();
 
         document.addEventListener("keydown", (e) => {
             if (e.timeStamp == lastKeydownTimeStamp) { return; }
@@ -222,9 +249,9 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                             const doResizeBottom = e.interaction.prepared.edges.bottom;
 
                             if (isGridSnapModifierHeld(e) && doResizeTop) {
-                                const newTop = snapCoordinate(e.rect.top)
-                                const deltaTop = e.rect.top - newTop;
-                                const newHeight = e.rect.height + deltaTop;
+                                const newTop = snapCoordinate(e.rect.top / uiScale)
+                                const deltaTop = (e.rect.top - newTop) / uiScale;
+                                const newHeight = (e.rect.height + deltaTop) / uiScale;
                                 e.target.style.top = `${Math.floor(newTop)}px`;
                                 e.target.style.height = `${Math.floor(newHeight)}px`;
                             }
@@ -236,8 +263,8 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                                 e.target.style.height = `${Math.floor(newHeight)}px`;
                             }
                             else {
-                                e.target.style.top = `${Math.floor(e.rect.top)}px`;
-                                e.target.style.height = `${Math.floor(e.rect.height)}px`;
+                                e.target.style.top = `${Math.floor(e.rect.top / uiScale)}px`;
+                                e.target.style.height = `${Math.floor(e.rect.height / uiScale)}px`;
                             }
 
                             if (isGridSnapModifierHeld(e) && doResizeLeft) {
@@ -255,8 +282,8 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                                 e.target.style.width = `${Math.floor(newWidth)}px`;
                             }
                             else {
-                                e.target.style.left = `${Math.floor(e.rect.left)}px`;
-                                e.target.style.width = `${Math.floor(e.rect.width)}px`;
+                                e.target.style.left = `${Math.floor(e.rect.left / uiScale)}px`;
+                                e.target.style.width = `${Math.floor(e.rect.width / uiScale)}px`;
                             }
 
                             updateCoordinates(e.target);
@@ -361,8 +388,12 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
 
                     const dimensionsDiv = document.createElement("div");
                     dimensionsDiv.classList.add("dimensions");
-
                     boundingBoxDiv.appendChild(dimensionsDiv);
+
+                    const nameDiv = document.createElement("div");
+                    nameDiv.classList.add("window-name");
+                    nameDiv.textContent = studioWindow.name;
+                    boundingBoxDiv.appendChild(nameDiv);
 
                     mainCanvasDivRef.current.append(boundingBoxDiv);
 
@@ -400,10 +431,10 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange }) => {
                 })
             }
         }
-    }, []);
+    }, [workspace]);
 
     return (
-        <div ref={mainCanvasDivRef} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}>
+        <div id='choco-studio-canvas-div' ref={mainCanvasDivRef}>
             <style ref={styleRef}>
                 .chocoWinBoundingBox {
 
