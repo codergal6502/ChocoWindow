@@ -5,6 +5,7 @@ import SettingsModal from './components/SettingsModal';
 import ChocoWinCanvas from './components/ChocoWInCanvas';
 import { ChocoStudioWorkspace } from './ChocoStudio';
 import { ChocoWinSettings } from './ChocoWindow';
+import LayoutPickerModal from './components/LayoutPickerModal';
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
@@ -35,13 +36,18 @@ const App = () => {
     window.localStorage.setItem(WORKSPACE_COOKIE_NAME, b64);
   }
 
-  const [isModalHidden, setIsModalHidden] = useState(true);
+  const [isConfigModalHidden, setIsConfigModalHidden] = useState(true);
+  const [isLayoutPickerModalHidden, setIsLayoutPickerModalHidden] = useState(true);
   const [canvasLayoutId, setCanvasLayoutId] = useState(null);
   const [modalWorkspace, setModalWorkspace] = useState(initialWorkspace());
   const [canvasWorkspace, setCanvasWorkspace] = useState(initialWorkspace());
 
   const openModalOnClick = () => {
-    setIsModalHidden(false);
+    setIsConfigModalHidden(false);
+  }
+
+  const onSelectLayoutClick = () => {
+    setIsLayoutPickerModalHidden(false);
   }
 
   const onModalWorkspaceChange = (modifiedWorkspace) => {
@@ -50,9 +56,16 @@ const App = () => {
   }
 
   const onModalReturn = (workspace, layoutId) => {
-    setIsModalHidden(true);
+    setIsConfigModalHidden(true);
     setCanvasWorkspace(new ChocoStudioWorkspace(workspace));
     if (layoutId) setCanvasLayoutId(layoutId);
+  }
+
+  const onLayoutPickerReturn = (layoutId) => {
+    if (layoutId) {
+      setCanvasLayoutId(layoutId);
+    }
+    setIsLayoutPickerModalHidden(true);
   }
 
   const onCanvasWorkspaceChange = (modifiedWorkspace) => {
@@ -62,8 +75,9 @@ const App = () => {
 
   return (
     <div id="app-div">
-      <SettingsFloater onGearClick={openModalOnClick} />
-      {isModalHidden || <SettingsModal isModalHidden={isModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
+      <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} />
+      {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
+      {isLayoutPickerModalHidden || <LayoutPickerModal workspace={canvasWorkspace} currentLayoutId={canvasLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToCanvas={onLayoutPickerReturn} /> }
       <ChocoWinCanvas workspace={canvasWorkspace} onWorkspaceChange={onCanvasWorkspaceChange} canvasLayoutId={canvasLayoutId} />
     </div>
   );

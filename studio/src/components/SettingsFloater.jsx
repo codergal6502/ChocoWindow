@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAnglesDown, faAnglesUp, faCircleLeft, faCircleRight, faDownload, faGear, faPenToSquare } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react';
 
-const SettingsFloater = ({ onGearClick }) => {
+const SettingsFloater = ({ onGearClick, onSelectLayoutClick }) => {
     const Positions = Object.freeze({
         LEFT: 'LEFT',
         RIGHT: 'RIGHT',
@@ -79,7 +79,7 @@ const SettingsFloater = ({ onGearClick }) => {
                         <FontAwesomeIcon className="text-3xl" icon={faGear} />
                         <div>Configuration</div>
                     </button>
-                    <button className="flex flex-col items-center w-[12em]">
+                    <button className="flex flex-col items-center w-[12em]" onClick={onSelectLayoutClick}>
                         <FontAwesomeIcon className="text-3xl" icon={faPenToSquare} />
                         <div>Select Layout</div>
                     </button>
