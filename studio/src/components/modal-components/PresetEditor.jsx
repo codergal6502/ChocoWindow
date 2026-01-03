@@ -60,7 +60,7 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
     }, [preset, tileScale, tileSet, substituteColors, imageRef])
 
     const doOnPresetChange = (newPreset) => {
-        if (onPresetChange && typeof onPresetChange === 'function') {
+        if (onPresetChange && typeof onPresetChange == 'function') {
             onPresetChange(newPreset);
         }
     }
@@ -110,7 +110,7 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
     }, [substituteColors])
 
     const doOnPresetDelete = (id) => {
-        if (onPresetDelete && typeof onPresetDelete === 'function') {
+        if (onPresetDelete && typeof onPresetDelete == 'function') {
             onPresetDelete(preset.id);
         }
     }

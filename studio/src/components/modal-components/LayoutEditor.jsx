@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import { ChocoStudioLayout, ChocoStudioWindow } from "../../ChocoStudio"
+import { ChocoStudioLayout } from "../../ChocoStudio"
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown, faArrowUp, faCircleMinus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faCircleMinus } from "@fortawesome/free-solid-svg-icons";
 
 const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { Array<ChocoStudioWindow> } */ windows, onLayoutChange, onLayoutDelete, onReturnToCanvas, onEditThisLayout }) => {
     const windowSelectRef = useRef();
@@ -19,7 +19,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
     }
 
     const doOnLayoutChange = (newLayout) => {
-        if (onLayoutChange && typeof onLayoutChange === 'function') {
+        if (onLayoutChange && typeof onLayoutChange == 'function') {
             onLayoutChange(newLayout)
         }
     }
@@ -86,7 +86,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
     }
 
     const doDeleteLayoutOnClick = () => {
-        if (onLayoutDelete && typeof onLayoutDelete === 'function') {
+        if (onLayoutDelete && typeof onLayoutDelete == 'function') {
             onLayoutDelete(layout.id);
         }
     }

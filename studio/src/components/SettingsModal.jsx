@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
-import { ChocoWinSettings, ChocoWinTileSet } from '../ChocoWindow.js';
+import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-svg-icons";
+import { ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
 import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
 import TileSetPreview from "./modal-components/TileSetPreview.jsx";
@@ -50,6 +50,10 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    }
+    
+    const downloadButtonClick = () => {
+
     }
 
     const importButtonClick = () => {
@@ -362,13 +366,17 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                             return (<>
                                                 <h2 className="mb-3 bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Export/Load Workspace</h2>
                                                 <div className="flex justify-around items-center w-full">
+                                                    <button className="flex flex-col items-center" onClick={importButtonClick}>
+                                                        <FontAwesomeIcon className="text-6xl" icon={faFolderOpen} />
+                                                        <div>Load Workspace...</div>
+                                                    </button>
                                                     <button className="flex flex-col items-center" onClick={exportButtonClick}>
                                                         <FontAwesomeIcon className="text-6xl" icon={faFloppyDisk} />
                                                         <div>Export Workspace...</div>
                                                     </button>
-                                                    <button className="flex flex-col items-center" onClick={importButtonClick}>
-                                                        <FontAwesomeIcon className="text-6xl" icon={faFolderOpen} />
-                                                        <div>Load Workspace...</div>
+                                                    <button className="flex flex-col items-center" onClick={downloadButtonClick}>
+                                                        <FontAwesomeIcon className="text-6xl" icon={faImages} />
+                                                        <div>Download Assets...</div>
                                                     </button>
                                                     <input className="hidden" accept="application/json" type="file" onChange={importInputChange} ref={fileInputRef} />
                                                 </div>
@@ -390,7 +398,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                                 </div>
                                                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                                                 <div className="flex justify-between">
-                                                    <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+                                                    <button onClick={() => onReturnToCanvas(workspace)} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
                                                 </div>
                                             </>);
 

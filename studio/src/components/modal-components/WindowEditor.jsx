@@ -15,7 +15,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
     const [presetId, setPresetId] = useState(window.presetId);
 
     const doOnWindowChange = (newWindow) => {
-        if (onWindowChange && typeof onWindowChange === 'function') {
+        if (onWindowChange && typeof onWindowChange == 'function') {
             onWindowChange(newWindow);
         }
     }
@@ -109,7 +109,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
     }, [presetId, imageRef])
 
     const doDeleteWindowOnClick = () => {
-        if (onWindowDelete && typeof onWindowDelete === 'function') {
+        if (onWindowDelete && typeof onWindowDelete == 'function') {
             onWindowDelete(window.id);
         }
     }

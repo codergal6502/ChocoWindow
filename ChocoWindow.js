@@ -11,7 +11,7 @@ class ChocoWinColor {
      * @param {ChocoWinColor} arg1
      */
     constructor(arg1) {
-        if (typeof (arg1) === 'string') {
+        if (typeof (arg1) == 'string') {
             const regex = /^#[0-9A-Fa-f]{6}/;
 
             if (!regex.test(arg1)) {

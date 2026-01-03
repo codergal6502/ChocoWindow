@@ -1,4 +1,4 @@
-import { ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinSettings } from './ChocoWindow.js';
+import { ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinTilsetEdges, ChocoWinSettings } from './ChocoWindow.js';
 
 class ChocoStudioPreset {
     /**

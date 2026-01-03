@@ -61,13 +61,13 @@ const TileSetPreview = ({ /** @type { ChocoWinTileSet } */ tileSet, onTileSetCha
         setName(e.target.value);
         const newTileset = new ChocoWinTileSet(tileSet);
         newTileset.name = e.target.value;
-        if (onTileSetChange && typeof onTileSetChange === 'function') {
+        if (onTileSetChange && typeof onTileSetChange == 'function') {
             onTileSetChange(newTileset);
         }
     });
 
     const doOnTileSetDelete = (id) => {
-        if (onTileSetDelete && typeof onTileSetDelete === 'function') {
+        if (onTileSetDelete && typeof onTileSetDelete == 'function') {
             onTileSetDelete(tileSet.id);
         }
     }
