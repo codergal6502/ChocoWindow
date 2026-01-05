@@ -1,0 +1,8 @@
+div.tile-sheet-position-selector {
+    background-image: url(./tile-background-3.png);
+    background-repeat: repeat;
+}
+
+div.sheet-tile-selection-mid-ground {
+    background-repeat: no-repeat;
+}
