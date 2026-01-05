@@ -170,7 +170,7 @@ class ChocoWinWindow {
         this.#w = w;
         this.#h = h;
 
-        if ((true !== ChocoWinSettings.ignoreScaleMisalignmentErrors) && ((this.#w % this.#tileScale != 0) || (this.#h % this.#tileScale != 0))) {
+        if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && ((this.#w % this.#tileScale != 0) || (this.#h % this.#tileScale != 0))) {
             console.warn(`Scale misalignment: one or both window dimensions [${this.#w}, ${this.#h}] are not multiples of tile scale ${tileScale}. Artifacts may occur on the right and bottom edges as a result, especially if the sprite map includes transparency. To ignore this warning, set ChocoWinSettings.ignoreScaleMisalignmentErrors = true`);
         }
 
@@ -223,20 +223,20 @@ class ChocoWinWindow {
         let sh = tileSize;
         const pixmap = this.#pixmap;
 
-        if ((true !== allowOverrunX) && (dxRelative + destWidth > this.#w - destWidth)) {
+        if ((true != allowOverrunX) && (dxRelative + destWidth > this.#w - destWidth)) {
             const pixelsToDraw = this.#w - destWidth - dxRelative;
             const pixelsToSource = Math.ceil(pixelsToDraw / this.#tileScale);
-            if ((true !== ChocoWinSettings.ignoreScaleMisalignmentErrors) && (pixelsToSource != Math.floor(pixelsToDraw / this.#tileScale))) {
+            if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && (pixelsToSource != Math.floor(pixelsToDraw / this.#tileScale))) {
                 console.warn(`Scale horizontal misalignment: cannot trim precisely at {${dxRelative}, ${dyRelative}}; drawing desination tile size ${destWidth} will horizontally overrun right edge/corner tiles at x=${this.#w - destWidth}; draw ${pixelsToSource} source tile pixels where ${pixelsToDraw} destination pixels should be drawn.`);
             }
             sw = pixelsToSource;
             destWidth = sw * this.#tileScale;
         }
 
-        if ((true !== allowOverrunY) && (dyRelative + destHeight > this.#h - destHeight)) {
+        if ((true != allowOverrunY) && (dyRelative + destHeight > this.#h - destHeight)) {
             const pixelsToDraw = this.#h - destHeight - dyRelative;
             const pixelsToSource = Math.ceil(pixelsToDraw / this.#tileScale);
-            if ((true !== ChocoWinSettings.ignoreScaleMisalignmentErrors) && (pixelsToSource != Math.floor(pixelsToDraw / this.#tileScale))) {
+            if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && (pixelsToSource != Math.floor(pixelsToDraw / this.#tileScale))) {
                 console.warn(`Scale vertical misalignment: cannot trim precisely at {${dxRelative}, ${dyRelative}}; drawing desination tile size ${destHeight} will vertically overrun right edge/corner tiles at y=${this.#h - destHeight}; draw ${pixelsToSource} source tile pixels where ${pixelsToDraw} destination pixels should be drawn.`);
             }
             sh = pixelsToSource;

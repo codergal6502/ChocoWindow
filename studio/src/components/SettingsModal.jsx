@@ -3,15 +3,26 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-svg-icons";
 import { ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
-import TileSetPreview from "./modal-components/TileSetPreview.jsx";
+import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioWindowDefinition } from "../ChocoStudio.js";
+import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
 import WindowEditor from "./modal-components/WindowEditor.jsx";
+import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 
+/**
+ * 
+ * @param {Object} props
+ * @param {Boolean} props.isModalHidden
+ * @param {function(ChocoStudioWorkspace):void} props.onReturnToCanvas
+ * @param {function(ChocoStudioWorkspace):void} props.onWorkspaceChange
+ * @param {ChocoStudioWorkspace} props.workspace
+ */
 const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, workspace }) => {
     const FormStates = Object.freeze({
         SETTINGS: 'SETTINGS',
+        TILE_SHEET: 'TILE_SHEET',
+        TILE_SET_DEFINITION: 'TILE_SET_DEFINITION',
         TILE_SET: 'TILE_SET',
         PRESET: 'PRESET',
         LAYOUT: 'LAYOUT',
@@ -21,6 +32,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
 
     // Total state of the form; default to Settings with the entire nav tree open. 
     const [formState, setFormState] = useState(FormStates.SETTINGS);
+    const [tileSetDefinitionsNavOpen, setTileSetDefinitionsNavOpen] = useState(true);
     const [tileSetsNavOpen, setTileSetsNavOpen] = useState(true);
     const [presetsNavOpen, setPresetsNavOpen] = useState(true);
     const [layoutsNavOpen, setLayoutsNavOpen] = useState(true);
@@ -28,7 +40,9 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
     const [variablesNavOpen, setVariablesNavOpen] = useState(true);
 
     // For each section, what is active (if anything).
-    const [/** @type {ChocoWinTileSet}   */ activeTileSet, setActiveTileSet] = useState(null);
+    const [/** @type {ChocoStudioTileSheet} */ activeTileSheet, setActiveTileSheet] = useState(null);
+    const [/** @type {ChocoWinTileSet} */ activeTileSet, setActiveTileSet] = useState(null);
+    const [/** @type {ChocoStudioWindowDefinition} */ activeTileSetDefinition, setActiveTileSetDefinition] = useState(null);
     const [/** @type {ChocoStudioPreset} */ activePreset, setActivePreset] = useState(null);
     const [/** @type {ChocoStudioLayout} */ activeLayout, setActiveLayout] = useState(null);
     const [/** @type {ChocoStudioWindow} */ activeWindow, setActiveWindow] = useState(null);
@@ -51,7 +65,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }
-    
+
     const downloadButtonClick = () => {
 
     }
@@ -66,6 +80,30 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
         onWorkspaceChange(workspace)
     }
 
+    const onTileSheetChange = (/** @type {ChocoStudioTileSheet} */ modifiedTileSheet) => {
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        let idx = modifiedWorkspace.tileSheets.findIndex((ts) => ts.id == modifiedTileSheet.id);
+
+        if (idx < 0) idx = modifiedWorkspace.tileSheets.length;
+        modifiedWorkspace.tileSheets[idx] = modifiedTileSheet;
+
+        doSetWorkspace(modifiedWorkspace);
+        setActiveTileSheet(modifiedTileSheet);
+    }
+
+    /**
+     * @param {ChocoStudioWindowDefinition} modifiedTileSetDefinition
+     */
+    const onTileSetDefinitionChange = (modifiedTileSetDefinition) => {
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        let idx = modifiedWorkspace.tileSetDefinitions.findIndex((tsd) => tsd.id == modifiedTileSetDefinition.id);
+
+        if (idx < 0) idx = modifiedWorkspace.tileSetDefinitions.length;
+        modifiedWorkspace.tileSetDefinitions[idx] = modifiedTileSetDefinition;
+
+        doSetWorkspace(modifiedWorkspace);
+    }
+
     const onTileSetChange = (/** @type {ChocoWinTileSet} */ modifiedTileSet) => {
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
         const idx = modifiedWorkspace.tileSets.findIndex((ts) => ts.id == modifiedTileSet.id);
@@ -76,6 +114,20 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
 
         doSetWorkspace(modifiedWorkspace);
         setActiveTileSet(modifiedTileSet);
+    }
+
+    const onTileSheetDelete = (id) => {
+        setFormState(FormStates.SETTINGS);
+
+        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
+        const idx = modifiedWorkspace.tileSheets.findIndex((ts) => ts.id == id);
+
+        if (idx >= 0) {
+            modifiedWorkspace.tileSheets.splice(idx, 1);
+        }
+
+        doSetWorkspace(modifiedWorkspace);
+        setActiveTileSheet(null);
     }
 
     const onTileSetDelete = (id) => {
@@ -213,11 +265,45 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
         doSetWorkspace(workspace);
     }
 
+    const tileSheetNavOnClick = (/** @type {ChocoStudioTileSheet} */ tileSheet) => {
+        if (FormStates.TILE_SHEET != formState) {
+            setFormState(FormStates.TILE_SHEET);
+        }
+        setActiveTileSheet(tileSheet);
+    }
+
     const tileSetNavOnClick = (/** @type {ChocoWinTileSet} */ tileSet) => {
         if (FormStates.TILE_SET != formState) {
             setFormState(FormStates.TILE_SET);
         }
         setActiveTileSet(tileSet);
+    }
+
+    const newTileSheetOnClick = () => {
+        if (FormStates.TILE_SHEET != formState) {
+            setFormState(FormStates.TILE_SHEET);
+        }
+
+        const newTileSheet = new ChocoStudioTileSheet();
+
+        setActiveTileSheet(newTileSheet);
+    }
+
+    const newTileSetDefinitionOnClick = () => {
+        if (FormStates.TILE_SET_DEFINITION != formState) {
+            setFormState(FormStates.TILE_SET_DEFINITION);
+        }
+
+        const newTileSetDefinition = new ChocoStudioWindowDefinition();
+
+        setActiveTileSetDefinition(newTileSetDefinition);
+    }
+
+    const tileSetDefinitionNavOnClick = (/** @type {ChocoStudioWindowDefinition} */ tileSetDefinition) => {
+        if (FormStates.TILE_SET_DEFINITION != formState) {
+            setFormState(FormStates.TILE_SET_DEFINITION);
+        }
+        setActiveTileSetDefinition(tileSetDefinition);
     }
 
     const newPresetNavOnClick = () => {
@@ -286,12 +372,38 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                 <li>
                                     <button onClick={() => setTileSetsNavOpen(!tileSetsNavOpen)} className="block py-1 hover:bg-gray-700">
                                         <FontAwesomeIcon icon={tileSetsNavOpen ? faAngleDown : faAngleRight} />
-                                        Tile Sets
+                                        Tile Sheets
+                                    </button>
+                                    <ul className={`ml-8 ${tileSetsNavOpen ? '' : 'hidden'}`}>
+                                        <button onClick={newTileSheetOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        {workspace.tileSheets.map((tileSheet) => <li key={tileSheet.id}>
+                                            <button onClick={() => tileSheetNavOnClick(tileSheet)} className="block py-1 hover:bg-gray-600">{String(tileSheet.name).trim() || <span className="italic">no name</span>}</button>
+                                        </li>)
+                                        }
+                                    </ul>
+                                </li>
+                                <li>
+                                    <button onClick={() => setTileSetsNavOpen(!tileSetsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                        <FontAwesomeIcon icon={tileSetsNavOpen ? faAngleDown : faAngleRight} />
+                                        Tile Sets (depr)
                                     </button>
                                     <ul className={`ml-8 ${tileSetsNavOpen ? '' : 'hidden'}`}>
                                         <a href="#" className="block py-1 hover:bg-gray-600">Add New...</a>
                                         {workspace.tileSets.map((tileSet) => <li key={tileSet.id}>
                                             <button onClick={() => tileSetNavOnClick(tileSet)} className="block py-1 hover:bg-gray-600">{String(tileSet.name).trim() || <span className="italic">no name</span>}</button>
+                                        </li>)
+                                        }
+                                    </ul>
+                                </li>
+                                <li>
+                                    <button onClick={() => setTileSetDefinitionsNavOpen(!tileSetDefinitionsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                        <FontAwesomeIcon icon={tileSetDefinitionsNavOpen ? faAngleDown : faAngleRight} />
+                                        Tile Set Definitions
+                                    </button>
+                                    <ul className={`ml-8 ${tileSetDefinitionsNavOpen ? '' : 'hidden'}`}>
+                                        <button onClick={newTileSetDefinitionOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        {workspace.tileSetDefinitions.map((tileSetDefinition) => <li key={tileSetDefinition.id}>
+                                            <button onClick={() => tileSetDefinitionNavOnClick(tileSetDefinition)} className="block py-1 hover:bg-gray-600">{String(tileSetDefinition.name).trim() || <span className="italic">no name</span>}</button>
                                         </li>)
                                         }
                                     </ul>
@@ -402,9 +514,17 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                                 </div>
                                             </>);
 
+                                        case FormStates.TILE_SHEET:
+                                            return (!activeTileSheet) ? "" : (
+                                                <TileSheetEditor key={activeTileSheet.id} tileSheet={activeTileSheet} onTileSheetChange={onTileSheetChange} onTileSheetDelete={onTileSheetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                            );
+                                        case FormStates.TILE_SET_DEFINITION:
+                                            return (!activeTileSetDefinition) ? "" : (
+                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                            );
                                         case FormStates.TILE_SET:
                                             return (!activeTileSet) ? "" : (
-                                                <TileSetPreview key={activeTileSet.id} tileSet={activeTileSet} onTileSetChange={onTileSetChange} onTileSetDelete={onTileSetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <TileSetDefinitionEditor key={activeTileSet.id} tileSetDefinition={activeTileSet} tileSheets={workspace.tileSheets} onTileSetChange={onTileSetChange} onTileSetDelete={onTileSetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.PRESET:
                                             return (!activePreset) ? "" : (

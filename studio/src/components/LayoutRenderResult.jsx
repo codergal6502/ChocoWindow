@@ -4,7 +4,7 @@ import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from 
 import { ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
 import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
-import TileSetPreview from "./modal-components/TileSetPreview.jsx";
+import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
 import WindowEditor from "./modal-components/WindowEditor.jsx";
