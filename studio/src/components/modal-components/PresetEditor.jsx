@@ -3,12 +3,21 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoStudioPreset } from "../../ChocoStudio"
 import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
 
-const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type { ChocoStudioPreset } */ preset, /** @type { Array<ChocoWinTileSet } */ tileSets, onPresetChange, onPresetDelete, onReturnToCanvas }) => {
+/**
+ * @param {Object} props
+ * @param {Boolean} props.isSubordinate
+ * @param {ChocoStudioPreset} props.preset
+ * @param {Array<TileSetDefinitions>} props.tileSetDefinitions
+ * @param {function(ChocoStudioPreset):void} props.onPresetChange
+ * @param {function(String):void} props.onPresetDelete
+ * @param {function():void} props.onReturnToCanvas
+ */
+const PresetEditor = ({ isSubordinate = false, preset, tileSetDefinitions, onPresetChange, onPresetDelete, onReturnToCanvas }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
-    const [tileSet, setTileSet] = useState(tileSets.find((ts) => ts.id == preset.tileSetId) || tileSets[0])
-    const [tileSetId, setTileSetId] = useState(preset.tileSetId || tileSets[0].id);
+    const [tileSetDefinition, setTileSetDefinition] = useState(tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId) || tileSetDefinitions[0])
+    const [tileSetDefinitionId, setTileSetDefinitionId] = useState(preset.tileSetId || tileSetDefinitions[0].id);
     const [tileScale, setTileScale] = useState(preset.tileScale || 1);
 
     const [substituteColors, setSubstituteColors] = useState(preset.substituteColors || []);
@@ -17,8 +26,8 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
     let colorsTimeout = null;
 
     useEffect(() => {
-        setTileSet(tileSets.find((ts) => ts.id == tileSetId))
-    }, [tileSetId])
+        setTileSetDefinition(tileSetDefinitions.find((ts) => ts.id == tileSetDefinitionId))
+    }, [tileSetDefinitionId])
 
     useEffect(() => {
         if (substituteColorsDelayed && substituteColorsDelayed.length) {
@@ -33,9 +42,9 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
 
     useEffect(() => {
         if (!imageRef.current) { return; }
-        if (!tileSet) { alert('err'); return; }
+        if (!tileSetDefinition) { return; }
 
-        let chocoWin = new ChocoWinWindow(tileSet, tileScale, 0, 0, 450, 180);
+        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(), tileScale, 0, 0, 450, 180);
 
         if (substituteColors && substituteColors.length) {
             substituteColors.forEach((col, idx) => {
@@ -57,7 +66,7 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
             let dataUrl = canvas.toDataURL("image/png", 1);
             imageRef.current.src = dataUrl;
         });
-    }, [preset, tileScale, tileSet, substituteColors, imageRef])
+    }, [preset, tileScale, tileSetDefinition, substituteColors, imageRef])
 
     const doOnPresetChange = (newPreset) => {
         if (onPresetChange && typeof onPresetChange == 'function') {
@@ -73,12 +82,12 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
         doOnPresetChange(newPreset);
     });
 
-    const onTileSetIdChange = ((e) => {
+    const onTileSetDefinitionIdChange = ((e) => {
         const value = e.target.value;
-        setTileSetId(value);
+        setTileSetDefinitionId(value);
         setSubstituteColors([]);
         const newPreset = new ChocoStudioPreset(preset);
-        newPreset.tileSetId = value;
+        newPreset.tileSetDefinitionId = value;
         doOnPresetChange(newPreset);
     })
 
@@ -133,9 +142,9 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
         }
 
         <div className="mb-4 w-full">
-            <label htmlFor="7ed0e6ee-47bf-48ff-b54b-d919c60faad5">Tile Set: </label>
-            <select id="7ed0e6ee-47bf-48ff-b54b-d919c60faad5" className={TAILWIND_INPUT_CLASS_NAME} onChange={onTileSetIdChange} value={tileSetId}>
-                {tileSets.map((ts) => <option key={ts.id} value={ts.id}>{ts.name}</option>)}
+            <label htmlFor="7ed0e6ee-47bf-48ff-b54b-d919c60faad5">Tile Set Definition: </label>
+            <select id="7ed0e6ee-47bf-48ff-b54b-d919c60faad5" className={TAILWIND_INPUT_CLASS_NAME} onChange={onTileSetDefinitionIdChange} value={tileSetDefinitionId}>
+                {tileSetDefinitions.map((ts) => <option key={ts.id} value={ts.id}>{ts.name}</option>)}
             </select>
         </div>
 
@@ -144,16 +153,16 @@ const PresetEditor = ({ /** @type {Boolean} */ isSubordinate = false, /** @type 
             <input placeholder="Tile Scale" type="number" min={1} max={10} id="59731ce7-1ab4-4ea1-a08e-1bf5a43d1f4e" className={TAILWIND_INPUT_CLASS_NAME} value={tileScale} onChange={onTileScaleChange} />
         </div>
 
-        <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
+        {/* <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
         <div className={`grid grid-cols-4 gap-4`}>
-            {tileSet.substitutableColors.map((color, i) =>
+            {tileSetDefinition.substitutableColors.map((color, i) =>
                 <div key={i}>
                     <div className="text-sm w-full text-center">Color {i + 1}</div>
                     <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString?.() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
                     <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
                 </div>
             )}
-        </div>
+        </div> */}
 
         <h3 className="mb-2 mt-4 text-xl">Preview</h3>
         <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div>

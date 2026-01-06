@@ -17,9 +17,10 @@ const BIGGEST_ZOOM_FACTOR = 6;
  * @param {Array<ChocoStudioTileSheet>} props.tileSheets
  * @param {Function} props.onTileSetDefinitionChange
  * @param {Function} props.onTileSetDefinitionDelete
+ * @param {Function} props.onReturnToCanvas
  * @returns {JSX.Element}
  */
-const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete }) => {
+const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete, onReturnToCanvas }) => {
     const hasChangeHandler = onTileSetDefinitionChange && typeof onTileSetDefinitionChange == "function";
     const hasDeleteHandler = onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == "function";
 
@@ -57,6 +58,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // Scale and size (width and height) for the tile selection
     const [sheetTileSelectionUiScale, setsheetTileSelectionUiScale] = useState(3);
     const [sheetTileSelectionUiSize, setSheetTileSelectionUiSize] = useState(tileSize * 3 || 72);
+
+    useEffect(() => {
+        if (previewRef && previewRef.current && tileSetDefinition && tileSheets && tileSetDefinition.tileSize && wholeTileSheetUrl) {
+            updatePreviewRef(tileSetDefinition)
+        }
+    }, [previewRef, tileSetDefinition, tileSheets, wholeTileSheetUrl])
 
     useEffect(() => {
         if (sheetTileGridOverlayDiv && sheetTileGridOverlayDiv.current) {
@@ -403,41 +410,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
         if (!previewRef.current) { return; }
 
-        const tileSet = new ChocoWinTileSet({
-            "id": "00000000-0000-0000-0000-000000000000",
-            "name": "Preview",
-            "sourceFileUrl": wholeTileSheetUrl,
-            "tileSize": newTileSetDefinition.tileSize,
-            "corners": {
-                "TL": {
-                    "x": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].x,
-                    "y": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].y
-                },
-                "TR": {
-                    "x": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].x,
-                    "y": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].y
-                },
-                "BL": {
-                    "x": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].x,
-                    "y": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].y
-                },
-                "BR": {
-                    "x": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].x,
-                    "y": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].y
-                }
-            },
-            "edges": {
-                "T": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions.map((col) => ({ "x": col[0].x, "y": col[0].y })),
-                "B": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions.map((col) => ({ "x": col[0].x, "y": col[0].y })),
-                "L": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions[0].map((row) => ({ "x": row.x, "y": row.y })),
-                "R": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions[0].map((row) => ({ "x": row.x, "y": row.y })),
-            },
-            "patternRows": newTileSetDefinition.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.map((row) =>
-                row.map((col) => ({ x: col.x, y: col.y }))
-            ),
-            "substitutableColors": [
-            ]
-        });
+        const tileSet = newTileSetDefinition.toChocoWinTileSet(wholeTileSheetUrl);
 
         let chocoWin = new ChocoWinWindow(tileSet, 3, 0, 0, 450, 180);
         chocoWin.isReady().then(() => {
@@ -605,7 +578,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
-            <button className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+            <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
             <button onClick={deleteTileSetDefinitionOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set</button>
         </div>
     </>

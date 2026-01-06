@@ -152,18 +152,18 @@ class ChocoWinTileSet {
 
 class ChocoWinWindow {
     /** @type {HTMLImageElement} */ #pixmap;
-    /** @type {ChocoWinTileSet} */ #winOption;
+    /** @type {ChocoWinTileSet} */ #winTileSet;
     /** @type {Number} */ #tileScale;
     /** @type {Number} */ #x;
     /** @type {Number} */ #y;
     /** @type {Number} */ #w;
     /** @type {Number} */ #h;
     /** @type {Object<Number, ChocoWinColor>} */ #colorSubstitutions;
-    constructor(/** @type {ChocoWinTileSet} */ winOption, /** @type {Number} */ tileScale, /** @type {Number} */ x, /** @type {Number} */ y, /** @type {Number} */ w, /** @type {Number} */ h) {
+    constructor(/** @type {ChocoWinTileSet} */ winTileSet, /** @type {Number} */ tileScale, /** @type {Number} */ x, /** @type {Number} */ y, /** @type {Number} */ w, /** @type {Number} */ h) {
         this.#pixmap = new Image();
-        this.#pixmap.src = winOption.sourceFileUrl;
+        this.#pixmap.src = winTileSet.sourceFileUrl;
 
-        this.#winOption = winOption;
+        this.#winTileSet = winTileSet;
         this.#tileScale = tileScale;
         this.#x = x;
         this.#y = y;
@@ -246,16 +246,16 @@ class ChocoWinWindow {
         const dxAbsolute = this.#x + dxRelative;
         ctx.drawImage(pixmap, sx, sy, sw, sh, dxAbsolute, this.#y + dyRelative, destWidth, destHeight);
 
-        if (this.hasColorSubstitutions && this.#winOption.substitutableColors?.length) {
+        if (this.hasColorSubstitutions && this.#winTileSet.substitutableColors?.length) {
             const imageData = ctx.getImageData(dxAbsolute, this.#y + dyRelative, destWidth, destHeight);
             const imagePixelBytes = imageData.data;
             for (const keyValuePair of Object.entries(this.#colorSubstitutions)) {
                 /** @type {number} */ const index = keyValuePair[0];
                 /** @type {ChocoWinColor} */ const newColor = keyValuePair[1];
-                /** @type {ChocoWinColor} */ const oldColor = this.#winOption.substitutableColors[index];
+                /** @type {ChocoWinColor} */ const oldColor = this.#winTileSet.substitutableColors[index];
 
                 if (index < 0) continue;
-                if (index >= this.#winOption.substitutableColors.length) continue;
+                if (index >= this.#winTileSet.substitutableColors.length) continue;
 
                 for (let i = 0; i < imagePixelBytes.length; i += 4) {
                     const areColorsCloseEnough = (r1, r2, g1, g2, b1, b2) => {
@@ -281,7 +281,7 @@ class ChocoWinWindow {
     }
 
     #doDrawWindow(/** @type {CanvasRenderingContext2D} */ ctx) {
-        const wo = this.#winOption;
+        const wo = this.#winTileSet;
         const tileSize = wo.tileSize;
         const destSize = tileSize * this.#tileScale;
 

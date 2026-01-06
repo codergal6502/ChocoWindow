@@ -106,6 +106,44 @@ class ChocoStudioTileSetDefinition {
             this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT]);
         }
     }
+
+    toChocoWinTileSet(sourceFileUrl) {
+        return new ChocoWinTileSet({
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "Preview",
+            "sourceFileUrl": sourceFileUrl,
+            "tileSize": this.tileSize,
+            "corners": {
+                "TL": {
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].x,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].y
+                },
+                "TR": {
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].x,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].y
+                },
+                "BL": {
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].x,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].y
+                },
+                "BR": {
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].x,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].y
+                }
+            },
+            "edges": {
+                "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions.map((col) => ({ "x": col[0].x, "y": col[0].y })),
+                "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions.map((col) => ({ "x": col[0].x, "y": col[0].y })),
+                "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions[0].map((row) => ({ "x": row.x, "y": row.y })),
+                "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions[0].map((row) => ({ "x": row.x, "y": row.y })),
+            },
+            "patternRows": this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.map((row) =>
+                row.map((col) => ({ x: col.x, y: col.y }))
+            ),
+            "substitutableColors": [
+            ]
+        });
+    }
 }
 
 class ChocoStudioPreset {
@@ -120,14 +158,14 @@ class ChocoStudioPreset {
         if (!arg1) {
             /** @type {String} */ this.name = "";
             /** @type {String} */ this.id = String(crypto.randomUUID());
-            /** @type {String} */ this.tileSetId = null;
+            /** @type {String} */ this.tileSetDefinitionId = null;
             /** @type {Number} */ this.tileScale = 1;
             /** @type {Array<ChocoWinColor} */ this.substituteColors = [];
         }
         else {
             this.name = arg1.name;
             this.id = arg1.id;
-            this.tileSetId = arg1.tileSetId
+            this.tileSetDefinitionId = arg1.tileSetDefinitionId
             this.tileScale = arg1.tileScale
             this.substituteColors = arg1.substituteColors.map((c) => new ChocoWinColor(c));
         }

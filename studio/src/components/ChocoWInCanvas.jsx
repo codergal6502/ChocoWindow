@@ -5,6 +5,14 @@ import { ChocoWinWindow } from '../ChocoWindow';
 import './ChocoWinCanvas.css'
 import { text } from '@fortawesome/fontawesome-svg-core';
 
+/**
+ * 
+ * @param {Object} props
+ * @param {ChocoStudioWorkspace} props.workspace
+ * @param {Function} props.onWorkspaceChange
+ * @param {String} props.canvasLayoutId
+ * @returns 
+ */
 const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
@@ -405,7 +413,9 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                     if (studioWindow) {
                         const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
                         if (preset) {
-                            const tileSet = ws.tileSets.find((ts) => ts.id == preset.tileSetId);
+                            const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
+                            const tileSheet = ws.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
+                            const tileSet = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
                             const renderWindow = new ChocoWinWindow(tileSet, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
 
                             renderWindow.isReady().then(() => {

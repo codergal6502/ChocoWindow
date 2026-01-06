@@ -11,7 +11,6 @@ import WindowEditor from "./modal-components/WindowEditor.jsx";
 import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 
 /**
- * 
  * @param {Object} props
  * @param {Boolean} props.isModalHidden
  * @param {function(ChocoStudioWorkspace):void} props.onReturnToCanvas
@@ -522,13 +521,10 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                             return (!activeTileSetDefinition) ? "" : (
                                                 <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
-                                        case FormStates.TILE_SET:
-                                            return (!activeTileSet) ? "" : (
-                                                <TileSetDefinitionEditor key={activeTileSet.id} tileSetDefinition={activeTileSet} tileSheets={workspace.tileSheets} onTileSetChange={onTileSetChange} onTileSetDelete={onTileSetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
-                                            );
                                         case FormStates.PRESET:
+                                            if (!workspace.tileSetDefinitions) debugger;
                                             return (!activePreset) ? "" : (
-                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSets={workspace.tileSets} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSetDefinitions={workspace.tileSetDefinitions} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.WINDOW:
                                             return (!activeWindow) ? "" : (
