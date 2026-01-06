@@ -48,13 +48,15 @@ class ChocoStudioWindowRegionDefinition {
         if (!arg1) {
             /** @type {Number} */ this.width = 1;
             /** @type {Number} */ this.height = 1;
-            /** @type {{ x: Number, y: Number }[][]} */ this.tileSheetPositions = [[{ x: 0, y: 0 }]]
+            /** @type {{ x: Number, y: Number }[][]} */ this.tileSheetPositions = [[{ x: null, y: null }]]
         }
         else {
             this.width = arg1.width;
             this.height = arg1.height;
             this.tileSheetPositions = arg1.tileSheetPositions.map((col) =>
-                col.map((pos) => ({ x: pos.x, y: pos.y }))
+                // pos could be null if passed in from a not-yet-assignd value in the GUI.
+                // ?? will coalesce undefined but not zero. JavaScript is weird.
+                col.map((pos) => ({ x: pos?.x ?? null, y: pos?.y ?? null }))
             )
         }
     }
@@ -74,7 +76,7 @@ class ChocoStudioTileSetDefinition {
             /** @type {String} */ this.name = "";
             /** @type {String} */ this.tileSheetId = "";
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
-            /** @type {Object.<String, ChocoStudioWindowRegionDefinition} */ this.regions = {}
+            /** @type {Object.<String, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
 
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition();
             this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition();
@@ -92,7 +94,7 @@ class ChocoStudioTileSetDefinition {
             this.tileSheetId = arg1.tileSheetId;
             this.tileSize = arg1.tileSize;
 
-            this.regions = {}
+            /** @type {Object.<String, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT]);
             this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP]);
             this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT]);
