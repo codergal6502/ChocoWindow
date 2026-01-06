@@ -101,18 +101,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
         modifiedWorkspace.tileSetDefinitions[idx] = modifiedTileSetDefinition;
 
         doSetWorkspace(modifiedWorkspace);
-    }
-
-    const onTileSetChange = (/** @type {ChocoWinTileSet} */ modifiedTileSet) => {
-        const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.tileSets.findIndex((ts) => ts.id == modifiedTileSet.id);
-
-        if (idx >= 0) {
-            modifiedWorkspace.tileSets[idx] = modifiedTileSet
-        }
-
-        doSetWorkspace(modifiedWorkspace);
-        setActiveTileSet(modifiedTileSet);
+        setActiveTileSetDefinition(modifiedTileSetDefinition);
     }
 
     const onTileSheetDelete = (id) => {

@@ -40,7 +40,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [windowRegionIdentifier, setWindowRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
     const [regions, setRegions] = useState(structuredClone(tileSetDefinition.regions));
     const [tileSheetSnapSelectionMode, setTileSheetSnapSelectionMode] = useState(true);
-    const [wholeTileSheetUrl, setWholeTileSheetUrl] = useState(null);
+    const [wholeTileSheetUrl, setWholeTileSheetUrl] = useState(tileSheets.find((ts) => ts.id == tileSetDefinition?.tileSheetId)?.imageDataUrl);
 
     const [wholeTileSheetImage, setWholeTileSheetImage] = useState(null);
     useEffect(() => {
@@ -60,10 +60,11 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [sheetTileSelectionUiSize, setSheetTileSelectionUiSize] = useState(tileSize * 3 || 72);
 
     useEffect(() => {
-        if (previewRef && previewRef.current && tileSetDefinition && tileSheets && tileSetDefinition.tileSize && wholeTileSheetUrl) {
+        if (previewRef && !previewRef.current) { console.warn('preview ref not done');}
+        if (previewRef && previewRef.current && tileSetDefinition && tileSheets && tileSetDefinition.tileSize) {
             updatePreviewRef(tileSetDefinition)
         }
-    }, [previewRef, tileSetDefinition, tileSheets, wholeTileSheetUrl])
+    }, [previewRef, tileSetDefinition, tileSheets])
 
     useEffect(() => {
         if (sheetTileGridOverlayDiv && sheetTileGridOverlayDiv.current) {

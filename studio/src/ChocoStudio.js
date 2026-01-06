@@ -132,10 +132,10 @@ class ChocoStudioTileSetDefinition {
                 }
             },
             "edges": {
-                "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions.map((col) => ({ "x": col[0].x, "y": col[0].y })),
-                "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions.map((col) => ({ "x": col[0].x, "y": col[0].y })),
-                "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions[0].map((row) => ({ "x": row.x, "y": row.y })),
-                "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions[0].map((row) => ({ "x": row.x, "y": row.y })),
+                "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions[0].map((col) => ({ "x": col.x, "y": col.y })),
+                "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions[0].map((col) => ({ "x": col.x, "y": col.y })),
+                "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions.map((row) => ({ "x": row[0].x, "y": row[0].y })),
+                "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions.map((row) => ({ "x": row[0].x, "y": row[0].y })),
             },
             "patternRows": this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.map((row) =>
                 row.map((col) => ({ x: col.x, y: col.y }))
