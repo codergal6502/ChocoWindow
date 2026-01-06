@@ -64,7 +64,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 canvas.add(polyline);
             }
 
-            console.log('drawing first horizontal grid to ', sheetTileSelectionUiSize / TILES_IN_STS);
             drawPolyline([
                 { x: sheetTileSelectionUiSize / TILES_IN_STS, y: 0 },
                 { x: sheetTileSelectionUiSize / TILES_IN_STS, y: sheetTileSelectionUiSize }
@@ -265,23 +264,28 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
         const imageWidth = wholeTileSheetRef.current.naturalWidth;
         const imageHeight = wholeTileSheetRef.current.naturalHeight;
-        const x = Math.max(0, Math.min(Math.round(e.clientX - rect.left), imageWidth));
-        const y = Math.max(0, Math.min(Math.round(e.clientY - rect.top), imageHeight));
+        const x = Math.max(0, Math.min(Math.round(e.clientX - rect.left + 1), imageWidth));
+        const y = Math.max(0, Math.min(Math.round(e.clientY - rect.top + 1), imageHeight));
 
-        // At sx = 0,          dx = sheetTileSelectionUiScale * tileSize.
-        // At sx = imageWidth, dx = -imageWidth + 2 * sheetTileSelectionUiScale * tileSize
+        // At sx = 0,          dx = tileSize * sheetTileSelectionUiScale
+        // At sx = imageWidth, dx = -imageWidth * sheetTileSelectionUiScale + 2 * tileSize * sheetTileSelectionUiScale
         // The slope of dx relative to sx is:
         // (dx1 - dx0) / (sx1 - sx0)
-        // (-imageWidth + 2 * sheetTileSelectionUiScale * tileSize - sheetTileSelectionUiScale * tileSize) / (imageWidth - 0)
-        // (-imageWidth + sheetTileSelectionUiScale * tileSize) / imageWidth
-        // -1 + sheetTileSelectionUiScale * tileSize / imageWidth
-        // sheetTileSelectionUiScale * tileSize / imageWidth - 1
+        // (-imageWidth * sheetTileSelectionUiScale + 2 * tileSize * sheetTileSelectionUiScale - )
         //
         // And analogously for y.
-        setSheetTileSelectionRenderPos({
-            x: sheetTileSelectionUiScale * tileSize + x * (sheetTileSelectionUiScale * tileSize / imageWidth - 1),
-            y: sheetTileSelectionUiScale * tileSize + y * (sheetTileSelectionUiScale * tileSize / imageHeight - 1),
-        });
+        const pos = {
+            x: tileSize * sheetTileSelectionUiScale + x * (-imageWidth * sheetTileSelectionUiScale + tileSize * sheetTileSelectionUiScale) / imageWidth,
+            y: tileSize * sheetTileSelectionUiScale + y * (-imageHeight * sheetTileSelectionUiScale + tileSize * sheetTileSelectionUiScale) / imageHeight,
+        };
+
+        if (tileSheetSnapSelectionMode) {
+            pos.x = tileSize * sheetTileSelectionUiScale * Math.round(pos.x / (tileSize * sheetTileSelectionUiScale));
+            pos.y = tileSize * sheetTileSelectionUiScale * Math.round(pos.y / (tileSize * sheetTileSelectionUiScale));
+            console.log('snapped to ', pos);
+        }
+
+        setSheetTileSelectionRenderPos(pos);
         setTileSheetMouseMovePos({ x, y })
     }
 
@@ -330,7 +334,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             </div>
             <div className="mb-4 w-full col-span-4">
                 <label htmlFor="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3">Tile Sheet Snap Selection Mode</label>
-                <select className={TAILWIND_INPUT_CLASS_NAME} id="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3" value={tileSheetSnapSelectionMode} onChange={(e) => setTileSheetSnapSelectionMode(e.target.value)}>
+                <select className={TAILWIND_INPUT_CLASS_NAME} id="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3" value={tileSheetSnapSelectionMode} onChange={(e) => setTileSheetSnapSelectionMode(String(true) == e.target.value)}>
                     <option value={true}>Snap to Tile Size ({tileSize}px)</option>
                     <option value={false}>Do Not Snap to Tile Size</option>
                 </select>
@@ -346,7 +350,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 {(windowRegion != CHOCO_WINDOW_REGIONS.LEFT && windowRegion != CHOCO_WINDOW_REGIONS.RIGHT && windowRegion != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
             </div>
             <div className="col-span-4 row-span-3 mb-4 w-full">
-                <h4>Tile Sheet Image: (tilesize={tileSize}), (x, y) = ({tileSheetMouseMovePos?.x}, {tileSheetMouseMovePos?.y})</h4>
+                <h4>Tile Sheet Image: (tilesize={tileSize}), (x, y) = ({tileSheetMouseMovePos?.x}, {tileSheetMouseMovePos?.y}), dims={wholeTileSheetRef?.current?.naturalWidth}x{wholeTileSheetRef?.current?.naturalHeight}</h4>
                 {/* <img onMouseMove={onPreviewMouseMove} className="w-full" alt="Window Preview" src={null} ref={wholeTileSheetRef} /> */}
                 <img onMouseMove={onPreviewMouseMove} className="" alt="Window Preview" src={null} ref={wholeTileSheetRef} />
             </div>
@@ -377,7 +381,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                     <div
                         ref={sheetTileSelectionTileDiv}
                         className="w-full h-full sheet-tile-selection-mid-ground"
-                        style={{ backgroundImage: `url(${wholeTileSheetUrl})`, backgroundPositionX: sheetTileSelectionRenderPos?.x || 0, backgroundPositionY: sheetTileSelectionRenderPos?.y || 0 }}
+                        style={{ backgroundImage: `url(${wholeTileSheetUrl})`, backgroundSize: `${wholeTileSheetRef?.current?.naturalWidth * sheetTileSelectionUiScale}px ${wholeTileSheetRef?.current?.naturalHeight * sheetTileSelectionUiScale}px`, backgroundPositionX: sheetTileSelectionRenderPos?.x || 0, backgroundPositionY: sheetTileSelectionRenderPos?.y || 0 }}
                     >
                         <div ref={sheetTileGridOverlayDiv} className="w-full h-full"></div>
                     </div>
