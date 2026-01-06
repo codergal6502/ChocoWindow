@@ -382,7 +382,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                         }
                                     </ul>
                                 </li>
-                                <li>
+                                {/* <li>
                                     <button onClick={() => setTileSetsNavOpen(!tileSetsNavOpen)} className="block py-1 hover:bg-gray-700">
                                         <FontAwesomeIcon icon={tileSetsNavOpen ? faAngleDown : faAngleRight} />
                                         Tile Sets (depr)
@@ -394,7 +394,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                         </li>)
                                         }
                                     </ul>
-                                </li>
+                                </li> */}
                                 <li>
                                     <button onClick={() => setTileSetDefinitionsNavOpen(!tileSetDefinitionsNavOpen)} className="block py-1 hover:bg-gray-700">
                                         <FontAwesomeIcon icon={tileSetDefinitionsNavOpen ? faAngleDown : faAngleRight} />
