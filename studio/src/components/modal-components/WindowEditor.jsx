@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
-import { ChocoStudioPreset, ChocoStudioWindow } from "../../ChocoStudio"
+import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindow } from "../../ChocoStudio"
 import { ChocoWinWindow } from "../../ChocoWindow";
 import PresetEditor from "./PresetEditor";
 
-const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { Array<ChocoStudioPreset> } */ presets, /** @type { Array<ChocoWinTileSet } */ tileSets, onWindowChange, onWindowDelete, onReturnToCanvas }) => {
+/**
+ * @param {Object} props
+ * @param {ChocoStudioWindow} props.window
+ * @param {Array<ChocoStudioTileSheet>} props.tileSheets
+ * @param {Array<ChocoStudioPreset>} props.presets
+ * @param {Array<ChocoStudioTileSetDefinition>} props.tileSetDefinitions
+ * @param {function(ChocoStudioPreset):void} props.onWindowChange
+ * @param {function(String):void} props.onWindowDelete
+ * @param {function():void} props.onReturnToCanvas
+ */
+const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindowChange, onWindowDelete, onReturnToCanvas }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(window.name)
@@ -64,6 +74,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
         const value = e.target.value;
         setPresetId(value);
         const newWindow = new ChocoStudioWindow(window);
+        newWindow.singularPreset = null;
         newWindow.presetId = value;
         doOnWindowChange(newWindow);
     }
@@ -78,13 +89,18 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
 
     useEffect(() => {
         if (!imageRef.current) { return; }
-        if (!presetId) { alert('err'); return; }
+        if (!presetId) { return; }
 
         let preset = presets.find((p) => p.id == presetId);
         if (!preset) { return; }
-        let tileSet = tileSets.find((ts) => ts.id == preset.tileSetId);
 
-        let chocoWin = new ChocoWinWindow(tileSet, preset.tileScale, 0, 0, 450, 180);
+        let tileSetDefinition = tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId);
+        if (!tileSetDefinition) { return; }
+
+        let tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
+        if (!tileSheet) { return; }
+
+        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), preset.tileScale, 0, 0, 450, 180);
 
         if (preset.substituteColors && preset.substituteColors.length) {
             preset.substituteColors.forEach((col, idx) => {
@@ -156,7 +172,7 @@ const WindowEditor = ({ /** @type { ChocoStudioWindow } */ window, /** @type { A
             </select>
         </div>
 
-        {(!presetId) && <PresetEditor isSubordinate={true} preset={window.singularPreset || new ChocoStudioPreset()} tileSets={tileSets} onPresetChange={onSingularPresetChange} />}
+        {(!presetId) && <PresetEditor isSubordinate={true} preset={window.singularPreset || new ChocoStudioPreset()} tileSheets={tileSheets} tileSetDefinitions={tileSetDefinitions} onPresetChange={onSingularPresetChange} />}
         {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div></>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>

@@ -513,11 +513,11 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                         case FormStates.PRESET:
                                             if (!workspace.tileSetDefinitions) debugger;
                                             return (!activePreset) ? "" : (
-                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSetDefinitions={workspace.tileSetDefinitions} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSheets={workspace.tileSheets} tileSetDefinitions={workspace.tileSetDefinitions} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.WINDOW:
                                             return (!activeWindow) ? "" : (
-                                                <WindowEditor key={activeWindow.id} window={activeWindow} presets={workspace.presets} tileSets={workspace.tileSets} onWindowChange={onWindowChange} onWindowDelete={onWindowDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <WindowEditor key={activeWindow.id} window={activeWindow} presets={workspace.presets} tileSetDefinitions={workspace.tileSetDefinitions} tileSheets={workspace.tileSheets} onWindowChange={onWindowChange} onWindowDelete={onWindowDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             )
                                         case FormStates.LAYOUT:
                                             return (!activeLayout) ? "" : (

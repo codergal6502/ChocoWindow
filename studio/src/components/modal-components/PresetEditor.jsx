@@ -1,23 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoStudioPreset } from "../../ChocoStudio"
+import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../ChocoStudio"
 import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
 
 /**
  * @param {Object} props
  * @param {Boolean} props.isSubordinate
  * @param {ChocoStudioPreset} props.preset
- * @param {Array<TileSetDefinitions>} props.tileSetDefinitions
+ * @param {Array<ChocoStudioTileSheet>} props.tileSheets
+ * @param {Array<ChocoStudioTileSetDefinition>} props.tileSetDefinitions
  * @param {function(ChocoStudioPreset):void} props.onPresetChange
  * @param {function(String):void} props.onPresetDelete
  * @param {function():void} props.onReturnToCanvas
  */
-const PresetEditor = ({ isSubordinate = false, preset, tileSetDefinitions, onPresetChange, onPresetDelete, onReturnToCanvas }) => {
+const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefinitions, onPresetChange, onPresetDelete, onReturnToCanvas }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
     const [tileSetDefinition, setTileSetDefinition] = useState(tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId) || tileSetDefinitions[0])
-    const [tileSetDefinitionId, setTileSetDefinitionId] = useState(preset.tileSetId || tileSetDefinitions[0].id);
+    const [tileSetDefinitionId, setTileSetDefinitionId] = useState(preset.tileSetDefinitionId ?? null);
     const [tileScale, setTileScale] = useState(preset.tileScale || 1);
 
     const [substituteColors, setSubstituteColors] = useState(preset.substituteColors || []);
@@ -43,8 +44,10 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSetDefinitions, onPre
     useEffect(() => {
         if (!imageRef.current) { return; }
         if (!tileSetDefinition) { return; }
+        const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
+        if (!tileSheet) { return; }
 
-        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(), tileScale, 0, 0, 450, 180);
+        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), tileScale || 1, 0, 0, 450, 180);
 
         if (substituteColors && substituteColors.length) {
             substituteColors.forEach((col, idx) => {
@@ -144,6 +147,7 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSetDefinitions, onPre
         <div className="mb-4 w-full">
             <label htmlFor="7ed0e6ee-47bf-48ff-b54b-d919c60faad5">Tile Set Definition: </label>
             <select id="7ed0e6ee-47bf-48ff-b54b-d919c60faad5" className={TAILWIND_INPUT_CLASS_NAME} onChange={onTileSetDefinitionIdChange} value={tileSetDefinitionId}>
+                {preset.tileSetDefinitionId || <option key={""} value={null}>-</option>}
                 {tileSetDefinitions.map((ts) => <option key={ts.id} value={ts.id}>{ts.name}</option>)}
             </select>
         </div>

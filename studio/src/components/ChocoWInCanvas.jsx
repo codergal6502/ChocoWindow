@@ -311,34 +311,42 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                             if (onWorkspaceChange) onWorkspaceChange(ws);
 
                             const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
-                            if (preset) {
-                                const tileSet = ws.tileSets.find((ts) => ts.id == preset.tileSetId);
-                                const renderWindow = new ChocoWinWindow(tileSet, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
+                            if (!preset) return;
 
-                                renderWindow.isReady().then(() => {
-                                    // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
-                                    // that way, the logic for drawing into the divs can be isoalted and reused
-                                    // also rename window to ChocoWindowRenderer, since it's not a window
-                                    const canvas = document.createElement("canvas");
-                                    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-                                    canvas.width = studioWindow.w;
-                                    canvas.height = studioWindow.h;
+                            const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
+                            if (!tileSetDefintiion) return;
 
-                                    const styleSheet = styleRef.current.sheet;
-                                    renderWindow.drawTo(ctx);
-                                    const imageData = canvas.toDataURL();
-                                    const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
+                            const tileSheet = ws.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
+                            if (!tileSheet) return;
+
+                            const tileSetDefinition = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
+                            if (!tileSetDefinition) return;
+
+                            const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
+
+                            renderWindow.isReady().then(() => {
+                                // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
+                                // that way, the logic for drawing into the divs can be isoalted and reused
+                                // also rename window to ChocoWindowRenderer, since it's not a window
+                                const canvas = document.createElement("canvas");
+                                const ctx = canvas.getContext("2d", { willReadFrequently: true });
+                                canvas.width = studioWindow.w;
+                                canvas.height = studioWindow.h;
+
+                                const styleSheet = styleRef.current.sheet;
+                                renderWindow.drawTo(ctx);
+                                const imageData = canvas.toDataURL();
+                                const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
 
                                     /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
-                                    const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
+                                const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
 
-                                    if (oldRuleInx >= 0) {
-                                        styleSheet.deleteRule(oldRuleInx);
-                                    }
+                                if (oldRuleInx >= 0) {
+                                    styleSheet.deleteRule(oldRuleInx);
+                                }
 
-                                    styleSheet.insertRule(newRule);
-                                });
-                            }
+                                styleSheet.insertRule(newRule);
+                            });
                         },
                     }
                 })
@@ -412,34 +420,39 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
 
                     if (studioWindow) {
                         const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
-                        if (preset) {
-                            const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
-                            const tileSheet = ws.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
-                            const tileSet = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
-                            const renderWindow = new ChocoWinWindow(tileSet, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
+                        if (!preset) return;
 
-                            renderWindow.isReady().then(() => {
-                                // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
-                                // that way, the logic for drawing into the divs can be isoalted and reused
-                                // also rename window to ChocoWindowRenderer, since it's not a window
+                        const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
+                        if (!tileSetDefintiion) return;
 
-                                const styleSheet = styleRef.current.sheet;
-                                renderWindow.drawTo(ctx);
-                                const imageData = canvas.toDataURL();
-                                const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
+                        const tileSheet = ws.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
+                        if (!tileSheet) return;
+
+                        const tileSetDefinition = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
+                        if (!tileSetDefinition) return;
+
+                        const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
+                        renderWindow.isReady().then(() => {
+                            // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
+                            // that way, the logic for drawing into the divs can be isoalted and reused
+                            // also rename window to ChocoWindowRenderer, since it's not a window
+
+                            const styleSheet = styleRef.current.sheet;
+                            renderWindow.drawTo(ctx);
+                            const imageData = canvas.toDataURL();
+                            const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
 
                                 /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
-                                const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
+                            const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
 
-                                if (oldRuleInx >= 0) {
-                                    styleSheet.deleteRule(oldRuleInx);
-                                }
+                            if (oldRuleInx >= 0) {
+                                styleSheet.deleteRule(oldRuleInx);
+                            }
 
-                                styleSheet.insertRule(newRule);
+                            styleSheet.insertRule(newRule);
 
-                                makeDraggable(boundingBoxDiv);
-                            });
-                        }
+                            makeDraggable(boundingBoxDiv);
+                        });
                     }
                 })
             }
