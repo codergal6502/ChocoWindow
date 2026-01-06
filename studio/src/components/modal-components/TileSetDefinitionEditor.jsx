@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWinWindow, ChocoWinColor, ChocoWinTileSet } from "../../ChocoWindow";
+import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
 import { ChocoStudioWindowDefinition, ChocoStudioTileSheet, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
 import './TileSetDefinitionEditor.css';
-import { StaticCanvas, Polyline, Text, Rect, Point, Canvas, Line } from 'fabric'
+import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 
 // Tiles in the sheet tile selection.
 const TILES_IN_STS = 3;
@@ -40,8 +40,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [regionSizes, setRegionSizes] = useState(structuredClone(tileSetDefinition.regionSizes));
     const [tileSheetSnapSelectionMode, setTileSheetSnapSelectionMode] = useState(true);
     const [wholeTileSheetUrl, setWholeTileSheetUrl] = useState(null);
-    const [tileSheetMouseMovePos, setTileSheetMouseMovePos] = useState(null);
+    const [sheetTileLocation, setSheetTileLocation] = useState(null);
     const [sheetTileSelectionRenderPos, setSheetTileSelectionRenderPos] = useState(null);
+
+    const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
+
+    const [regionTileSelection, setRegionTileSelection] = useState({ x: 0, y: 0 });
 
     // Width for position select buttons
     const [posSelWidth, setPosSelWidth] = useState(tileSize || 24);
@@ -54,35 +58,64 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         if (sheetTileGridOverlayDiv && sheetTileGridOverlayDiv.current) {
             const canvas = new Canvas('canvasId');
             const lineWidth = 1;
+            const gridTileLength = sheetTileSelectionUiSize / TILES_IN_STS;
+            const translucentYellow = 'rgba(128, 128, 00, 0.5)';
+            const clear = 'rgba(00, 0, 00, 0)';
+
+            const drawNonCenterTileHaze = (x, y, color) => {
+                const rectangle = new Rect({
+                    left: x - 1,
+                    top: y - 1,
+                    fill: color,
+                    width: gridTileLength - 1,
+                    height: gridTileLength - 1,
+                    objectCaching: false,
+                    originX: 'left',
+                    originY: 'top'
+                })
+                canvas.add(rectangle);
+            }
 
             const drawPolyline = (points) => {
                 const polyline = new Polyline(points, {
                     stroke: 'black',
                     strokeWidth: lineWidth,
-                    fill: 'transparent' // Ensure fill is transparent
+                    fill: 'transparent'
                 });
                 canvas.add(polyline);
             }
 
             drawPolyline([
-                { x: sheetTileSelectionUiSize / TILES_IN_STS, y: 0 },
-                { x: sheetTileSelectionUiSize / TILES_IN_STS, y: sheetTileSelectionUiSize }
+                { x: gridTileLength, y: 0 },
+                { x: gridTileLength, y: sheetTileSelectionUiSize }
+            ], true);
+
+            drawPolyline([
+                { x: gridTileLength * 2, y: 0 },
+                { x: gridTileLength * 2, y: sheetTileSelectionUiSize }
             ]);
 
             drawPolyline([
-                { x: (sheetTileSelectionUiSize / TILES_IN_STS) * 2, y: 0 },
-                { x: (sheetTileSelectionUiSize / TILES_IN_STS) * 2, y: sheetTileSelectionUiSize }
+                { x: 0, y: gridTileLength },
+                { x: sheetTileSelectionUiSize, y: gridTileLength }
             ]);
 
             drawPolyline([
-                { x: 0, y: sheetTileSelectionUiSize / TILES_IN_STS },
-                { x: sheetTileSelectionUiSize, y: sheetTileSelectionUiSize / TILES_IN_STS }
+                { x: 0, y: gridTileLength * 2 },
+                { x: sheetTileSelectionUiSize, y: gridTileLength * 2 }
             ]);
 
-            drawPolyline([
-                { x: 0, y: (sheetTileSelectionUiSize / TILES_IN_STS) * 2 },
-                { x: sheetTileSelectionUiSize, y: (sheetTileSelectionUiSize / TILES_IN_STS) * 2 }
-            ]);
+            drawNonCenterTileHaze(0, 0, translucentYellow);
+            drawNonCenterTileHaze(gridTileLength, 0, translucentYellow);
+            drawNonCenterTileHaze(gridTileLength * 2, 0, translucentYellow);
+
+            drawNonCenterTileHaze(0, gridTileLength, translucentYellow);
+            drawNonCenterTileHaze(gridTileLength, gridTileLength, clear);
+            drawNonCenterTileHaze(gridTileLength * 2, gridTileLength, translucentYellow);
+
+            drawNonCenterTileHaze(0, gridTileLength * 2, translucentYellow);
+            drawNonCenterTileHaze(gridTileLength, gridTileLength * 2, translucentYellow);
+            drawNonCenterTileHaze(gridTileLength * 2, gridTileLength * 2, translucentYellow);
 
             canvas.renderAll();
             const imageSrc = canvas.toDataURL();
@@ -253,19 +286,15 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         doOnTileSetDefinitionDelete(tileSetDefinition.id);
     };
 
-    /**
-     * 
-     * @param {MouseEvent} e 
-     */
-    const onPreviewMouseMove = (e) => {
+    const showTileSheetTileInSheetTileSelection = (clientX, clientY) => {
         if (!wholeTileSheetRef || !wholeTileSheetRef.current) return;
 
         /** @type {DOMRect} */ const rect = wholeTileSheetRef.current.getBoundingClientRect();
 
         const imageWidth = wholeTileSheetRef.current.naturalWidth;
         const imageHeight = wholeTileSheetRef.current.naturalHeight;
-        const x = Math.max(0, Math.min(Math.round(e.clientX - rect.left + 1), imageWidth));
-        const y = Math.max(0, Math.min(Math.round(e.clientY - rect.top + 1), imageHeight));
+        const x = Math.max(0, Math.min(Math.round(clientX - rect.left + 1), imageWidth));
+        const y = Math.max(0, Math.min(Math.round(clientY - rect.top + 1), imageHeight));
 
         // At sx = 0,          dx = tileSize * sheetTileSelectionUiScale
         // At sx = imageWidth, dx = -imageWidth * sheetTileSelectionUiScale + 2 * tileSize * sheetTileSelectionUiScale
@@ -282,12 +311,78 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         if (tileSheetSnapSelectionMode) {
             pos.x = tileSize * sheetTileSelectionUiScale * Math.round(pos.x / (tileSize * sheetTileSelectionUiScale));
             pos.y = tileSize * sheetTileSelectionUiScale * Math.round(pos.y / (tileSize * sheetTileSelectionUiScale));
-            console.log('snapped to ', pos);
         }
 
+        setSheetTileLocation({x: Math.floor(tileSize -pos.x / sheetTileSelectionUiScale), y: Math.floor(tileSize - pos.y / sheetTileSelectionUiScale)});
         setSheetTileSelectionRenderPos(pos);
-        setTileSheetMouseMovePos({ x, y })
     }
+
+    const onPreviewMouseEnter = () => {
+        setSheetTileSelectionSemiLocked(false);
+    }
+
+    /**
+     * @param {MouseEvent} e 
+     */
+    const onPreviewMouseMove = (e) => {
+        if (!sheetTileSelectionSemiLocked) {
+            showTileSheetTileInSheetTileSelection(e.clientX, e.clientY);
+        }
+    }
+
+    /**
+     * @param {MouseEvent} e 
+     */
+    const onPreviewMouseClick = (e) => {
+        setSheetTileSelectionSemiLocked(true);
+        showTileSheetTileInSheetTileSelection(e.clientX, e.clientY);
+    }
+
+    const onPreviewMouseLeave = () => {
+        // setSheetTileSelectionRenderPos(null);
+    }
+
+    const regionTileSelectionButtonClick = (e, x, y) => {
+        if (regionTileSelection?.x == x && regionTileSelection?.y == y) {
+            setRegionTileSelection(null);
+            const image = FabricImage.fromURL(wholeTileSheetUrl);
+            
+            image.then((img) => {
+                const canvas = new Canvas('c');
+                
+                img.set({
+                    clipPath: new Rect({
+                        left: 0,
+                        top: 0,
+                        width: img.width,
+                        height: img.height,
+                        absolutePositioned: true,
+                        originX: "left",
+                        originY: "top",
+                    }),
+                    left: -sheetTileLocation?.x ?? 0,
+                    top: -sheetTileLocation?.y ?? 0,
+                })
+
+                img.originX = 'left';
+                img.originY = 'top';
+
+                canvas.width = tileSize;
+                canvas.height = tileSize;
+                canvas.add(img);
+                canvas.renderAll();
+                const specificTileDataUrl = canvas.toDataURL();
+
+                e.target.style.backgroundImage = `url(${specificTileDataUrl})`;
+                e.target.style.backgroundSize = "100%";
+            });
+        }
+        else {
+            setRegionTileSelection({ x, y })
+        }
+    }
+
+    const isTileSelected = (x, y) => (regionTileSelection?.x == x && regionTileSelection?.y == y);
 
     return <>
         <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Set Definition <span className="text-sm">({tileSetDefinition.id})</span></h2>
@@ -350,25 +445,20 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 {(windowRegion != CHOCO_WINDOW_REGIONS.LEFT && windowRegion != CHOCO_WINDOW_REGIONS.RIGHT && windowRegion != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
             </div>
             <div className="col-span-4 row-span-3 mb-4 w-full">
-                <h4>Tile Sheet Image: (tilesize={tileSize}), (x, y) = ({tileSheetMouseMovePos?.x}, {tileSheetMouseMovePos?.y}), dims={wholeTileSheetRef?.current?.naturalWidth}x{wholeTileSheetRef?.current?.naturalHeight}</h4>
-                {/* <img onMouseMove={onPreviewMouseMove} className="w-full" alt="Window Preview" src={null} ref={wholeTileSheetRef} /> */}
-                <img onMouseMove={onPreviewMouseMove} className="" alt="Window Preview" src={null} ref={wholeTileSheetRef} />
+                <h4>Tile Sheet Image:</h4>
+                <img onMouseEnter={onPreviewMouseEnter} onMouseMove={onPreviewMouseMove} onClick={onPreviewMouseClick} onMouseLeave={onPreviewMouseLeave} className="" alt="Window Preview" src={null} ref={wholeTileSheetRef} />
             </div>
 
             <div ref={regionTileSelectionRef} className="mb-4 w-full col-span-3">
                 <h4>Region Tile Selection</h4>
-                <p className="mb-2 text-sm italic">Select on a region position to modify, then find the tile in the tile sheet. {posSelWidth}</p>
-                {/* <div
-                    style={{'--col-count': regionSizes[windowRegion].width || 1, '--row-count': regionSizes[windowRegion].height || 1}}
-                    className={`grid grid-cols-[var(--col-count)] grid-rows-[var(--row-count)] gap-4`}
-                    > */}
+                <p className="mb-2 text-sm italic">Select a region position to modify, then find the tile in the tile sheet.</p>
                 <div
                     style={{ '--col-count': `repeat(${regionSizes[windowRegion].width || 1}, minmax(0, 1fr))`, '--row-count': `repeat(${regionSizes[windowRegion].height || 1}, minmax(0, 1fr))` }}
                     className={`grid grid-cols-[var(--col-count)] grid-rows-[var(--row-count)] gap-4`}
                 >
                     {Array.from({ length: regionSizes[windowRegion].width || 1 }).map((_, x) =>
                         Array.from({ length: regionSizes[windowRegion].height || 1 }).map((_, y) =>
-                            <button key={`tile-selector-${x}-${y}`} style={{ '--pos-sel-width': `${posSelWidth}px` }} className={`w-[var(--pos-sel-width)] h-[var(--pos-sel-width)] bg-blue-500 text-white rounded font-mono text-xs`}>({x + 1}, {y + 1})</button>)
+                            <button onClick={(e) => regionTileSelectionButtonClick(e, x, y)} key={`tile-selector-${x}-${y}`} style={{ '--pos-sel-width': `${posSelWidth}px` }} className={`${isTileSelected(x, y) && "selected-tile"} w-[var(--pos-sel-width)] h-[var(--pos-sel-width)] ${!isTileSelected(x, y) && "bg-blue-500"} text-white rounded font-mono text-xs`}>({x + 1}, {y + 1})</button>)
                     )}
 
                 </div>
@@ -376,8 +466,18 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             <div className="mb-4 w-full col-span-3">
                 <h4>Sheet Tile Selection</h4>
                 <p className="mb-2 text-sm italic">Approximately click on the tile in the tile sheet, then pick a precise location below.</p>
-                <p className="mb-2 text-sm italic">(x, y) = ({Math.floor(sheetTileSelectionRenderPos?.x)}, {Math.floor(sheetTileSelectionRenderPos?.y)}); zoom = {sheetTileSelectionUiScale}</p>
-                <div ref={sheetTileSelectionDiv} style={{ '--tile-sel-size': `${sheetTileSelectionUiSize}px` }} className="tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
+                {/* <p className="mb-2 text-sm italic">(x, y) = ({Math.floor(sheetTileSelectionRenderPos?.x)}, {Math.floor(sheetTileSelectionRenderPos?.y)}); zoom = {sheetTileSelectionUiScale}</p> */}
+                <div className="grid grid-cols-2">
+                    <div className="mr-2 mb-2">
+                        <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X</label>
+                        <input placeholder="x" type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} value={sheetTileLocation?.x} />
+                    </div>
+                    <div className="ml-2 mb-2">
+                        <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
+                        <input placeholder="x" type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} value={sheetTileLocation?.y} />
+                    </div>
+                </div>
+                <div ref={sheetTileSelectionDiv} style={{ '--tile-sel-size': `${sheetTileSelectionUiSize}px` }} className="mx-auto tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
                     <div
                         ref={sheetTileSelectionTileDiv}
                         className="w-full h-full sheet-tile-selection-mid-ground"

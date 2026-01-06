@@ -6,3 +6,19 @@ div.tile-sheet-position-selector {
 div.sheet-tile-selection-mid-ground {
     background-repeat: no-repeat;
 }
+
+@keyframes regionTileSelectionButtonOscillation {
+    0% {
+        background-color: rgba(64, 128, 64, 1);
+    }
+    50% {
+        background-color: rgba(64, 196, 64, 1);
+    }
+    100% {
+        background-color: rgba(64, 128, 64, 1);
+    }
+}
+
+button.selected-tile {
+    animation: regionTileSelectionButtonOscillation 2s infinite;
+}
