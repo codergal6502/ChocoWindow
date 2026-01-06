@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-svg-icons";
 import { ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioWindowDefinition } from "../ChocoStudio.js";
+import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition } from "../ChocoStudio.js";
 import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
@@ -42,7 +42,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
     // For each section, what is active (if anything).
     const [/** @type {ChocoStudioTileSheet} */ activeTileSheet, setActiveTileSheet] = useState(null);
     const [/** @type {ChocoWinTileSet} */ activeTileSet, setActiveTileSet] = useState(null);
-    const [/** @type {ChocoStudioWindowDefinition} */ activeTileSetDefinition, setActiveTileSetDefinition] = useState(null);
+    const [/** @type {ChocoStudioTileSetDefinition} */ activeTileSetDefinition, setActiveTileSetDefinition] = useState(null);
     const [/** @type {ChocoStudioPreset} */ activePreset, setActivePreset] = useState(null);
     const [/** @type {ChocoStudioLayout} */ activeLayout, setActiveLayout] = useState(null);
     const [/** @type {ChocoStudioWindow} */ activeWindow, setActiveWindow] = useState(null);
@@ -92,7 +92,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
     }
 
     /**
-     * @param {ChocoStudioWindowDefinition} modifiedTileSetDefinition
+     * @param {ChocoStudioTileSetDefinition} modifiedTileSetDefinition
      */
     const onTileSetDefinitionChange = (modifiedTileSetDefinition) => {
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
@@ -294,12 +294,12 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
             setFormState(FormStates.TILE_SET_DEFINITION);
         }
 
-        const newTileSetDefinition = new ChocoStudioWindowDefinition();
+        const newTileSetDefinition = new ChocoStudioTileSetDefinition();
 
         setActiveTileSetDefinition(newTileSetDefinition);
     }
 
-    const tileSetDefinitionNavOnClick = (/** @type {ChocoStudioWindowDefinition} */ tileSetDefinition) => {
+    const tileSetDefinitionNavOnClick = (/** @type {ChocoStudioTileSetDefinition} */ tileSetDefinition) => {
         if (FormStates.TILE_SET_DEFINITION != formState) {
             setFormState(FormStates.TILE_SET_DEFINITION);
         }

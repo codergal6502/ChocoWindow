@@ -36,29 +36,37 @@ const CHOCO_WINDOW_REGIONS = Object.freeze({
     BOTTOM_RIGHT: "BOTTOM_RIGHT"
 });
 
-class ChocoStudioWindowRegionSize {
+class ChocoStudioWindowRegionDefinition {
     /**
      * Default constructor
      */
     /**
      * Copy constructor; useful for loading JSON.
-     * @param {ChocoStudioWindowRegionSize} arg1 
+     * @param {ChocoStudioWindowRegionDefinition} arg1 
      */
     constructor(arg1) {
         if (!arg1) {
-            this.width = 1;
-            this.height = 1;
+            /** @type {Number} */ this.width = 1;
+            /** @type {Number} */ this.height = 1;
+            /** @type {{ x: Number, y: Number }[][]} */ this.tileSheetPositions = [[{ x: 0, y: 0 }]]
+        }
+        else {
+            this.width = arg1.width;
+            this.height = arg1.height;
+            this.tileSheetPositions = arg1.tileSheetPositions.map((col) =>
+                col.map((pos) => ({ x: pos.x, y: pos.y }))
+            )
         }
     }
 }
 
-class ChocoStudioWindowDefinition {
+class ChocoStudioTileSetDefinition {
     /**
      * Default constructor
      */
     /**
      * Copy constructor; useful for loading JSON.
-     * @param {ChocoStudioWindowDefinition} arg1 
+     * @param {ChocoStudioTileSetDefinition} arg1 
      */
     constructor(arg1) {
         if (!arg1) {
@@ -66,24 +74,34 @@ class ChocoStudioWindowDefinition {
             /** @type {String} */ this.name = "";
             /** @type {String} */ this.tileSheetId = "";
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
-            /** @type {Object.<String, ChocoStudioWindowRegionSize} */ this.regionSizes = { }
+            /** @type {Object.<String, ChocoStudioWindowRegionDefinition} */ this.regions = {}
 
-            this.regionSizes[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.TOP_RIGHT] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.LEFT] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.CENTER] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.RIGHT] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.BOTTOM] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
-            this.regionSizes[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT] = new ChocoStudioWindowRegionSize({width: 1, height: 1});
+            this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.LEFT] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.CENTER] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.RIGHT] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.BOTTOM] = new ChocoStudioWindowRegionDefinition();
+            this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT] = new ChocoStudioWindowRegionDefinition();
         }
         else {
             this.id = arg1.id;
             this.name = arg1.name;
             this.tileSheetId = arg1.tileSheetId;
             this.tileSize = arg1.tileSize;
-            this.regionSizes = Object.assign({ }, arg1.regionSizes);
+
+            this.regions = {}
+            this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT]);
+            this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP]);
+            this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT]);
+            this.regions[CHOCO_WINDOW_REGIONS.LEFT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.LEFT]);
+            this.regions[CHOCO_WINDOW_REGIONS.CENTER] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.CENTER]);
+            this.regions[CHOCO_WINDOW_REGIONS.RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.RIGHT]);
+            this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT]);
+            this.regions[CHOCO_WINDOW_REGIONS.BOTTOM] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM]);
+            this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT]);
         }
     }
 }
@@ -109,7 +127,7 @@ class ChocoStudioPreset {
             this.id = arg1.id;
             this.tileSetId = arg1.tileSetId
             this.tileScale = arg1.tileScale
-            this.substituteColors = arg1.substituteColors?.map((c) => new ChocoWinColor(c)) || [];
+            this.substituteColors = arg1.substituteColors.map((c) => new ChocoWinColor(c));
         }
     }
 }
@@ -203,7 +221,7 @@ class ChocoStudioWorkspace {
             /** @type { Number } */ this.width = 1920;
             /** @type { Number } */ this.height = 1080;
             /** @type {Array<ChocoStudioTileSheet>} */ this.tileSheets = [];
-            /** @type {Array<ChocoStudioWindowDefinition>} */ this.tileSetDefinitions = [];
+            /** @type {Array<ChocoStudioTileSetDefinition>} */ this.tileSetDefinitions = [];
             /** @type {Array<ChocoWinTileSet>} */ this.tileSets = [];
             /** @type {Array<ChocoStudioPreset} */ this.presets = [];
             /** @type {Array<ChocoStudioLayout} */ this.layouts = [];
@@ -216,7 +234,7 @@ class ChocoStudioWorkspace {
             this.width = arg1.width;
             this.height = arg1.height;
             this.tileSheets = arg1.tileSheets.map((ts => new ChocoStudioTileSheet(ts)));
-            this.tileSetDefinitions = arg1.tileSetDefinitions.map((tsd) => new ChocoStudioWindowDefinition(tsd));
+            this.tileSetDefinitions = arg1.tileSetDefinitions.map((tsd) => new ChocoStudioTileSetDefinition(tsd));
             this.tileSets = arg1.tileSets.map((ts) => new ChocoWinTileSet(ts));
             this.presets = arg1.presets.map((wp) => new ChocoStudioPreset(wp));
             this.layouts = arg1.layouts.map((wp) => new ChocoStudioLayout(wp));
@@ -226,4 +244,4 @@ class ChocoStudioWorkspace {
     }
 }
 
-export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioWindowDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionSize };
+export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition as ChocoStudioWindowRegionSize };

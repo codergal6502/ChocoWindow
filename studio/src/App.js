@@ -26,7 +26,7 @@ const App = () => {
     }
     catch (e) {
       console.error(e);
-      alert('An unexpected error occurred; check the console log for details.')
+      // alert('An unexpected error occurred; check the console log for details.')
     }
 
     return new ChocoStudioWorkspace();
