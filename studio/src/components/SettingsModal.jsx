@@ -118,14 +118,14 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
         setActiveTileSheet(null);
     }
 
-    const onTileSetDelete = (id) => {
+    const onTileSetDefinitionDelete = (id) => {
         setFormState(FormStates.SETTINGS);
 
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.tileSets.findIndex((p) => p.id == id);
+        const idx = modifiedWorkspace.tileSetDefinitions.findIndex((p) => p.id == id);
 
         if (idx >= 0) {
-            modifiedWorkspace.tileSets.splice(idx, 1);
+            modifiedWorkspace.tileSetDefinitions.splice(idx, 1);
         }
 
         doSetWorkspace(modifiedWorkspace);
@@ -508,7 +508,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                             );
                                         case FormStates.TILE_SET_DEFINITION:
                                             return (!activeTileSetDefinition) ? "" : (
-                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.PRESET:
                                             if (!workspace.tileSetDefinitions) debugger;

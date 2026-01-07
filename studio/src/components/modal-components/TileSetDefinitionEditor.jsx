@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWinWindow, ChocoWinColor, ChocoWinTileSet } from "../../ChocoWindow";
-import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition } from "../../ChocoStudio";
+import { ChocoWinWindow } from "../../ChocoWindow";
+import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
 import './TileSetDefinitionEditor.css';
 import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 
@@ -24,34 +24,42 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const hasChangeHandler = onTileSetDefinitionChange && typeof onTileSetDefinitionChange == "function";
     const hasDeleteHandler = onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == "function";
 
-    const [substituteColors, setSubstituteColors] = useState([]);
-    const [substituteColorsDelayed, setSubstituteColorsDelayed] = useState([]);
+    // const [substituteColors, setSubstituteColors] = useState([]);
+    // const [substituteColorsDelayed, setSubstituteColorsDelayed] = useState([]);
 
-    const wholeTileSheetRef = useRef(null);
-    const regionTileSelectionRef = useRef(null);
-    const sheetTileSelectionDiv = useRef(null);
-    const sheetTileSelectionTileDiv = useRef(null);
-    const sheetTileGridOverlayDiv = useRef(null);
+    const wholeTileSheetContainerRef = useRef(null);
+    const preciseSelectionContainerRef = useRef(null);
+    const preciseSelectionZoomedRef = useRef(null);
+    const preciseSelectionGridRef = useRef(null);
+    const tileAssignmentContainerRef = useRef(null);
     const previewRef = useRef(null);
 
+    // Domain Object Field States
     const [name, setName] = useState(tileSetDefinition.name);
     const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
     const [tileSize, setTileSize] = useState(tileSetDefinition.tileSize);
-    const [windowRegionIdentifier, setWindowRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
     const [regions, setRegions] = useState(structuredClone(tileSetDefinition.regions));
-    const [tileSheetSnapSelectionMode, setTileSheetSnapSelectionMode] = useState(true);
-    const [wholeTileSheetUrl, setWholeTileSheetUrl] = useState(tileSheets.find((ts) => ts.id == tileSetDefinition?.tileSheetId)?.imageDataUrl);
 
+    // Editor-Only Field States
+    const [windowRegionIdentifier, setWindowRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
+    const [tileSheetSnapSelectionMode, setTileSheetSnapSelectionMode] = useState(true);
+
+    // Other Editor State
+    const [showLowerUi, setShowLowerUi] = useState(tileSetDefinition.tileSheetId ? true : false);
+    const [wholeTileSheetUrl, setWholeTileSheetUrl] = useState(tileSheets.find((ts) => ts.id == tileSetDefinition?.tileSheetId)?.imageDataUrl);
     const [wholeTileSheetImage, setWholeTileSheetImage] = useState(null);
+
     useEffect(() => {
+        if (!showLowerUi) return;
         const image = FabricImage.fromURL(wholeTileSheetUrl);
         image.then((i) => setWholeTileSheetImage(i));
-    }, [wholeTileSheetUrl])
+    }, [showLowerUi, wholeTileSheetUrl, tileSheetId])
 
     const [sheetTileLocation, setSheetTileLocation] = useState(null);
     const [sheetTileSelectionRenderPos, setSheetTileSelectionRenderPos] = useState(null);
 
     const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
+
     // Tile assignment for position select buttons
     const [tileAssignmentTileSize, setTileAssignmentTileSize] = useState(tileSize || 24);
 
@@ -59,15 +67,16 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [sheetTileSelectionUiScale, setsheetTileSelectionUiScale] = useState(3);
     const [sheetTileSelectionUiSize, setSheetTileSelectionUiSize] = useState(tileSize * 3 || 72);
 
+    // Initial load drawing.
     useEffect(() => {
-        if (previewRef && !previewRef.current) { console.warn('preview ref not done');}
-        if (previewRef && previewRef.current && tileSetDefinition && tileSheets && tileSetDefinition.tileSize) {
+        if (showLowerUi && previewRef && previewRef.current && tileSheets && tileSetDefinition && tileSetDefinition.tileSize) {
             updatePreviewRef(tileSetDefinition)
         }
-    }, [previewRef, tileSetDefinition, tileSheets])
+    }, [showLowerUi, previewRef, tileSheets, tileSetDefinition])
 
+    // draw grid over precise selection grid.
     useEffect(() => {
-        if (sheetTileGridOverlayDiv && sheetTileGridOverlayDiv.current) {
+        if (showLowerUi && preciseSelectionGridRef && preciseSelectionGridRef.current) {
             const canvas = new Canvas('canvasId');
             const lineWidth = 1;
             const gridTileLength = sheetTileSelectionUiSize / TILES_IN_STS;
@@ -131,99 +140,53 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
             canvas.renderAll();
             const imageSrc = canvas.toDataURL();
-            sheetTileGridOverlayDiv.current.style.backgroundImage = `url(${imageSrc})`;
+            preciseSelectionGridRef.current.style.backgroundImage = `url(${imageSrc})`;
         }
-    }, [sheetTileGridOverlayDiv, sheetTileSelectionUiScale, sheetTileSelectionUiSize])
+    }, [showLowerUi, preciseSelectionGridRef, sheetTileSelectionUiScale, sheetTileSelectionUiSize])
 
     useEffect(() => {
-
-    }, [sheetTileSelectionUiScale, sheetTileSelectionUiSize])
-
-    useEffect(() => {
+        if (!showLowerUi) return;
         // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
 
         const regionTileWidth = regions[windowRegionIdentifier].width || 1;
-        if (!regionTileSelectionRef.current || !regions[windowRegionIdentifier]) {
+        if (!tileAssignmentContainerRef.current || !regions[windowRegionIdentifier]) {
             setTileAssignmentTileSize(tileSize);
         }
         else {
             // Similar to the tile selection size, but this changes dynamically with how many tiles the region is.
-            const possibleScale = Math.floor((regionTileSelectionRef.current.offsetWidth / regionTileWidth - 4 * regionTileWidth) / tileSize);
+            const possibleScale = Math.floor((tileAssignmentContainerRef.current.offsetWidth / regionTileWidth - 4 * regionTileWidth) / tileSize);
             setTileAssignmentTileSize(tileSize * Math.min(BIGGEST_ZOOM_FACTOR, possibleScale));
         }
 
-    }, [regionTileSelectionRef, tileSize, regions, windowRegionIdentifier])
+    }, [showLowerUi, tileAssignmentContainerRef, tileSize, regions, windowRegionIdentifier])
 
     useEffect(() => {
+        if (!showLowerUi) return;
         // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
-        if (!sheetTileSelectionDiv.current) {
+        if (!preciseSelectionContainerRef.current) {
             setSheetTileSelectionUiSize(TILES_IN_STS * tileSize);
         }
         else {
             // Similar to the region tile selection width, but this is always three tiles square.
-            const possibleScale = Math.floor((sheetTileSelectionDiv.current.parentElement.offsetWidth / 3 - 12) / tileSize);
+            const possibleScale = Math.floor((preciseSelectionContainerRef.current.parentElement.offsetWidth / 3 - 12) / tileSize);
             const actualScale = Math.min(BIGGEST_ZOOM_FACTOR, possibleScale);
             setsheetTileSelectionUiScale(actualScale);
             setSheetTileSelectionUiSize(TILES_IN_STS * tileSize * actualScale);
         }
-    }, [tileSize, sheetTileSelectionDiv])
+    }, [showLowerUi, tileSize, preciseSelectionContainerRef])
 
     useEffect(() => {
-        if (wholeTileSheetRef && wholeTileSheetRef.current) {
+        if (!showLowerUi) return;
+        if (wholeTileSheetContainerRef && wholeTileSheetContainerRef.current) {
             const tileSheet = tileSheets.find((ts) => ts.id == tileSheetId);
             if (tileSheet && tileSheet.imageDataUrl) {
-                wholeTileSheetRef.current.src = tileSheet.imageDataUrl;
+                wholeTileSheetContainerRef.current.src = tileSheet.imageDataUrl;
 
                 setWholeTileSheetUrl(tileSheet.imageDataUrl);
                 return;
             }
         }
-    }, [wholeTileSheetRef, tileSheetId])
-
-    let subColsTimedTimeout = null;
-
-    useEffect(() => {
-        if (substituteColorsDelayed && substituteColorsDelayed.length) {
-            if (subColsTimedTimeout) {
-                clearTimeout(subColsTimedTimeout);
-            }
-
-            setTimeout(() => { setSubstituteColors(substituteColorsDelayed); }, 50)
-        }
-
-    }, [substituteColorsDelayed])
-
-    useEffect(() => {
-        if (!wholeTileSheetRef.current) { return; }
-        let chocoWin = new ChocoWinWindow(tileSetDefinition, 3, 0, 0, 450, 180);
-
-        if (substituteColors && substituteColors.length) {
-            substituteColors.forEach((col, idx) => {
-                chocoWin.substituteColor(idx, col);
-            });
-        }
-
-        chocoWin.isReady().then(() => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 450;
-            canvas.height = 180;
-            canvas.style.imageRendering = "pixelated";
-
-            const /** @type {CanvasRenderingContext2D} */ ctx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb" });
-            ctx.imageSmoothingEnabled = false;
-
-            chocoWin.drawTo(ctx);
-
-            let dataUrl = canvas.toDataURL("image/png", 1);
-            alert("wrong image ref"); debugger; //imageRef.current.src = dataUrl;
-        });
-    }, [tileSetDefinition, substituteColors, wholeTileSheetRef])
-
-    const subColorOnChange = ((e, colorIndex) => {
-        let newSubCols = substituteColors.slice();
-        newSubCols[colorIndex] = new ChocoWinColor(e.target.value);
-        setSubstituteColorsDelayed(newSubCols);
-    });
+    }, [showLowerUi, wholeTileSheetContainerRef, tileSheetId])
 
     /**
      * @param {function(ChocoStudioTileSetDefinition): void} propModCallback
@@ -253,6 +216,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      */
     const onTileSheetIdChange = (e) => {
         setTileSheetId(e.target.value);
+        if (!showLowerUi) setShowLowerUi(true);
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.tileSheetId = e.target.value);
     };
 
@@ -267,16 +231,14 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     /**
      * @param {InputEvent} e 
      */
-    const windowRegionIdentifierOnChange = (e) => {
+    const onWindowRegionIdentifierChange = (e) => {
         setWindowRegionIdentifier(e.target.value);
     }
-
-    // useEffect(() => { debugger; }, [tileAssignmentButtonRefs]);
 
     /**
      * @param {InputEvent} e
      */
-    const regionWidthOnChange = (e) => {
+    const onRegionWidthChange = (e) => {
         const newRegions = structuredClone(regions);
         newRegions[windowRegionIdentifier].width = e.target.value;
         setRegions(newRegions);
@@ -286,30 +248,20 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     /**
      * @param {InputEvent} e
      */
-    const regionHeightOnChange = (e) => {
+    const onRegionHeightChange = (e) => {
         const newRegionSizes = structuredClone(regions);
         newRegionSizes[windowRegionIdentifier].height = e.target.value;
         setRegions(newRegionSizes);
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegionSizes);
     };
 
-    const doOnTileSetDefinitionDelete = (id) => {
-        if (onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == 'function') {
-            onTileSetDefinitionDelete(tileSetDefinition.id);
-        }
-    }
-
-    const deleteTileSetDefinitionOnClick = () => {
-        doOnTileSetDefinitionDelete(tileSetDefinition.id);
-    };
-
     const showTileSheetTileInSheetTileSelection = (clientX, clientY) => {
-        if (!wholeTileSheetRef || !wholeTileSheetRef.current) return;
+        if (!showLowerUi || !wholeTileSheetContainerRef || !wholeTileSheetContainerRef.current) return;
 
-        /** @type {DOMRect} */ const rect = wholeTileSheetRef.current.getBoundingClientRect();
+        /** @type {DOMRect} */ const rect = wholeTileSheetContainerRef.current.getBoundingClientRect();
 
-        const imageWidth = wholeTileSheetRef.current.naturalWidth;
-        const imageHeight = wholeTileSheetRef.current.naturalHeight;
+        const imageWidth = wholeTileSheetContainerRef.current.naturalWidth;
+        const imageHeight = wholeTileSheetContainerRef.current.naturalHeight;
         const x = Math.max(0, Math.min(Math.round(clientX - rect.left + 1), imageWidth));
         const y = Math.max(0, Math.min(Math.round(clientY - rect.top + 1), imageHeight));
 
@@ -410,8 +362,9 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const updatePreviewRef = (newTileSetDefinition) => {
 
         if (!previewRef.current) { return; }
-
-        const tileSet = newTileSetDefinition.toChocoWinTileSet(wholeTileSheetUrl);
+        const tileSheet = tileSheets.find((ts) => ts.id == newTileSetDefinition.tileSheetId);
+        if (!tileSheet) return;
+        const tileSet = newTileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl);
 
         let chocoWin = new ChocoWinWindow(tileSet, 3, 0, 0, 450, 180);
         chocoWin.isReady().then(() => {
@@ -437,7 +390,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      */
     const tileAssignmentButtonOnClick = (e, tileIndexX, tileIndexY) => {
         // Update the UI.
-        // const image = FabricImage.fromURL(wholeTileSheetUrl);
         if (!wholeTileSheetImage) {
             console.error("wholeTileSheetImage isn't loaded by the user tile assignment happeend.");
             return;
@@ -453,6 +405,16 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         setRegions(newRegions);
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
     }
+
+    const doOnTileSetDefinitionDelete = (id) => {
+        if (hasDeleteHandler) {
+            onTileSetDefinitionDelete(tileSetDefinition.id);
+        }
+    }
+
+    const deleteTileSetDefinitionOnClick = () => {
+        doOnTileSetDefinitionDelete(tileSetDefinition.id);
+    };
 
     return <>
         <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Set Definition <span className="text-sm">({tileSetDefinition.id})</span></h2>
@@ -476,111 +438,115 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             </div>
         </div>
 
-        <h3 className="mb-1 font-bold text-xl">Window Regions</h3>
-        <p className="mb-2 text-sm italic mx-6">There are nine window regions: four corners, four edges, and the center. Top and bottom edges will repeat horizontally. Left and right edges will repeat vertically. The center will repeat in both directions.</p>
-        <div className={`grid grid-cols-10 gap-4`}>
-            <div className="col-span-4 w-full">
-                <label htmlFor="fca684ea-2f2e-459a-ae5c-99e602f3d57e">Window Region:</label>
-                <select className={TAILWIND_INPUT_CLASS_NAME} id="fca684ea-2f2e-459a-ae5c-99e602f3d57e" value={windowRegionIdentifier} onChange={windowRegionIdentifierOnChange}>
-                    <option value={CHOCO_WINDOW_REGIONS.TOP_LEFT}>Top-Left Corner</option>
-                    <option value={CHOCO_WINDOW_REGIONS.TOP}>Top Edge</option>
-                    <option value={CHOCO_WINDOW_REGIONS.TOP_RIGHT}>Top-Right Corner</option>
-                    <option value={CHOCO_WINDOW_REGIONS.LEFT}>Left Edge</option>
-                    <option value={CHOCO_WINDOW_REGIONS.CENTER}>Center</option>
-                    <option value={CHOCO_WINDOW_REGIONS.RIGHT}>Right Edge</option>
-                    <option value={CHOCO_WINDOW_REGIONS.BOTTOM_LEFT}>Bottom-Left Corner</option>
-                    <option value={CHOCO_WINDOW_REGIONS.BOTTOM}>Bottom Edge</option>
-                    <option value={CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT}>Bottom-Right Corner</option>
-                </select>
-            </div>
-            <div className="w-full col-span-2">
-                <label htmlFor="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3">Sheet Snap Mode</label>
-                <select className={TAILWIND_INPUT_CLASS_NAME} id="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3" value={tileSheetSnapSelectionMode} onChange={(e) => setTileSheetSnapSelectionMode(String(true) == e.target.value)}>
-                    <option value={true}>Tile Size ({tileSize}px)</option>
-                    <option value={false}>Do Not Snap</option>
-                </select>
-            </div>
-            <div className="w-full col-span-2">
-                <label htmlFor="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961">Width (tiles)</label>
-                {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regions[windowRegionIdentifier].width || 1} onChange={regionWidthOnChange} />}
-                {(windowRegionIdentifier != CHOCO_WINDOW_REGIONS.TOP && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.BOTTOM && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
-            </div>
-            <div className="w-full col-span-2">
-                <label htmlFor="7ae42bae-9eeb-4491-be31-00161a3af632">Height (tiles)</label>
-                {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regions[windowRegionIdentifier].height || 1} onChange={regionHeightOnChange} />}
-                {(windowRegionIdentifier != CHOCO_WINDOW_REGIONS.LEFT && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.RIGHT && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
-            </div>
-            <div className="col-span-10 -mt-4">
-                {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP_LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP_RIGHT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM_LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT) && <p className="mb-2 text-sm italic">Corners can only be 1 tile wide and 1 tile high.</p>}
-                {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM) && <p className="mb-2 text-sm italic">Top and bottom edge pattern can be any number of tiles wide.</p>}
-                {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT) && <p className="mb-2 text-sm italic">Left and right edge pattern can be any number of tiles wide.</p>}
-                {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <p className="mb-2 text-sm italic">The center repeated pattern can be any number of tiles wide or high.</p>}
-            </div>
-        </div>
-
-        <h3 className="mb-1 text-xl font-bold">Tile Selection</h3>
-        <p className="mb-2 text-sm mx-6"><span className="italic">First,</span> approximately click on location the tile sheet to load that area into the tile sheet detail selector. <span className="italic">Second,</span> precisely adjust the position or click on an adjacent tile. <span className="italic">Third,</span> click on the tile location to assign that part of the tile sheet to that tile in the regioon. If <span className="italic"> other tiles </span> to be assigned are <span className="italic">adjacent</span> in the tile sheet, use can use the precise tile selection without using the approximate tile selection.</p>
-        <div className={`grid grid-cols-3 gap-4`}>
-            <div className="mb-4 w-full">
-                <h4 className="mb-1 font-bold">Approximate Tile Selection</h4>
-                <img onMouseEnter={onPreviewMouseEnter} onMouseMove={onPreviewMouseMove} onClick={onPreviewMouseClick} onMouseLeave={onPreviewMouseLeave} className="" alt="Window Preview" src={null} ref={wholeTileSheetRef} />
+        {showLowerUi && <>
+            <h3 className="mb-1 font-bold text-xl">Window Regions</h3>
+            <p className="mb-2 text-sm italic mx-6">There are nine window regions: four corners, four edges, and the center. Top and bottom edges will repeat horizontally. Left and right edges will repeat vertically. The center will repeat in both directions.</p>
+            <div className={`grid grid-cols-10 gap-4`}>
+                <div className="col-span-4 w-full">
+                    <label htmlFor="fca684ea-2f2e-459a-ae5c-99e602f3d57e">Window Region:</label>
+                    <select className={TAILWIND_INPUT_CLASS_NAME} id="fca684ea-2f2e-459a-ae5c-99e602f3d57e" value={windowRegionIdentifier} onChange={onWindowRegionIdentifierChange}>
+                        <option value={CHOCO_WINDOW_REGIONS.TOP_LEFT}>Top-Left Corner</option>
+                        <option value={CHOCO_WINDOW_REGIONS.TOP}>Top Edge</option>
+                        <option value={CHOCO_WINDOW_REGIONS.TOP_RIGHT}>Top-Right Corner</option>
+                        <option value={CHOCO_WINDOW_REGIONS.LEFT}>Left Edge</option>
+                        <option value={CHOCO_WINDOW_REGIONS.CENTER}>Center</option>
+                        <option value={CHOCO_WINDOW_REGIONS.RIGHT}>Right Edge</option>
+                        <option value={CHOCO_WINDOW_REGIONS.BOTTOM_LEFT}>Bottom-Left Corner</option>
+                        <option value={CHOCO_WINDOW_REGIONS.BOTTOM}>Bottom Edge</option>
+                        <option value={CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT}>Bottom-Right Corner</option>
+                    </select>
+                </div>
+                <div className="w-full col-span-2">
+                    <label htmlFor="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3">Sheet Snap Mode</label>
+                    <select className={TAILWIND_INPUT_CLASS_NAME} id="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3" value={tileSheetSnapSelectionMode} onChange={(e) => setTileSheetSnapSelectionMode(String(true) == e.target.value)}>
+                        <option value={true}>Tile Size ({tileSize}px)</option>
+                        <option value={false}>Do Not Snap</option>
+                    </select>
+                </div>
+                <div className="w-full col-span-2">
+                    <label htmlFor="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961">Width (tiles)</label>
+                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regions[windowRegionIdentifier].width || 1} onChange={onRegionWidthChange} />}
+                    {(windowRegionIdentifier != CHOCO_WINDOW_REGIONS.TOP && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.BOTTOM && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
+                </div>
+                <div className="w-full col-span-2">
+                    <label htmlFor="7ae42bae-9eeb-4491-be31-00161a3af632">Height (tiles)</label>
+                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regions[windowRegionIdentifier].height || 1} onChange={onRegionHeightChange} />}
+                    {(windowRegionIdentifier != CHOCO_WINDOW_REGIONS.LEFT && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.RIGHT && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
+                </div>
+                <div className="col-span-10 -mt-4">
+                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP_LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP_RIGHT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM_LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT) && <p className="mb-2 text-sm italic">Corners can only be 1 tile wide and 1 tile high.</p>}
+                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM) && <p className="mb-2 text-sm italic">Top and bottom edge pattern can be any number of tiles wide.</p>}
+                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT) && <p className="mb-2 text-sm italic">Left and right edge pattern can be any number of tiles wide.</p>}
+                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <p className="mb-2 text-sm italic">The center repeated pattern can be any number of tiles wide or high.</p>}
+                </div>
             </div>
 
-            <div className="mb-4 w-full">
-                <h4 className="mb-1 font-bold">Precise Tile Selection</h4>
-                <div ref={sheetTileSelectionDiv} style={{ '--tile-sel-size': `${sheetTileSelectionUiSize}px` }} className="mb-3 mx-auto tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
+            <h3 className="mb-1 text-xl font-bold">Tile Selection</h3>
+            <p className="mb-2 text-sm mx-6"><span className="italic">First,</span> approximately click on location the tile sheet to load that area into the tile sheet detail selector. <span className="italic">Second,</span> precisely adjust the position or click on an adjacent tile. <span className="italic">Third,</span> click on the tile location to assign that part of the tile sheet to that tile in the regioon. If <span className="italic"> other tiles </span> to be assigned are <span className="italic">adjacent</span> in the tile sheet, use can use the precise tile selection without using the approximate tile selection.</p>
+            <div className={`grid grid-cols-3 gap-4`}>
+                <div className="mb-4 w-full">
+                    <h4 className="mb-1 font-bold">Approximate Tile Selection</h4>
+                    <img onMouseEnter={onPreviewMouseEnter} onMouseMove={onPreviewMouseMove} onClick={onPreviewMouseClick} onMouseLeave={onPreviewMouseLeave} className="" alt="Window Preview" src={null} ref={wholeTileSheetContainerRef} />
+                </div>
+
+                <div className="mb-4 w-full">
+                    <h4 className="mb-1 font-bold">Precise Tile Selection</h4>
+                    <div ref={preciseSelectionContainerRef} style={{ '--tile-sel-size': `${sheetTileSelectionUiSize}px` }} className="mb-3 mx-auto tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
+                        <div
+                            ref={preciseSelectionZoomedRef}
+                            className="w-full h-full sheet-tile-selection-mid-ground"
+                            style={{ backgroundImage: `url(${wholeTileSheetUrl})`, backgroundSize: `${wholeTileSheetContainerRef?.current?.naturalWidth * sheetTileSelectionUiScale}px ${wholeTileSheetContainerRef?.current?.naturalHeight * sheetTileSelectionUiScale}px`, backgroundPositionX: sheetTileSelectionRenderPos?.x || 0, backgroundPositionY: sheetTileSelectionRenderPos?.y || 0 }}
+                        >
+                            <div ref={preciseSelectionGridRef} className="w-full h-full"></div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2">
+                        <div className="mr-2 mb-2">
+                            <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X</label>
+                            <input placeholder="x" type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} value={sheetTileLocation?.x} />
+                        </div>
+                        <div className="ml-2 mb-2">
+                            <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
+                            <input placeholder="x" type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} value={sheetTileLocation?.y} />
+                        </div>
+                    </div>
+                </div>
+
+                <div ref={tileAssignmentContainerRef} className="mb-4 w-full">
+                    <h4 className="mb-1 font-bold">Tile Assignment</h4>
                     <div
-                        ref={sheetTileSelectionTileDiv}
-                        className="w-full h-full sheet-tile-selection-mid-ground"
-                        style={{ backgroundImage: `url(${wholeTileSheetUrl})`, backgroundSize: `${wholeTileSheetRef?.current?.naturalWidth * sheetTileSelectionUiScale}px ${wholeTileSheetRef?.current?.naturalHeight * sheetTileSelectionUiScale}px`, backgroundPositionX: sheetTileSelectionRenderPos?.x || 0, backgroundPositionY: sheetTileSelectionRenderPos?.y || 0 }}
+                        style={{ '--flex-width': `${regions[windowRegionIdentifier].width * tileAssignmentTileSize}px`, '--col-count': `${regions[windowRegionIdentifier].width}px`, '--tile-size': `${tileAssignmentTileSize}px` }}
+                        className="flex flex-wrap w-[var(--flex-width)] mx-auto"
                     >
-                        <div ref={sheetTileGridOverlayDiv} className="w-full h-full"></div>
+                        {
+                            Array.from({ length: regions[windowRegionIdentifier].height || 1 }).map((_, tileIndexY) =>
+                                Array.from({ length: regions[windowRegionIdentifier].width || 1 }).map((_, tileIndexX) =>
+                                    <button
+                                        onClick={(e) => tileAssignmentButtonOnClick(e, tileIndexX, tileIndexY)}
+                                        key={`tile-selector-${tileIndexX}-${tileIndexY}`}
+                                        style={{
+                                            backgroundImage: `url("${getTileAssignmentButtonBackgroundForRegion(regions?.[windowRegionIdentifier]?.tileSheetPositions?.[tileIndexY]?.[tileIndexX])}")`,
+                                            backgroundSize: "100%"
+                                        }}
+                                        className={`border-t-2 border-l-2 ${(tileIndexY == regions[windowRegionIdentifier].height - 1) && 'border-b-2'} ${(tileIndexX == regions[windowRegionIdentifier].width - 1) && 'border-r-2'} w-[var(--tile-size)] h-[var(--tile-size)] text-xs`}>({tileIndexX + 1}, {tileIndexY + 1})</button>)
+                            )
+                        }
                     </div>
                 </div>
-                <div className="grid grid-cols-2">
-                    <div className="mr-2 mb-2">
-                        <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X</label>
-                        <input placeholder="x" type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} value={sheetTileLocation?.x} />
-                    </div>
-                    <div className="ml-2 mb-2">
-                        <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
-                        <input placeholder="x" type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} value={sheetTileLocation?.y} />
-                    </div>
-                </div>
+
             </div>
 
-            <div ref={regionTileSelectionRef} className="mb-4 w-full">
-                <h4 className="mb-1 font-bold">Tile Assignment</h4>
-                <div
-                    style={{ '--flex-width': `${regions[windowRegionIdentifier].width * tileAssignmentTileSize}px`, '--col-count': `${regions[windowRegionIdentifier].width}px`, '--tile-size': `${tileAssignmentTileSize}px` }}
-                    className="flex flex-wrap w-[var(--flex-width)] mx-auto"
-                >
-                    {
-                        Array.from({ length: regions[windowRegionIdentifier].height || 1 }).map((_, tileIndexY) =>
-                            Array.from({ length: regions[windowRegionIdentifier].width || 1 }).map((_, tileIndexX) =>
-                                <button
-                                    onClick={(e) => tileAssignmentButtonOnClick(e, tileIndexX, tileIndexY)}
-                                    key={`tile-selector-${tileIndexX}-${tileIndexY}`}
-                                    style={{
-                                        backgroundImage: `url("${getTileAssignmentButtonBackgroundForRegion(regions?.[windowRegionIdentifier]?.tileSheetPositions?.[tileIndexY]?.[tileIndexX])}")`,
-                                        backgroundSize: "100%"
-                                    }}
-                                    className={`border-t-2 border-l-2 ${(tileIndexY == regions[windowRegionIdentifier].height - 1) && 'border-b-2'} ${(tileIndexX == regions[windowRegionIdentifier].width - 1) && 'border-r-2'} w-[var(--tile-size)] h-[var(--tile-size)] text-xs`}>({tileIndexX + 1}, {tileIndexY + 1})</button>)
-                        )
-                    }
-                </div>
-            </div>
+            <h3 className="mb-2 mt-4 text-xl">Window Preview</h3>
+            <p className="mb-2 text-sm italic">This is a preview of what a window with this tile set definition will look like.</p>
+            <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={previewRef} /></div>
 
-        </div>
-
-        <h3>Window Preview</h3>
-        <p className="mb-2 text-sm italic">This is a preview of what a window with this tile set definition will look like.</p>
-        <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={previewRef} /></div>
+            <h3 className="mb-2 mt-4 text-xl">Color Palette</h3>
+        </>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
             <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
-            <button onClick={deleteTileSetDefinitionOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set</button>
+            <button onClick={deleteTileSetDefinitionOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set Definition</button>
         </div>
     </>
 }
