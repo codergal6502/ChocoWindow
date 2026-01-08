@@ -77,6 +77,7 @@ class ChocoStudioTileSetDefinition {
             /** @type {String} */ this.tileSheetId = "";
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
             /** @type {Object.<String, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
+            /** @type {Array.<ChocoWinColor> } */ this.defaultColors = [ ]
 
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition();
             this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition();
@@ -104,6 +105,8 @@ class ChocoStudioTileSetDefinition {
             this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT]);
             this.regions[CHOCO_WINDOW_REGIONS.BOTTOM] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM]);
             this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT]);
+
+            this.defaultColors = arg1?.defaultColors?.map((c) => new ChocoWinColor(c));
         }
     }
 
@@ -140,8 +143,7 @@ class ChocoStudioTileSetDefinition {
             "patternRows": this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.map((row) =>
                 row.map((col) => ({ x: col.x, y: col.y }))
             ),
-            "substitutableColors": [
-            ]
+            "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? [ ]
         });
     }
 }
@@ -167,7 +169,7 @@ class ChocoStudioPreset {
             this.id = arg1.id;
             this.tileSetDefinitionId = arg1.tileSetDefinitionId
             this.tileScale = arg1.tileScale
-            this.substituteColors = arg1.substituteColors.map((c) => new ChocoWinColor(c));
+            this.substituteColors = arg1?.substituteColors?.map((c) => new ChocoWinColor(c)) || [ ];
         }
     }
 }
@@ -284,4 +286,4 @@ class ChocoStudioWorkspace {
     }
 }
 
-export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition as ChocoStudioWindowRegionSize };
+export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition };

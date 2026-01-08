@@ -14,6 +14,7 @@
     "@zip.js/zip.js": "^2.8.11",
     "fabric": "^7.1.0",
     "interactjs": "^1.10.27",
+    "pngjs": "^7.0.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-scripts": "5.0.1",

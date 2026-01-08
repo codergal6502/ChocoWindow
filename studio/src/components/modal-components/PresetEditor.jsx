@@ -36,7 +36,12 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
                 clearTimeout(colorsTimeout);
             }
 
-            setTimeout(() => { setSubstituteColors(substituteColorsDelayed); }, 50)
+            setTimeout(() => {
+                setSubstituteColors(substituteColorsDelayed);
+                const newPreset = new ChocoStudioPreset(preset);
+                newPreset.substituteColors = substituteColorsDelayed;
+                doOnPresetChange(newPreset);
+            }, 250)
         }
 
     }, [substituteColorsDelayed])
@@ -47,13 +52,7 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
         const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
         if (!tileSheet) { return; }
 
-        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), tileScale || 1, 0, 0, 450, 180);
-
-        if (substituteColors && substituteColors.length) {
-            substituteColors.forEach((col, idx) => {
-                chocoWin.substituteColor(idx, col);
-            });
-        }
+        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), tileScale || 1, 0, 0, 450, 180, substituteColors);
 
         chocoWin.isReady().then(() => {
             const canvas = document.createElement("canvas");
@@ -157,16 +156,17 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
             <input placeholder="Tile Scale" type="number" min={1} max={10} id="59731ce7-1ab4-4ea1-a08e-1bf5a43d1f4e" className={TAILWIND_INPUT_CLASS_NAME} value={tileScale} onChange={onTileScaleChange} />
         </div>
 
-        {/* <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
-        <div className={`grid grid-cols-4 gap-4`}>
-            {tileSetDefinition.substitutableColors.map((color, i) =>
+        <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
+        {(tileSetDefinition?.defaultColors?.length > 0) || <p className="mb-2 text-sm italic">No default colors were generated for the selected tile set definition.</p>}
+        {(tileSetDefinition?.defaultColors?.length > 0) && <div className={`grid grid-cols-4 gap-4`}>
+            {tileSetDefinition.defaultColors.map((color, i) =>
                 <div key={i}>
                     <div className="text-sm w-full text-center">Color {i + 1}</div>
                     <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString?.() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
                     <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
                 </div>
             )}
-        </div> */}
+        </div>}
 
         <h3 className="mb-2 mt-4 text-xl">Preview</h3>
         <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div>

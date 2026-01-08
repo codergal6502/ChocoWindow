@@ -83,24 +83,22 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
     }
 
     const resizeCanvas = () => {
-        /** @type { ChocoStudioWorkspace } */ const ws = workspace;
-
         const menuBarHeight = 0;
         const clientWidth = window.innerWidth;
         const clientHeight = window.innerHeight;
 
-        const widthRatio = 1.0 * clientWidth / ws.width;
-        const heightRatio = 1.0 * (clientHeight - menuBarHeight) / ws.height;
+        const widthRatio = 1.0 * clientWidth / workspace.width;
+        const heightRatio = 1.0 * (clientHeight - menuBarHeight) / workspace.height;
 
         uiScale = Math.min(widthRatio, heightRatio);
 
         if (uiScale < 1) {
             const /** @type {HTMLElement} */ chocoStudioCanvasDiv = document.getElementById("choco-studio-canvas-div");
             chocoStudioCanvasDiv.style.scale = `${100.0 * uiScale}%`;
-            chocoStudioCanvasDiv.style.width = Math.floor(1.0 * ws.width * uiScale);
-            chocoStudioCanvasDiv.style.height = Math.floor(1.0 * ws.height * uiScale);
-            chocoStudioCanvasDiv.style.left = `${-0.25 * ws.width * uiScale}px`;
-            chocoStudioCanvasDiv.style.top = `${-0.25 * ws.height * uiScale + menuBarHeight}px`;
+            chocoStudioCanvasDiv.style.width = Math.floor(1.0 * workspace.width * uiScale);
+            chocoStudioCanvasDiv.style.height = Math.floor(1.0 * workspace.height * uiScale);
+            chocoStudioCanvasDiv.style.left = `${-0.25 * workspace.width * uiScale}px`;
+            chocoStudioCanvasDiv.style.top = `${-0.25 * workspace.height * uiScale + menuBarHeight}px`;
         }
     }
 
@@ -220,10 +218,8 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                             e.target.style.top = chocoWinDiv.style.top;
                             e.target.style.left = chocoWinDiv.style.left;
 
-                            /** @type { ChocoStudioWorkspace } */ const ws = workspace;
-
-                            if (ws) {
-                                const studioWindow = ws.windows.filter((w) => chocoWinDiv.dataset.studioWindowId == w.id)[0];
+                            if (workspace) {
+                                const studioWindow = workspace.windows.filter((w) => chocoWinDiv.dataset.studioWindowId == w.id)[0];
 
                                 studioWindow.x = Math.round(newLeft);
                                 studioWindow.y = Math.round(newTop);
@@ -301,29 +297,27 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                             chocoWinDiv.style.left = e.target.style.left;
                             chocoWinDiv.style.width = e.target.style.width;
 
-                            const /** @type { ChocoStudio } */ ws = workspace;
-                            const studioWindow = ws.windows.find((w) => `win-${w.id}` == e.target.dataset.chocoWinId);
+                            const studioWindow = workspace.windows.find((w) => `win-${w.id}` == e.target.dataset.chocoWinId);
                             const chocoWindowDivId = `win-${studioWindow.id}`;
 
                             studioWindow.w = Number(chocoWinDiv.style.width.replace("px", ""));
                             studioWindow.h = Number(chocoWinDiv.style.height.replace("px", ""))
 
-                            if (onWorkspaceChange) onWorkspaceChange(ws);
+                            if (onWorkspaceChange) onWorkspaceChange(workspace);
 
-                            const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
+                            const preset = studioWindow.singularPreset || workspace.presets.find((ps) => ps.id == studioWindow.presetId);
                             if (!preset) return;
 
-                            const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
+                            const tileSetDefintiion = workspace.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
                             if (!tileSetDefintiion) return;
 
-                            const tileSheet = ws.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
+                            const tileSheet = workspace.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
                             if (!tileSheet) return;
 
                             const tileSetDefinition = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
                             if (!tileSetDefinition) return;
 
-                            const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
-
+                            const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
                             renderWindow.isReady().then(() => {
                                 // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
                                 // that way, the logic for drawing into the divs can be isoalted and reused
@@ -431,7 +425,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                         const tileSetDefinition = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
                         if (!tileSetDefinition) return;
 
-                        const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h);
+                        const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
                         renderWindow.isReady().then(() => {
                             // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
                             // that way, the logic for drawing into the divs can be isoalted and reused

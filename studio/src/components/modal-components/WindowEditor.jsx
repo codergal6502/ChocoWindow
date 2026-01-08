@@ -100,13 +100,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
         let tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
         if (!tileSheet) { return; }
 
-        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), preset.tileScale, 0, 0, 450, 180);
-
-        if (preset.substituteColors && preset.substituteColors.length) {
-            preset.substituteColors.forEach((col, idx) => {
-                chocoWin.substituteColor(idx, col);
-            });
-        }
+        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), preset.tileScale, 0, 0, 450, 180, preset.substituteColors);
 
         chocoWin.isReady().then(() => {
             const canvas = document.createElement("canvas");

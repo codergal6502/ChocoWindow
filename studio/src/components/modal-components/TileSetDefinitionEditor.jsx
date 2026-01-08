@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWinWindow } from "../../ChocoWindow";
-import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
+import { ChocoWinColor, ChocoWinWindow } from "../../ChocoWindow";
+import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
 import './TileSetDefinitionEditor.css';
 import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
+import { PNG } from 'pngjs/browser'
 
 // Tiles in the sheet tile selection.
 const TILES_IN_STS = 3;
 const BIGGEST_ZOOM_FACTOR = 6;
+const MAX_COLOR_COUNT = 8;
 
 // See https://bikeshedd.ing/posts/use_state_should_require_a_dependency_array/.
 
@@ -24,9 +26,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const hasChangeHandler = onTileSetDefinitionChange && typeof onTileSetDefinitionChange == "function";
     const hasDeleteHandler = onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == "function";
 
-    // const [substituteColors, setSubstituteColors] = useState([]);
-    // const [substituteColorsDelayed, setSubstituteColorsDelayed] = useState([]);
-
     const wholeTileSheetContainerRef = useRef(null);
     const preciseSelectionContainerRef = useRef(null);
     const preciseSelectionZoomedRef = useRef(null);
@@ -39,10 +38,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
     const [tileSize, setTileSize] = useState(tileSetDefinition.tileSize);
     const [regions, setRegions] = useState(structuredClone(tileSetDefinition.regions));
+    const [defaultColors, setDefaultColors] = useState(tileSetDefinition.defaultColors);
 
     // Editor-Only Field States
     const [windowRegionIdentifier, setWindowRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
     const [tileSheetSnapSelectionMode, setTileSheetSnapSelectionMode] = useState(true);
+    const [tooManyColors, setTooManyColors] = useState(false);
 
     // Other Editor State
     const [showLowerUi, setShowLowerUi] = useState(tileSetDefinition.tileSheetId ? true : false);
@@ -255,6 +256,14 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegionSizes);
     };
 
+    /**
+     * @param {Array.<ChocoWinColor> } newDefaultColors 
+     */
+    const onDefaultColorsChange = (newDefaultColors) => {
+        setDefaultColors(newDefaultColors);
+        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.defaultColors = newDefaultColors);
+    };
+
     const showTileSheetTileInSheetTileSelection = (clientX, clientY) => {
         if (!showLowerUi || !wholeTileSheetContainerRef || !wholeTileSheetContainerRef.current) return;
 
@@ -321,8 +330,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             return;
         }
 
-        const canvas = new Canvas('c');
-
         wholeTileSheetImage.set({
             clipPath: new Rect({
                 left: 0,
@@ -340,6 +347,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         wholeTileSheetImage.originX = 'left';
         wholeTileSheetImage.originY = 'top';
 
+        const canvas = new Canvas('c');
         canvas.width = tileSize;
         canvas.height = tileSize;
         canvas.add(wholeTileSheetImage);
@@ -415,6 +423,63 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const deleteTileSetDefinitionOnClick = () => {
         doOnTileSetDefinitionDelete(tileSetDefinition.id);
     };
+
+    const subColorOnChange = (e) => {
+
+    }
+
+    const generateColorPalette = () => {
+        fetch(wholeTileSheetUrl).then((response) => response.body).then((body) => {
+            const png = new PNG();
+            const reader = body.getReader();
+            reader
+                .read()
+                .then((v) => png.write(v.value))
+                .finally(() => {
+                    console.log(`Read PNG with dimensions ${png.width}x${png.height}`);
+                });
+
+            png.on("parsed", () => {
+                const /** @type {Array<ChocoWinColor>} */ colors = [];
+                const /** @type {Set<String>} */ colorStrings = new Set();
+                const y = 192;
+
+                Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
+                    const /** @type {ChocoStudioWindowRegionDefinition} */ r = regions[whichRegion];
+                    r.tileSheetPositions.forEach((tspRow) => {
+                        tspRow.forEach((tsp) => {
+                            console.log("tile at:", tsp);
+                            for (let x = tsp.x; x < tsp.x + tileSize; x++) {
+                                for (let y = tsp.y; y < tsp.y + tileSize; y++) {
+                                    const idx = (png.width * y + x) << 2;
+
+                                    const r = png.data[idx];
+                                    const g = png.data[idx + 1];
+                                    const b = png.data[idx + 2];
+                                    const a = png.data[idx + 3];
+
+                                    const rgbaString = `(${r}, ${g}, ${b}, ${a})`;
+                                    if (!colorStrings.has(rgbaString)) {
+                                        colorStrings.add(rgbaString);
+                                        colors[colors.length] = new ChocoWinColor({ r, g, b, a });
+                                    }
+                                }
+                            }
+                        })
+                    })
+                })
+
+                if (colors.length > MAX_COLOR_COUNT) {
+                    setTooManyColors(colors.length);
+                }
+                else {
+                    onDefaultColorsChange(colors);
+                }
+            })
+        });
+    }
+
+
 
     return <>
         <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Set Definition <span className="text-sm">({tileSetDefinition.id})</span></h2>
@@ -537,10 +602,23 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             </div>
 
             <h3 className="mb-2 mt-4 text-xl">Window Preview</h3>
-            <p className="mb-2 text-sm italic">This is a preview of what a window with this tile set definition will look like.</p>
+            <p className="mb-2 text-sm mx-6">This is a preview of what a window with this tile set definition will look like.</p>
             <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={previewRef} /></div>
 
             <h3 className="mb-2 mt-4 text-xl">Color Palette</h3>
+            <button onClick={generateColorPalette} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Generate Color Palette</button>
+            {tooManyColors && <p className="my-2 text-sm mx-6">The selected tiles contain {tooManyColors} colors but only {MAX_COLOR_COUNT} colors are supported. Please reduce the colors in an external tool or select different tiles.</p>}
+            {!tooManyColors && defaultColors && defaultColors.length && <>
+                <h3 className="mb-2 mt-4 text-xl">Default Colors</h3>
+                <div className={`grid grid-cols-4 gap-4`}>
+                    {defaultColors.map((color, i) =>
+                        <div key={i}>
+                            <div className="text-sm w-full text-center">Color {i + 1}</div>
+                            <div><input className="w-full rounded" type="color" value={defaultColors[i]?.toHexString?.() || color.toHexString()} readOnly /></div>
+                        </div>
+                    )}
+                </div>
+            </>}
         </>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>

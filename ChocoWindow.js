@@ -31,11 +31,13 @@ class ChocoWinColor {
             this.r = arg1.r;
             this.g = arg1.g;
             this.b = arg1.b;
+            this.a = isNaN(arg1.a) ? 255 : arg1.a;
         }
         else {
             /** @type {number} */ this.r = 0;
             /** @type {number} */ this.g = 0;
             /** @type {number} */ this.b = 0;
+            /** @type {number} */ this.a = 255;
         }
     }
 
@@ -159,7 +161,18 @@ class ChocoWinWindow {
     /** @type {Number} */ #w;
     /** @type {Number} */ #h;
     /** @type {Object<Number, ChocoWinColor>} */ #colorSubstitutions;
-    constructor(/** @type {ChocoWinTileSet} */ winTileSet, /** @type {Number} */ tileScale, /** @type {Number} */ x, /** @type {Number} */ y, /** @type {Number} */ w, /** @type {Number} */ h) {
+
+    /**
+     * 
+     * @param {ChocoWinTileSet} winTileSet 
+     * @param {Number} tileScale 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @param {Number} w 
+     * @param {Number} h 
+     * @param {Object<Number, ChocoWinColor>} colorSubstitutions
+     */
+    constructor(winTileSet, tileScale, x, y, w, h, colorSubstitutions) {
         this.#pixmap = new Image();
         this.#pixmap.src = winTileSet.sourceFileUrl;
 
@@ -169,12 +182,11 @@ class ChocoWinWindow {
         this.#y = y;
         this.#w = w;
         this.#h = h;
+        this.#colorSubstitutions = colorSubstitutions || [ ];
 
         if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && ((this.#w % this.#tileScale != 0) || (this.#h % this.#tileScale != 0))) {
             console.warn(`Scale misalignment: one or both window dimensions [${this.#w}, ${this.#h}] are not multiples of tile scale ${tileScale}. Artifacts may occur on the right and bottom edges as a result, especially if the sprite map includes transparency. To ignore this warning, set ChocoWinSettings.ignoreScaleMisalignmentErrors = true`);
         }
-
-        this.#colorSubstitutions = {};
     }
 
     isReady() {
@@ -202,7 +214,7 @@ class ChocoWinWindow {
         this.#colorSubstitutions[index] = new ChocoWinColor(color);
         return this;
     }
-
+    
     hasColorSubstitutions() {
         return Object.keys(this.#colorSubstitutions).length > 0;
     }
@@ -246,7 +258,7 @@ class ChocoWinWindow {
         const dxAbsolute = this.#x + dxRelative;
         ctx.drawImage(pixmap, sx, sy, sw, sh, dxAbsolute, this.#y + dyRelative, destWidth, destHeight);
 
-        if (this.hasColorSubstitutions && this.#winTileSet.substitutableColors?.length) {
+        if (this.hasColorSubstitutions() && this.#winTileSet.substitutableColors?.length) {
             const imageData = ctx.getImageData(dxAbsolute, this.#y + dyRelative, destWidth, destHeight);
             const imagePixelBytes = imageData.data;
             for (const keyValuePair of Object.entries(this.#colorSubstitutions)) {
@@ -259,14 +271,14 @@ class ChocoWinWindow {
 
                 for (let i = 0; i < imagePixelBytes.length; i += 4) {
                     const areColorsCloseEnough = (r1, r2, g1, g2, b1, b2) => {
-                        const maxDistance = 5;
-                        return (Math.abs(r1-r2) < maxDistance) && (Math.abs(g1-g2) < maxDistance) && (Math.abs(b1-b2) < maxDistance);
-                        // const maxDistance = 2;
-                        // const dr = r2 - r1;
-                        // const dg = g2 - g1;
-                        // const db = b2 - b1
+                        // const maxDistance = 5;
+                        // return (Math.abs(r1 - r2) < maxDistance) && (Math.abs(g1 - g2) < maxDistance) && (Math.abs(b1 - b2) < maxDistance);
+                        const maxDistance = 2;
+                        const dr = r2 - r1;
+                        const dg = g2 - g1;
+                        const db = b2 - b1
 
-                        // return Math.sqrt(0.33 * dr * dr + 0.33 * dg * dg + 0.33 * db * db) < maxDistance
+                        return Math.sqrt(0.33 * dr * dr + 0.33 * dg * dg + 0.33 * db * db) < maxDistance
                     }
 
                     if (areColorsCloseEnough(imagePixelBytes[i], oldColor.r, imagePixelBytes[i + 1], oldColor.g, imagePixelBytes[i + 2], oldColor.b)) {
