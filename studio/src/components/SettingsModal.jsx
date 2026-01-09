@@ -1,14 +1,15 @@
-import { useRef, useState } from "react";
+import { createContext, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-svg-icons";
-import { ChocoWinTileSet } from '../ChocoWindow.js';
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition } from "../ChocoStudio.js";
+import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, ChocoStudioTileSheetBlobUrlManager } from "../ChocoStudio.js";
 import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
 import WindowEditor from "./modal-components/WindowEditor.jsx";
 import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
+
+export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheetBlobUrlManager())
 
 /**
  * @param {Object} props
@@ -491,7 +492,7 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                                 <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.PRESET:
-                                            if (!workspace.tileSetDefinitions) debugger;
+                                            if (!workspace.tileSetDefinitions)
                                             return (!activePreset) ? "" : (
                                                 <PresetEditor key={activePreset.id} preset={activePreset} tileSheets={workspace.tileSheets} tileSetDefinitions={workspace.tileSetDefinitions} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );

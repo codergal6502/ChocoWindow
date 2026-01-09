@@ -1,8 +1,11 @@
-import { useRef, useEffect } from 'react';
-import { ChocoStudioLayout, ChocoStudioWorkspace } from '../ChocoStudio';
-import interact from 'interactjs';
-import { ChocoWinWindow } from '../ChocoWindow';
 import './ChocoWinCanvas.css'
+
+import { useRef, useEffect } from 'react';
+
+import { ChocoStudioLayout, ChocoStudioWorkspace } from '../ChocoStudio';
+import { ChocoWinWindow } from '../ChocoWindow';
+
+import interact from 'interactjs';
 
 /**
  * @param {Object} props

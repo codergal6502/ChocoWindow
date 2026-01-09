@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import './TileSetDefinitionEditor.css';
+
+import { useContext, useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoWinColor, ChocoWinWindow } from "../../ChocoWindow";
 import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
-import './TileSetDefinitionEditor.css';
 import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 import { PNG } from 'pngjs/browser'
+import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 
 // Tiles in the sheet tile selection.
 const TILES_IN_STS = 3;
@@ -33,6 +35,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const tileAssignmentContainerRef = useRef(null);
     const previewRef = useRef(null);
 
+    const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
+
     // Domain Object Field States
     const [name, setName] = useState(tileSetDefinition.name);
     const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
@@ -47,14 +51,15 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
     // Other Editor State
     const [showLowerUi, setShowLowerUi] = useState(tileSetDefinition.tileSheetId ? true : false);
-    const [wholeTileSheetUrl, setWholeTileSheetUrl] = useState(tileSheets.find((ts) => ts.id == tileSetDefinition?.tileSheetId)?.imageDataUrl);
     const [wholeTileSheetImage, setWholeTileSheetImage] = useState(null);
+    const [previewTileScale, setPreviewTileScale] = useState(3);
 
     useEffect(() => {
         if (!showLowerUi) return;
-        const image = FabricImage.fromURL(wholeTileSheetUrl);
+        // messy temporary
+        const image = FabricImage.fromURL(tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId));
         image.then((i) => setWholeTileSheetImage(i));
-    }, [showLowerUi, wholeTileSheetUrl, tileSheetId])
+    }, [showLowerUi, tileSheetId])
 
     const [sheetTileLocation, setSheetTileLocation] = useState(null);
     const [sheetTileSelectionRenderPos, setSheetTileSelectionRenderPos] = useState(null);
@@ -73,7 +78,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         if (showLowerUi && previewRef && previewRef.current && tileSheets && tileSetDefinition && tileSetDefinition.tileSize) {
             updatePreviewRef(tileSetDefinition)
         }
-    }, [showLowerUi, previewRef, tileSheets, tileSetDefinition])
+    }, [showLowerUi, previewRef, tileSheets, tileSetDefinition, previewTileScale])
 
     // draw grid over precise selection grid.
     useEffect(() => {
@@ -178,13 +183,17 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
     useEffect(() => {
         if (!showLowerUi) return;
+
         if (wholeTileSheetContainerRef && wholeTileSheetContainerRef.current) {
             const tileSheet = tileSheets.find((ts) => ts.id == tileSheetId);
-            if (tileSheet && tileSheet.imageDataUrl) {
-                wholeTileSheetContainerRef.current.src = tileSheet.imageDataUrl;
 
-                setWholeTileSheetUrl(tileSheet.imageDataUrl);
-                return;
+            if (tileSheet?.id) {
+                if (!tileSheetBlobUrlDictionary.has(tileSetDefinition.tileSheetId)) {
+                    // If the tile sheet PNG isn't in the blob dictionary, we should assume we're loading this tile sheet for the first time.
+                    tileSheetBlobUrlDictionary.set(tileSheet.id, tileSheets.find((ts) => ts.id == tileSheet.id)?.imageDataUrl);
+                }
+
+                wholeTileSheetContainerRef.current.src = tileSheetBlobUrlDictionary.get(tileSheet.id);
             }
         }
     }, [showLowerUi, wholeTileSheetContainerRef, tileSheetId])
@@ -295,14 +304,14 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         setSheetTileSelectionRenderPos(pos);
     }
 
-    const onPreviewMouseEnter = () => {
+    const onWholeTileSheetMouseEnter = () => {
         setSheetTileSelectionSemiLocked(false);
     }
 
     /**
      * @param {MouseEvent} e 
      */
-    const onPreviewMouseMove = (e) => {
+    const onWholeTileSheetMouseMove = (e) => {
         if (!sheetTileSelectionSemiLocked) {
             showTileSheetTileInSheetTileSelection(e.clientX, e.clientY);
         }
@@ -311,12 +320,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     /**
      * @param {MouseEvent} e 
      */
-    const onPreviewMouseClick = (e) => {
+    const onWholeTileSeetMouseClick = (e) => {
         setSheetTileSelectionSemiLocked(true);
         showTileSheetTileInSheetTileSelection(e.clientX, e.clientY);
     }
 
-    const onPreviewMouseLeave = () => {
+    const onWholeTileSheetMouseLeave = () => {
         // setSheetTileSelectionRenderPos(null);
     }
 
@@ -374,7 +383,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         if (!tileSheet) return;
         const tileSet = newTileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl);
 
-        let chocoWin = new ChocoWinWindow(tileSet, 3, 0, 0, 450, 180);
+        let chocoWin = new ChocoWinWindow(tileSet, previewTileScale, 0, 0, 450, 180);
         chocoWin.isReady().then(() => {
             const canvas = document.createElement("canvas");
             canvas.width = 450;
@@ -425,7 +434,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     };
 
     const generateColorPalette = () => {
-        fetch(wholeTileSheetUrl).then((response) => response.body).then((body) => {
+        // messy temporary
+        fetch(tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)).then((response) => response.body).then((body) => {
             const png = new PNG();
             const reader = body.getReader();
             reader
@@ -544,7 +554,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             <div className={`grid grid-cols-3 gap-4`}>
                 <div className="mb-4 w-full">
                     <h4 className="mb-1 font-bold">Approximate Tile Selection</h4>
-                    <img onMouseEnter={onPreviewMouseEnter} onMouseMove={onPreviewMouseMove} onClick={onPreviewMouseClick} onMouseLeave={onPreviewMouseLeave} className="" alt="Window Preview" src={null} ref={wholeTileSheetContainerRef} />
+                    <img onMouseEnter={onWholeTileSheetMouseEnter} onMouseMove={onWholeTileSheetMouseMove} onClick={onWholeTileSeetMouseClick} onMouseLeave={onWholeTileSheetMouseLeave} className="" alt="Window Preview" src={null} ref={wholeTileSheetContainerRef} />
                 </div>
 
                 <div className="mb-4 w-full">
@@ -553,7 +563,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                         <div
                             ref={preciseSelectionZoomedRef}
                             className="w-full h-full sheet-tile-selection-mid-ground"
-                            style={{ backgroundImage: `url(${wholeTileSheetUrl})`, backgroundSize: `${wholeTileSheetContainerRef?.current?.naturalWidth * sheetTileSelectionUiScale}px ${wholeTileSheetContainerRef?.current?.naturalHeight * sheetTileSelectionUiScale}px`, backgroundPositionX: sheetTileSelectionRenderPos?.x || 0, backgroundPositionY: sheetTileSelectionRenderPos?.y || 0 }}
+                            // temporary messy
+                            style={{ backgroundImage: `url(${tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)})`, backgroundSize: `${wholeTileSheetContainerRef?.current?.naturalWidth * sheetTileSelectionUiScale}px ${wholeTileSheetContainerRef?.current?.naturalHeight * sheetTileSelectionUiScale}px`, backgroundPositionX: sheetTileSelectionRenderPos?.x || 0, backgroundPositionY: sheetTileSelectionRenderPos?.y || 0 }}
                         >
                             <div ref={preciseSelectionGridRef} className="w-full h-full"></div>
                         </div>
@@ -596,6 +607,14 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
             <h3 className="mb-2 mt-4 text-xl">Window Preview</h3>
             <p className="mb-2 text-sm mx-6">This is a preview of what a window with this tile set definition will look like.</p>
+
+            <div className={`grid grid-cols-4 gap-4 mx-6 mb-2 text-sm`}>
+                <div>
+                    <label htmlFor="a33f0024-8c0d-4ab8-9ac2-0c72ce5f2eb1">Preview Tile Scale</label>
+                    <input min={1} placeholder="Preview Tile Scale" type="Number" autoComplete="off" id="a33f0024-8c0d-4ab8-9ac2-0c72ce5f2eb1" className={TAILWIND_INPUT_CLASS_NAME} value={previewTileScale} onChange={(e) => setPreviewTileScale(e.target.value)} />
+                </div>
+            </div>
+
             <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={previewRef} /></div>
 
             <h3 className="mb-2 mt-4 text-xl">Color Palette</h3>

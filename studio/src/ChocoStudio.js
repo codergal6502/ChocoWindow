@@ -1,4 +1,76 @@
-import { ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinTilsetEdges, ChocoWinSettings } from './ChocoWindow.js';
+import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
+import { ChocoWinColor, ChocoWinTileSet } from './ChocoWindow.js';
+
+/**
+ * Provides 
+ */
+class ChocoStudioTileSheetBlobUrlManager {
+    /** @type {Map<String, String} */ #map;
+    constructor() {
+        this.#map = new Map();
+    }
+
+    /**
+     * @param {String} tileSheetId 
+     * @returns 
+     */
+    has(tileSheetId) {
+        return this.#map.has(String(tileSheetId));
+    }
+
+    /**
+     * @param {String} tileSheetId 
+     * @returns {String} The blob URL for the PNG referenced by the tile sheet or null if it hasn't been set.
+     */
+    get(tileSheetId) {
+        return this.#map.get(String(tileSheetId)) ?? null;
+    }
+
+    set(tileSheetId, dataUrl) {
+        const oldBlobUrl = this.get(tileSheetId);
+        if (oldBlobUrl) {
+            URL.revokeObjectURL(oldBlobUrl);
+        }
+
+        const blob = ChocoStudioTileSheetBlobUrlManager.#pngBase64DataUrlToBlob(dataUrl);
+        const newBlobUrl = URL.createObjectURL(blob);
+        this.#map.set(tileSheetId, newBlobUrl);
+    }
+
+    /**
+     * @param {String} dataUrl 
+     * @returns {Blob}
+     */
+    static #pngBase64DataUrlToBlob(dataUrl) {
+        // This is permissive of weird URLs, but this application isn't a spaceship so good enough is good enough!
+        // Example: data:image/png;base64,iVBORw0KGg
+        const [protocol, mimeType, encoding, dataUrlEncodedBase64] = dataUrl.split(/[:,;]/);
+        if (!dataUrlEncodedBase64 || encoding != "base64" || mimeType != "image/png" || protocol != "data") {
+            console.warn(`Got unexpected data url (truncated): ${dataUrlEncodedBase64?.substring(0, 30)}:`);
+            return null;
+        }
+
+        // See https://stackoverflow.com/a/16245768/1102726
+        const sliceSize = 512;
+        const byteCharacters = atob(dataUrlEncodedBase64);
+        const byteArrays = [];
+
+        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+
+        const blob = new Blob(byteArrays, { type: "image/png;base64" });
+        return blob;
+    }
+}
 
 class ChocoStudioTileSheet {
     /**
@@ -77,7 +149,7 @@ class ChocoStudioTileSetDefinition {
             /** @type {String} */ this.tileSheetId = "";
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
             /** @type {Object.<String, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
-            /** @type {Array.<ChocoWinColor> } */ this.defaultColors = [ ]
+            /** @type {Array.<ChocoWinColor> } */ this.defaultColors = []
 
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition();
             this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition();
@@ -143,7 +215,7 @@ class ChocoStudioTileSetDefinition {
             "patternRows": this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.map((row) =>
                 row.map((col) => ({ x: col.x, y: col.y }))
             ),
-            "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? [ ]
+            "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? []
         });
     }
 }
@@ -169,7 +241,7 @@ class ChocoStudioPreset {
             this.id = arg1.id;
             this.tileSetDefinitionId = arg1.tileSetDefinitionId
             this.tileScale = arg1.tileScale
-            this.substituteColors = arg1?.substituteColors?.map((c) => new ChocoWinColor(c)) || [ ];
+            this.substituteColors = arg1?.substituteColors?.map((c) => new ChocoWinColor(c)) || [];
         }
     }
 }
@@ -286,4 +358,4 @@ class ChocoStudioWorkspace {
     }
 }
 
-export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition };
+export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager };

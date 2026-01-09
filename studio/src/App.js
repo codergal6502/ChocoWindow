@@ -1,13 +1,16 @@
-import { useState } from 'react';
 import './App.css';
+
+import { useEffect, useState } from 'react';
+
 import SettingsFloater from './components/SettingsFloater';
 import SettingsModal from './components/SettingsModal';
 import ChocoWinCanvas from './components/ChocoWInCanvas';
+import LayoutPickerModal from './components/LayoutPickerModal';
+import LayoutRenderResult from './components/LayoutRenderResult';
+
 import { ChocoStudioWorkspace } from './ChocoStudio';
 import { ChocoWinSettings } from './ChocoWindow';
-import LayoutPickerModal from './components/LayoutPickerModal';
 import { ChocoWorkspaceRenderer } from './ChocoRender';
-import LayoutRenderResult from './components/LayoutRenderResult';
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
@@ -26,7 +29,7 @@ const App = () => {
     }
     catch (e) {
       console.error(e);
-      // alert('An unexpected error occurred; check the console log for details.')
+      alert('An unexpected error occurred; check the console log for details.')
     }
 
     return new ChocoStudioWorkspace();
@@ -101,12 +104,16 @@ const App = () => {
     setRenderDownloadName("");
   }
 
+  useEffect(() => {
+
+  }, []);
+
   return (
     <div id="app-div">
       <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} onDownloadPngClick={onDownloadPngClick} />
       {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
       {isLayoutPickerModalHidden || <LayoutPickerModal workspace={canvasWorkspace} currentLayoutId={canvasLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToCanvas={onLayoutPickerReturn} />}
-      {hasRenderResult && <LayoutRenderResult isModalHidden={! hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToCanvas={onRenderResultReturn} />}
+      {hasRenderResult && <LayoutRenderResult isModalHidden={!hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToCanvas={onRenderResultReturn} />}
       <ChocoWinCanvas ignoreKeyInputs={canvasIgnoreKeyInputs} workspace={canvasWorkspace} onWorkspaceChange={onCanvasWorkspaceChange} canvasLayoutId={canvasLayoutId} />
     </div>
   );
