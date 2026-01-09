@@ -1,23 +1,26 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { ChocoStudioLayout, ChocoStudioWorkspace } from '../ChocoStudio';
 import interact from 'interactjs';
 import { ChocoWinWindow } from '../ChocoWindow';
 import './ChocoWinCanvas.css'
-import { text } from '@fortawesome/fontawesome-svg-core';
 
 /**
- * 
  * @param {Object} props
  * @param {ChocoStudioWorkspace} props.workspace
  * @param {Function} props.onWorkspaceChange
  * @param {String} props.canvasLayoutId
  * @returns 
  */
-const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
+const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKeyInputs }) => {
     const mainCanvasDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
     let uiScale = 1.0;
+
+    const ignoreKeyInputsRef = useRef(ignoreKeyInputs);
+    useEffect(() => {
+        ignoreKeyInputsRef.current = ignoreKeyInputs;
+    }, [ignoreKeyInputs]);
 
     const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
 
@@ -104,12 +107,15 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
 
     let lastKeydownTimeStamp = 0;
 
+    const checkIgnore = () => ignoreKeyInputsRef?.current;
+
     useEffect(() => { // empty-dependency useEffect for on load
         if (mainCanvasDivRef.current) { mainCanvasDivRef.current.onclick = (e) => { if (e.target == mainCanvasDivRef.current) { makeNoWindowActive(); } } }
 
         resizeCanvas();
 
-        document.addEventListener("keydown", (e) => {
+        const keydownListener = (/** @type {KeyboardEvent} */ e) => {
+            if (checkIgnore()) { return; }
             if (e.timeStamp == lastKeydownTimeStamp) { return; }
             lastKeydownTimeStamp = e.timeStamp;
 
@@ -159,7 +165,9 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                     break;
                 }
             }
-        })
+        };
+
+        document.addEventListener("keydown", keydownListener);
 
         const makeDraggable = (selector) => {
             interact(selector)
@@ -451,6 +459,11 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId }) => {
                 })
             }
         }
+
+        return () => {
+            document.removeEventListener("keydown", keydownListener);
+        }
+
     }, [workspace, canvasLayoutId]);
 
     return (

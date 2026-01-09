@@ -24,8 +24,8 @@ const LayoutPickerModal = ({ workspace, currentLayoutId, isModalHidden, onReturn
                     <div className="flex-grow p-6 bg-white rounded-lg dark:bg-gray-600 dark:text-gray-300">
                         <label>
                             <span>Select Layout:</span>
-                            <select name="name" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSelectChange} value={selection || currentLayoutId} autoComplete="false">
-                                {workspace.layouts.map((l) => <option value={l.id}>{l.name}</option>)}
+                            <select name="name" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSelectChange} value={selection ?? currentLayoutId ?? ""} autoComplete="false">
+                                {workspace.layouts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                             </select>
                         </label>
                         <div className="flex justify-between">

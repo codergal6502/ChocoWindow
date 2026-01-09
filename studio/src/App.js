@@ -43,6 +43,7 @@ const App = () => {
   const [canvasLayoutId, setCanvasLayoutId] = useState(null);
   const [modalWorkspace, setModalWorkspace] = useState(initialWorkspace());
   const [canvasWorkspace, setCanvasWorkspace] = useState(initialWorkspace());
+  const [canvasIgnoreKeyInputs, setCanvasIgnoreKeyInputs] = useState(false);
 
   const [hasRenderResult, setHasRenderResult] = useState(false);
   const [renderResultDataUrl, setRenderResultDataUrl] = useState(null);
@@ -50,10 +51,12 @@ const App = () => {
 
   const openModalOnClick = () => {
     setIsConfigModalHidden(false);
+    setCanvasIgnoreKeyInputs(true);
   }
 
   const onSelectLayoutClick = () => {
     setIsLayoutPickerModalHidden(false);
+    setCanvasIgnoreKeyInputs(true);
   }
 
   const onModalWorkspaceChange = (modifiedWorkspace) => {
@@ -62,12 +65,14 @@ const App = () => {
   }
 
   const onModalReturn = (workspace, layoutId) => {
+    setCanvasIgnoreKeyInputs(false);
     setIsConfigModalHidden(true);
     setCanvasWorkspace(new ChocoStudioWorkspace(workspace));
     if (layoutId) setCanvasLayoutId(layoutId);
   }
 
   const onLayoutPickerReturn = (layoutId) => {
+    setCanvasIgnoreKeyInputs(false);
     if (layoutId) {
       setCanvasLayoutId(layoutId);
     }
@@ -102,7 +107,7 @@ const App = () => {
       {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
       {isLayoutPickerModalHidden || <LayoutPickerModal workspace={canvasWorkspace} currentLayoutId={canvasLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToCanvas={onLayoutPickerReturn} />}
       {hasRenderResult && <LayoutRenderResult isModalHidden={! hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToCanvas={onRenderResultReturn} />}
-      <ChocoWinCanvas workspace={canvasWorkspace} onWorkspaceChange={onCanvasWorkspaceChange} canvasLayoutId={canvasLayoutId} />
+      <ChocoWinCanvas ignoreKeyInputs={canvasIgnoreKeyInputs} workspace={canvasWorkspace} onWorkspaceChange={onCanvasWorkspaceChange} canvasLayoutId={canvasLayoutId} />
     </div>
   );
 };

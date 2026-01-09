@@ -424,10 +424,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         doOnTileSetDefinitionDelete(tileSetDefinition.id);
     };
 
-    const subColorOnChange = (e) => {
-
-    }
-
     const generateColorPalette = () => {
         fetch(wholeTileSheetUrl).then((response) => response.body).then((body) => {
             const png = new PNG();
@@ -435,9 +431,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             reader
                 .read()
                 .then((v) => png.write(v.value))
-                .finally(() => {
-                    console.log(`Read PNG with dimensions ${png.width}x${png.height}`);
-                });
+                .finally(() => { });
 
             png.on("parsed", () => {
                 const /** @type {Array<ChocoWinColor>} */ colors = [];
@@ -448,7 +442,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                     const /** @type {ChocoStudioWindowRegionDefinition} */ r = regions[whichRegion];
                     r.tileSheetPositions.forEach((tspRow) => {
                         tspRow.forEach((tsp) => {
-                            console.log("tile at:", tsp);
                             for (let x = tsp.x; x < tsp.x + tileSize; x++) {
                                 for (let y = tsp.y; y < tsp.y + tileSize; y++) {
                                     const idx = (png.width * y + x) << 2;
