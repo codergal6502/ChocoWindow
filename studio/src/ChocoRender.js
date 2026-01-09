@@ -25,19 +25,23 @@ class ChocoWorkspaceRenderer {
             const studioWindow = this.workspace.windows.find((w) => wId == w.id);
             if (!studioWindow) { console.error(`No window with ID ${wId}.`); return; };
 
-            const studoPreset = studioWindow.singularPreset || this.workspace.presets.find((ps) => ps.id == studioWindow.presetId);
-            if (!studoPreset) { console.error(`No singular preset or preset with ID ${studioWindow.presetId}.`); return; }
+            const studioPreset = studioWindow.singularPreset || this.workspace.presets.find((ps) => ps.id == studioWindow.presetId);
+            if (!studioPreset) { console.error(`No singular preset or preset with ID ${studioWindow.presetId}.`); return; }
 
-            const tileset = this.workspace.tileSets.find((ts) => ts.id == studoPreset.tileSetId);
-            if (!tileset) { console.error(`No tileset with ID ${studoPreset.tileSetId}.`); return; }
+            const tileSetDefinition = this.workspace.tileSetDefinitions.find((tsd) => tsd.id == studioPreset.tileSetDefinitionId);
+            if (!tileSetDefinition) { console.error(`No tile set definition with ID ${studioPreset.tileSetDefinitionId}.`); return; }
+            
+            const tileSheet = this.workspace.tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
+            if (!tileSheet) { console.error(`No tile sheet with ID ${tileSetDefinition.tileSheetId}.`); return; }
 
             const chocoWindow = new ChocoWinWindow(
-                tileset
-              , studoPreset.tileScale
+                tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl)
+              , studioPreset.tileScale
               , studioWindow.x
               , studioWindow.y
               , studioWindow.w
               , studioWindow.h
+              , studioPreset.substituteColors
             );
 
             return chocoWindow;
