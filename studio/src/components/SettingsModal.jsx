@@ -260,13 +260,6 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
         setActiveTileSheet(tileSheet);
     }
 
-    const tileSetNavOnClick = (/** @type {ChocoWinTileSet} */ tileSet) => {
-        if (FormStates.TILE_SET != formState) {
-            setFormState(FormStates.TILE_SET);
-        }
-        setActiveTileSet(tileSet);
-    }
-
     const newTileSheetOnClick = () => {
         if (FormStates.TILE_SHEET != formState) {
             setFormState(FormStates.TILE_SHEET);
@@ -370,19 +363,6 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                         }
                                     </ul>
                                 </li>
-                                {/* <li>
-                                    <button onClick={() => setTileSetsNavOpen(!tileSetsNavOpen)} className="block py-1 hover:bg-gray-700">
-                                        <FontAwesomeIcon icon={tileSetsNavOpen ? faAngleDown : faAngleRight} />
-                                        Tile Sets (depr)
-                                    </button>
-                                    <ul className={`ml-8 ${tileSetsNavOpen ? '' : 'hidden'}`}>
-                                        <a href="#" className="block py-1 hover:bg-gray-600">Add New...</a>
-                                        {workspace.tileSets.map((tileSet) => <li key={tileSet.id}>
-                                            <button onClick={() => tileSetNavOnClick(tileSet)} className="block py-1 hover:bg-gray-600">{String(tileSet.name).trim() || <span className="italic">no name</span>}</button>
-                                        </li>)
-                                        }
-                                    </ul>
-                                </li> */}
                                 <li>
                                     <button onClick={() => setTileSetDefinitionsNavOpen(!tileSetDefinitionsNavOpen)} className="block py-1 hover:bg-gray-700">
                                         <FontAwesomeIcon icon={tileSetDefinitionsNavOpen ? faAngleDown : faAngleRight} />
