@@ -25,8 +25,21 @@ class ChocoStudioTileSheetBlobUrlManager {
     get(tileSheetId) {
         return this.#map.get(String(tileSheetId)) ?? null;
     }
-
-    set(tileSheetId, dataUrl) {
+    
+    /**
+     * @param {String} tileSheetId 
+     * @param {Blob} blob 
+     */
+    setBlob(tileSheetId, blob) {
+        const newBlobUrl = URL.createObjectURL(blob);
+        this.#map.set(tileSheetId, newBlobUrl);
+    }
+    
+    /**
+     * @param {String} tileSheetId 
+     * @param {String} dataUrl 
+     */
+    setDataUrl(tileSheetId, dataUrl) {
         const oldBlobUrl = this.get(tileSheetId);
         if (oldBlobUrl) {
             URL.revokeObjectURL(oldBlobUrl);
@@ -148,6 +161,7 @@ class ChocoStudioTileSetDefinition {
             /** @type {String} */ this.name = "";
             /** @type {String} */ this.tileSheetId = "";
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
+            // todo: replace this with a map at some point
             /** @type {Object.<String, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
             /** @type {Array.<ChocoWinColor> } */ this.defaultColors = []
 
