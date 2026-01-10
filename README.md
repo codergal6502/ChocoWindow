@@ -26,7 +26,7 @@ If you want to run the examples or Choco Window Studio locally, you first must m
 
 ## License
 
-Copyright 2025
+Copyright 2025, 2026
 
 This project is distributed under the terms of the [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.en.html). The license applies to this file and other files in the [GitHub repository](https://github.com/codergal6502/ChocoWindow) hosting this file.
 
