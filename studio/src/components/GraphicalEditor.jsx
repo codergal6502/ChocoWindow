@@ -1,4 +1,4 @@
-import './Editor.css'
+import './GraphicalEditor.css'
 
 import { useRef, useEffect } from 'react';
 
@@ -14,7 +14,7 @@ import interact from 'interactjs';
  * @param {String} props.editorLayoutId
  * @returns 
  */
-const Editor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs }) => {
+const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs }) => {
     const mainEditorDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
@@ -478,4 +478,4 @@ const Editor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs 
         </div>
     );
 };
-export default Editor;
+export default GraphicalEditor;

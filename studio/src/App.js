@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import SettingsFloater from './components/SettingsFloater';
 import SettingsModal from './components/SettingsModal';
-import Editor from './components/Editor';
+import GraphicalEditor from './components/GraphicalEditor';
 import LayoutPickerModal from './components/LayoutPickerModal';
 import LayoutRenderResult from './components/LayoutRenderResult';
 
@@ -114,7 +114,7 @@ const App = () => {
       {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
       {isLayoutPickerModalHidden || <LayoutPickerModal workspace={editorWorkspace} currentLayoutId={editorLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToEditor={onLayoutPickerReturn} />}
       {hasRenderResult && <LayoutRenderResult isModalHidden={!hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToEditor={onRenderResultReturn} />}
-      <Editor ignoreKeyInputs={editorIgnoreKeyInputs} workspace={editorWorkspace} onWorkspaceChange={onEditorWorkspaceChange} editorLayoutId={editorLayoutId} />
+      <GraphicalEditor ignoreKeyInputs={editorIgnoreKeyInputs} workspace={editorWorkspace} onWorkspaceChange={onEditorWorkspaceChange} editorLayoutId={editorLayoutId} />
     </div>
   );
 };

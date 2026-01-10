@@ -171,7 +171,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
-            <button onClick={onReturnToEditor} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Editor</button>
+            <button onClick={onReturnToEditor} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Close</button>
             <button onClick={deleteWindowOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Window</button>
         </div>
     </>
