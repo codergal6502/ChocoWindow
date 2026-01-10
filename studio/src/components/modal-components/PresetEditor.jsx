@@ -11,9 +11,9 @@ import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
  * @param {Array<ChocoStudioTileSetDefinition>} props.tileSetDefinitions
  * @param {function(ChocoStudioPreset):void} props.onPresetChange
  * @param {function(String):void} props.onPresetDelete
- * @param {function():void} props.onReturnToCanvas
+ * @param {function():void} props.onReturnToEditor
  */
-const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefinitions, onPresetChange, onPresetDelete, onReturnToCanvas }) => {
+const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefinitions, onPresetChange, onPresetDelete, onReturnToEditor }) => {
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
@@ -175,7 +175,7 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
             isSubordinate || <>
                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                 <div className="flex justify-between">
-                    <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+                    <button onClick={onReturnToEditor} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Editor</button>
                     <button onClick={deletePresetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button>
                 </div>
             </>

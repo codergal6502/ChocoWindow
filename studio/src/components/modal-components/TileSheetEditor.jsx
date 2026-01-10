@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { ChocoStudioTileSheet } from "../../ChocoStudio";
 
-const TileSheetEditor = ({ tileSheet, onTileSheetChange, onTileSheetDelete, onReturnToCanvas }) => {
+const TileSheetEditor = ({ tileSheet, onTileSheetChange, onTileSheetDelete, onReturnToEditor }) => {
     const canPropogateDelete = (onTileSheetDelete && typeof onTileSheetDelete == 'function');
 
     const fileInputRef = useRef(null);
@@ -89,7 +89,7 @@ const TileSheetEditor = ({ tileSheet, onTileSheetChange, onTileSheetDelete, onRe
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
-            <button onClick={onReturnToCanvas} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+            <button onClick={onReturnToEditor} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Editor</button>
             {canPropogateDelete && <button onClick={() => onTileSheetDelete(tileSheet.id)} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Sheet</button>}
         </div>
     </>)

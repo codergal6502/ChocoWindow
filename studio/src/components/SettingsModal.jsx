@@ -14,11 +14,11 @@ export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheet
 /**
  * @param {Object} props
  * @param {Boolean} props.isModalHidden
- * @param {function(ChocoStudioWorkspace):void} props.onReturnToCanvas
+ * @param {function(ChocoStudioWorkspace):void} props.onReturnToEditor
  * @param {function(ChocoStudioWorkspace):void} props.onWorkspaceChange
  * @param {ChocoStudioWorkspace} props.workspace
  */
-const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, workspace }) => {
+const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, workspace }) => {
     const FormStates = Object.freeze({
         SETTINGS: 'SETTINGS',
         TILE_SHEET: 'TILE_SHEET',
@@ -479,29 +479,29 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                                 </div>
                                                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                                                 <div className="flex justify-between">
-                                                    <button onClick={() => onReturnToCanvas(workspace)} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
+                                                    <button onClick={() => onReturnToEditor(workspace)} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Editor</button>
                                                 </div>
                                             </>);
 
                                         case FormStates.TILE_SHEET:
                                             return (!activeTileSheet) ? "" : (
-                                                <TileSheetEditor key={activeTileSheet.id} tileSheet={activeTileSheet} onTileSheetChange={onTileSheetChange} onTileSheetDelete={onTileSheetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <TileSheetEditor key={activeTileSheet.id} tileSheet={activeTileSheet} onTileSheetChange={onTileSheetChange} onTileSheetDelete={onTileSheetDelete} onReturnToEditor={() => onReturnToEditor(workspace)} />
                                             );
                                         case FormStates.TILE_SET_DEFINITION:
                                             return (!activeTileSetDefinition) ? "" : (
-                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToEditor={() => onReturnToEditor(workspace)} />
                                             );
                                         case FormStates.PRESET:
                                             return (!activePreset) ? "" : (
-                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSheets={workspace.tileSheets} tileSetDefinitions={workspace.tileSetDefinitions} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <PresetEditor key={activePreset.id} preset={activePreset} tileSheets={workspace.tileSheets} tileSetDefinitions={workspace.tileSetDefinitions} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToEditor={() => onReturnToEditor(workspace)} />
                                             );
                                         case FormStates.WINDOW:
                                             return (!activeWindow) ? "" : (
-                                                <WindowEditor key={activeWindow.id} window={activeWindow} presets={workspace.presets} tileSetDefinitions={workspace.tileSetDefinitions} tileSheets={workspace.tileSheets} onWindowChange={onWindowChange} onWindowDelete={onWindowDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
+                                                <WindowEditor key={activeWindow.id} window={activeWindow} presets={workspace.presets} tileSetDefinitions={workspace.tileSetDefinitions} tileSheets={workspace.tileSheets} onWindowChange={onWindowChange} onWindowDelete={onWindowDelete} onReturnToEditor={() => onReturnToEditor(workspace)} />
                                             )
                                         case FormStates.LAYOUT:
                                             return (!activeLayout) ? "" : (
-                                                <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} onEditThisLayout={(layoutId) => { onReturnToCanvas(workspace, layoutId) }} />
+                                                <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} onReturnToEditor={() => onReturnToEditor(workspace)} onEditThisLayout={(layoutId) => { onReturnToEditor(workspace, layoutId) }} />
                                             )
                                         case FormStates.VARIABLE:
                                             return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">variable</h2>;

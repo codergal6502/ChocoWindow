@@ -9,7 +9,7 @@ import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
 import WindowEditor from "./modal-components/WindowEditor.jsx";
 
-const LayoutPickerModal = ({ workspace, currentLayoutId, isModalHidden, onReturnToCanvas }) => {
+const LayoutPickerModal = ({ workspace, currentLayoutId, isModalHidden, onReturnToEditor }) => {
     const [selection, setSelection] = useState(null);
 
     const onSelectChange = (e) => {
@@ -29,8 +29,8 @@ const LayoutPickerModal = ({ workspace, currentLayoutId, isModalHidden, onReturn
                             </select>
                         </label>
                         <div className="flex justify-between">
-                            <button onClick={() => { onReturnToCanvas(selection) }} className="m-2 w-[12em] bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Canvas</button>
-                            <button onClick={() => { onReturnToCanvas(null); }} className="m-2 w-[12em] bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Cancel</button>
+                            <button onClick={() => { onReturnToEditor(selection) }} className="m-2 w-[12em] bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Return to Editor</button>
+                            <button onClick={() => { onReturnToEditor(null); }} className="m-2 w-[12em] bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Cancel</button>
                         </div>
                     </div>
                 </div>

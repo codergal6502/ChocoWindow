@@ -1,4 +1,4 @@
-import './ChocoWinCanvas.css'
+import './Editor.css'
 
 import { useRef, useEffect } from 'react';
 
@@ -11,11 +11,11 @@ import interact from 'interactjs';
  * @param {Object} props
  * @param {ChocoStudioWorkspace} props.workspace
  * @param {Function} props.onWorkspaceChange
- * @param {String} props.canvasLayoutId
+ * @param {String} props.editorLayoutId
  * @returns 
  */
-const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKeyInputs }) => {
-    const mainCanvasDivRef = useRef(null);
+const Editor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs }) => {
+    const mainEditorDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
     let uiScale = 1.0;
@@ -27,7 +27,10 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
 
     const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
 
-    const updateCoordinates = (dd) => {
+    /**
+     * @param {HTMLElement} dd 
+     */
+    const updateBoundingBoxDisplayCoordinates = (dd) => {
         let /** @type {HTMLElement} */ textDiv;
         let /** @type {HTMLElement} */ boundingBoxDiv;
 
@@ -85,10 +88,10 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
         let div = e.target.classList && e.target.classList.contains("dimensions") ? e.target.parentNode : e.target;
         Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); })
         div.classList.add('active');
-        updateCoordinates(div);
+        updateBoundingBoxDisplayCoordinates(div);
     }
 
-    const resizeCanvas = () => {
+    const resizeEditorDiv = () => {
         const menuBarHeight = 0;
         const clientWidth = window.innerWidth;
         const clientHeight = window.innerHeight;
@@ -99,12 +102,12 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
         uiScale = Math.min(widthRatio, heightRatio);
 
         if (uiScale < 1) {
-            const /** @type {HTMLElement} */ chocoStudioCanvasDiv = document.getElementById("choco-studio-canvas-div");
-            chocoStudioCanvasDiv.style.scale = `${100.0 * uiScale}%`;
-            chocoStudioCanvasDiv.style.width = Math.floor(1.0 * workspace.width * uiScale);
-            chocoStudioCanvasDiv.style.height = Math.floor(1.0 * workspace.height * uiScale);
-            chocoStudioCanvasDiv.style.left = `${-0.25 * workspace.width * uiScale}px`;
-            chocoStudioCanvasDiv.style.top = `${-0.25 * workspace.height * uiScale + menuBarHeight}px`;
+            const /** @type {HTMLElement} */ editorDiv = document.getElementById("editor-div");
+            editorDiv.style.scale = `${100.0 * uiScale}%`;
+            editorDiv.style.width = Math.floor(1.0 * workspace.width * uiScale);
+            editorDiv.style.height = Math.floor(1.0 * workspace.height * uiScale);
+            editorDiv.style.left = `${-0.25 * workspace.width * uiScale}px`;
+            editorDiv.style.top = `${-0.25 * workspace.height * uiScale + menuBarHeight}px`;
         }
     }
 
@@ -113,9 +116,9 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
     const checkIgnore = () => ignoreKeyInputsRef?.current;
 
     useEffect(() => { // empty-dependency useEffect for on load
-        if (mainCanvasDivRef.current) { mainCanvasDivRef.current.onclick = (e) => { if (e.target == mainCanvasDivRef.current) { makeNoWindowActive(); } } }
+        if (mainEditorDivRef.current) { mainEditorDivRef.current.onclick = (e) => { if (e.target == mainEditorDivRef.current) { makeNoWindowActive(); } } }
 
-        resizeCanvas();
+        resizeEditorDiv();
 
         const keydownListener = (/** @type {KeyboardEvent} */ e) => {
             if (checkIgnore()) { return; }
@@ -133,7 +136,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                         activeDiv.style.top = `${Number(activeDiv.style.top.replace("px", "")) - 1}px`;
                         const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
                         chocoWinDiv.style.top = activeDiv.style.top;
-                        updateCoordinates(activeDiv);
+                        updateBoundingBoxDisplayCoordinates(activeDiv);
                     }
                     break;
                 }
@@ -143,7 +146,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                         activeDiv.style.top = `${Number(activeDiv.style.top.replace("px", "")) + 1}px`;
                         const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
                         chocoWinDiv.style.top = activeDiv.style.top;
-                        updateCoordinates(activeDiv);
+                        updateBoundingBoxDisplayCoordinates(activeDiv);
                     }
                     break;
                 }
@@ -153,7 +156,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                         activeDiv.style.left = `${Number(activeDiv.style.left.replace("px", "")) - 1}px`;
                         const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
                         chocoWinDiv.style.left = activeDiv.style.left;
-                        updateCoordinates(activeDiv);
+                        updateBoundingBoxDisplayCoordinates(activeDiv);
                     }
                     break;
                 }
@@ -163,7 +166,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                         activeDiv.style.left = `${Number(activeDiv.style.left.replace("px", "")) + 1}px`;
                         const chocoWinDiv = document.getElementById(activeDiv.getAttribute('data-choco-win-id'));
                         chocoWinDiv.style.left = activeDiv.style.left;
-                        updateCoordinates(activeDiv);
+                        updateBoundingBoxDisplayCoordinates(activeDiv);
                     }
                     break;
                 }
@@ -201,7 +204,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                             e.target.style.left = `${Math.round(endX)}px`;
                             e.target.style.top = `${Math.round(endY)}px`;
 
-                            updateCoordinates(e.target);
+                            updateBoundingBoxDisplayCoordinates(e.target);
                         },
                         end(e) {
                             const dragStartX = e.target.getAttribute("data-drag-start-x");
@@ -299,7 +302,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                                 e.target.style.width = `${Math.floor(e.rect.width / uiScale)}px`;
                             }
 
-                            updateCoordinates(e.target);
+                            updateBoundingBoxDisplayCoordinates(e.target);
                         },
                         end(e) {
                             const chocoWinDiv = document.getElementById(e.target.getAttribute('data-choco-win-id'));
@@ -359,11 +362,11 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
 
         if (workspace) {
             const /** @type { ChocoStudioWorkspace } */ ws = workspace;
-            mainCanvasDivRef.current.style.width = `${ws.width}px`;
-            mainCanvasDivRef.current.style.height = `${ws.height}px`;
-            const /** @type { ChocoStudioLayout } */ layout = ws.layouts.filter((l) => canvasLayoutId == l.id)[0] || ws.layouts[0];
+            mainEditorDivRef.current.style.width = `${ws.width}px`;
+            mainEditorDivRef.current.style.height = `${ws.height}px`;
+            const /** @type { ChocoStudioLayout } */ layout = ws.layouts.filter((l) => editorLayoutId == l.id)[0] || ws.layouts[0];
 
-            if (mainCanvasDivRef.current && styleRef.current && layout) {
+            if (mainEditorDivRef.current && styleRef.current && layout) {
                 document.querySelectorAll("[data-studio-window-id], [data-choco-win-id]").forEach((el) => el.remove());
                 const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
                 let rules = new Array(styleSheet.cssRules);
@@ -396,7 +399,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                     chocoWinDiv.style.boxSizing = "border-box";
                     chocoWinDiv.style.backgroundSize = "100%";
 
-                    mainCanvasDivRef.current.appendChild(chocoWinDiv);
+                    mainEditorDivRef.current.appendChild(chocoWinDiv);
 
                     const boundingBoxDivId = `bnd-${studioWindow.id}`;
                     const boundingBoxDiv = document.createElement("div");
@@ -419,7 +422,7 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
                     nameDiv.textContent = studioWindow.name;
                     boundingBoxDiv.appendChild(nameDiv);
 
-                    mainCanvasDivRef.current.append(boundingBoxDiv);
+                    mainEditorDivRef.current.append(boundingBoxDiv);
 
                     boundingBoxDiv.onclick = makeChocoWinBoundingBoxActive;
 
@@ -467,12 +470,12 @@ const ChocoWinCanvas = ({ workspace, onWorkspaceChange, canvasLayoutId, ignoreKe
             document.removeEventListener("keydown", keydownListener);
         }
 
-    }, [workspace, canvasLayoutId]);
+    }, [workspace, editorLayoutId]);
 
     return (
-        <div id='choco-studio-canvas-div' ref={mainCanvasDivRef}>
+        <div id='editor-div' className='static top-0 mt-0' ref={mainEditorDivRef}>
             <style ref={styleRef}></style>
         </div>
     );
 };
-export default ChocoWinCanvas;
+export default Editor;

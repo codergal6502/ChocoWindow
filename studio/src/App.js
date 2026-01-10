@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import SettingsFloater from './components/SettingsFloater';
 import SettingsModal from './components/SettingsModal';
-import ChocoWinCanvas from './components/ChocoWInCanvas';
+import Editor from './components/Editor';
 import LayoutPickerModal from './components/LayoutPickerModal';
 import LayoutRenderResult from './components/LayoutRenderResult';
 
@@ -43,10 +43,10 @@ const App = () => {
 
   const [isConfigModalHidden, setIsConfigModalHidden] = useState(true);
   const [isLayoutPickerModalHidden, setIsLayoutPickerModalHidden] = useState(true);
-  const [canvasLayoutId, setCanvasLayoutId] = useState(null);
+  const [editorLayoutId, setEditorLayoutId] = useState(null);
   const [modalWorkspace, setModalWorkspace] = useState(initialWorkspace());
-  const [canvasWorkspace, setCanvasWorkspace] = useState(initialWorkspace());
-  const [canvasIgnoreKeyInputs, setCanvasIgnoreKeyInputs] = useState(false);
+  const [editorWorkspace, setEditorWorkspace] = useState(initialWorkspace());
+  const [editorIgnoreKeyInputs, setEditorIgnoreKeyInputs] = useState(false);
 
   const [hasRenderResult, setHasRenderResult] = useState(false);
   const [renderResultDataUrl, setRenderResultDataUrl] = useState(null);
@@ -54,12 +54,12 @@ const App = () => {
 
   const openModalOnClick = () => {
     setIsConfigModalHidden(false);
-    setCanvasIgnoreKeyInputs(true);
+    setEditorIgnoreKeyInputs(true);
   }
 
   const onSelectLayoutClick = () => {
     setIsLayoutPickerModalHidden(false);
-    setCanvasIgnoreKeyInputs(true);
+    setEditorIgnoreKeyInputs(true);
   }
 
   const onModalWorkspaceChange = (modifiedWorkspace) => {
@@ -68,29 +68,29 @@ const App = () => {
   }
 
   const onModalReturn = (workspace, layoutId) => {
-    setCanvasIgnoreKeyInputs(false);
+    setEditorIgnoreKeyInputs(false);
     setIsConfigModalHidden(true);
-    setCanvasWorkspace(new ChocoStudioWorkspace(workspace));
-    if (layoutId) setCanvasLayoutId(layoutId);
+    setEditorWorkspace(new ChocoStudioWorkspace(workspace));
+    if (layoutId) setEditorLayoutId(layoutId);
   }
 
   const onLayoutPickerReturn = (layoutId) => {
-    setCanvasIgnoreKeyInputs(false);
+    setEditorIgnoreKeyInputs(false);
     if (layoutId) {
-      setCanvasLayoutId(layoutId);
+      setEditorLayoutId(layoutId);
     }
     setIsLayoutPickerModalHidden(true);
   }
 
-  const onCanvasWorkspaceChange = (modifiedWorkspace) => {
+  const onEditorWorkspaceChange = (modifiedWorkspace) => {
     setModalWorkspace(new ChocoStudioWorkspace(modifiedWorkspace));
     storeWorkspaceToCookie(modalWorkspace);
   }
 
   const onDownloadPngClick = () => {
-    const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(canvasWorkspace);
-    const layoutId = canvasLayoutId || canvasWorkspace.layouts[0].id;
-    const downloadName = (canvasWorkspace.layouts.find((l) => l.id == layoutId)?.name || "window") + ".png";
+    const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(editorWorkspace);
+    const layoutId = editorLayoutId || editorWorkspace.layouts[0].id;
+    const downloadName = (editorWorkspace.layouts.find((l) => l.id == layoutId)?.name || "window") + ".png";
     setRenderDownloadName(downloadName);
     renderer.generateLayoutImageDataUrl(layoutId, (dataUrl) => {
       setRenderResultDataUrl(dataUrl);
@@ -111,10 +111,10 @@ const App = () => {
   return (
     <div id="app-div">
       <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} onDownloadPngClick={onDownloadPngClick} />
-      {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToCanvas={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
-      {isLayoutPickerModalHidden || <LayoutPickerModal workspace={canvasWorkspace} currentLayoutId={canvasLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToCanvas={onLayoutPickerReturn} />}
-      {hasRenderResult && <LayoutRenderResult isModalHidden={!hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToCanvas={onRenderResultReturn} />}
-      <ChocoWinCanvas ignoreKeyInputs={canvasIgnoreKeyInputs} workspace={canvasWorkspace} onWorkspaceChange={onCanvasWorkspaceChange} canvasLayoutId={canvasLayoutId} />
+      {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
+      {isLayoutPickerModalHidden || <LayoutPickerModal workspace={editorWorkspace} currentLayoutId={editorLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToEditor={onLayoutPickerReturn} />}
+      {hasRenderResult && <LayoutRenderResult isModalHidden={!hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToEditor={onRenderResultReturn} />}
+      <Editor ignoreKeyInputs={editorIgnoreKeyInputs} workspace={editorWorkspace} onWorkspaceChange={onEditorWorkspaceChange} editorLayoutId={editorLayoutId} />
     </div>
   );
 };

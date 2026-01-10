@@ -1,4 +1,4 @@
-#choco-studio-canvas-div {
+#editor-div {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -68,20 +68,3 @@
     width: 100%;
     text-align: center;
 }
-
-
-/*
-
-
-css for canvas (assuming 1920x1080
-
-position: relative;
-top: -270px;
-background: #FF000033;
-height: 1080px;
-scale: 50%;
-width: 1920px;
-left: -480px;
-overflow: clip;
-
-*/
