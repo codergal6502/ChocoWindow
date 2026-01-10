@@ -52,6 +52,8 @@ const App = () => {
   const [renderResultDataUrl, setRenderResultDataUrl] = useState(null);
   const [renderDownloadName, setRenderDownloadName] = useState(null);
 
+  const [lastResizeTimestamp, setLastResizeTimestamp] = useState(null);
+
   const openModalOnClick = () => {
     setIsConfigModalHidden(false);
     setEditorIgnoreKeyInputs(true);
@@ -104,8 +106,16 @@ const App = () => {
     setRenderDownloadName("");
   }
 
-  useEffect(() => {
+  const onResize = () => {
+    // This forces any components that need to resize to "get the message" as it were.
+    // See https://stackoverflow.com/a/69136763/1102726.
 
+    setLastResizeTimestamp(Date.now());
+  }
+
+  useEffect(() => {
+    window.removeEventListener("resize", onResize);
+    window.addEventListener("resize", onResize);
   }, []);
 
   return (
@@ -114,7 +124,7 @@ const App = () => {
       {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
       {isLayoutPickerModalHidden || <LayoutPickerModal workspace={editorWorkspace} currentLayoutId={editorLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToEditor={onLayoutPickerReturn} />}
       {hasRenderResult && <LayoutRenderResult isModalHidden={!hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToEditor={onRenderResultReturn} />}
-      <GraphicalEditor ignoreKeyInputs={editorIgnoreKeyInputs} workspace={editorWorkspace} onWorkspaceChange={onEditorWorkspaceChange} editorLayoutId={editorLayoutId} />
+      <GraphicalEditor ignoreKeyInputs={editorIgnoreKeyInputs} workspace={editorWorkspace} onWorkspaceChange={onEditorWorkspaceChange} editorLayoutId={editorLayoutId} lastResizeTimestamp={lastResizeTimestamp} />
     </div>
   );
 };

@@ -1,9 +1,10 @@
-#editor-div {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #99000033;
+#graphical-editor-div {
     overflow: clip;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
 }
 
 .chocoWinBoundingBox {
@@ -26,9 +27,11 @@
     0% {
         border-color: #FFFF00;
     }
+
     50% {
         border-color: #FFFF99;
     }
+
     100% {
         border-color: #FFFF00;
     }

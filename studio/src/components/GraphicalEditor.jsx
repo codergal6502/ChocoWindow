@@ -14,8 +14,8 @@ import interact from 'interactjs';
  * @param {String} props.editorLayoutId
  * @returns 
  */
-const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs }) => {
-    const mainEditorDivRef = useRef(null);
+const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs, lastResizeTimestamp }) => {
+    const graphicalEditorDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
     let uiScale = 1.0;
@@ -102,12 +102,18 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
         uiScale = Math.min(widthRatio, heightRatio);
 
         if (uiScale < 1) {
-            const /** @type {HTMLElement} */ editorDiv = document.getElementById("editor-div");
-            editorDiv.style.scale = `${100.0 * uiScale}%`;
-            editorDiv.style.width = Math.floor(1.0 * workspace.width * uiScale);
-            editorDiv.style.height = Math.floor(1.0 * workspace.height * uiScale);
-            editorDiv.style.left = `${-0.25 * workspace.width * uiScale}px`;
-            editorDiv.style.top = `${-0.25 * workspace.height * uiScale + menuBarHeight}px`;
+            const /** @type {HTMLElement} */ graphicalEditorDiv = document.getElementById("graphical-editor-div");
+
+            const newWidth = Math.floor(1.0 * workspace.width * uiScale);
+            const newHeight = Math.floor(1.0 * workspace.height * uiScale);
+
+
+            console.log(`workspace is ${workspace.width} x ${workspace.height}, client is ${clientWidth} x ${clientHeight}, scale is ${uiScale}, new size is ${newWidth} x ${newHeight} at (${graphicalEditorDiv.offsetLeft}, ${graphicalEditorDiv.offsetTop})`);
+
+
+            graphicalEditorDiv.style.scale = `${100.0 * uiScale}%`;
+            graphicalEditorDiv.style.left = `-${(workspace.width - clientWidth) / 2}px`
+            graphicalEditorDiv.style.top = `-${(workspace.height - clientHeight) / 2}px`
         }
     }
 
@@ -116,7 +122,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
     const checkIgnore = () => ignoreKeyInputsRef?.current;
 
     useEffect(() => { // empty-dependency useEffect for on load
-        if (mainEditorDivRef.current) { mainEditorDivRef.current.onclick = (e) => { if (e.target == mainEditorDivRef.current) { makeNoWindowActive(); } } }
+        if (graphicalEditorDivRef.current) { graphicalEditorDivRef.current.onclick = (e) => { if (e.target == graphicalEditorDivRef.current) { makeNoWindowActive(); } } }
 
         resizeEditorDiv();
 
@@ -362,11 +368,11 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
         if (workspace) {
             const /** @type { ChocoStudioWorkspace } */ ws = workspace;
-            mainEditorDivRef.current.style.width = `${ws.width}px`;
-            mainEditorDivRef.current.style.height = `${ws.height}px`;
+            graphicalEditorDivRef.current.style.width = `${ws.width}px`;
+            graphicalEditorDivRef.current.style.height = `${ws.height}px`;
             const /** @type { ChocoStudioLayout } */ layout = ws.layouts.filter((l) => editorLayoutId == l.id)[0] || ws.layouts[0];
 
-            if (mainEditorDivRef.current && styleRef.current && layout) {
+            if (graphicalEditorDivRef.current && styleRef.current && layout) {
                 document.querySelectorAll("[data-studio-window-id], [data-choco-win-id]").forEach((el) => el.remove());
                 const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
                 let rules = new Array(styleSheet.cssRules);
@@ -399,7 +405,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                     chocoWinDiv.style.boxSizing = "border-box";
                     chocoWinDiv.style.backgroundSize = "100%";
 
-                    mainEditorDivRef.current.appendChild(chocoWinDiv);
+                    graphicalEditorDivRef.current.appendChild(chocoWinDiv);
 
                     const boundingBoxDivId = `bnd-${studioWindow.id}`;
                     const boundingBoxDiv = document.createElement("div");
@@ -422,7 +428,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                     nameDiv.textContent = studioWindow.name;
                     boundingBoxDiv.appendChild(nameDiv);
 
-                    mainEditorDivRef.current.append(boundingBoxDiv);
+                    graphicalEditorDivRef.current.append(boundingBoxDiv);
 
                     boundingBoxDiv.onclick = makeChocoWinBoundingBoxActive;
 
@@ -472,8 +478,14 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
     }, [workspace, editorLayoutId]);
 
+    useEffect(() => {
+        if (lastResizeTimestamp) {
+            resizeEditorDiv();
+        }
+    }, [lastResizeTimestamp])
+
     return (
-        <div id='editor-div' className='static top-0 mt-0' ref={mainEditorDivRef}>
+        <div id='graphical-editor-div' ref={graphicalEditorDivRef}>
             <style ref={styleRef}></style>
         </div>
     );
