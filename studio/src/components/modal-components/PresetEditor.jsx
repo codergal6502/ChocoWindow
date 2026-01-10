@@ -146,7 +146,7 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
         <div className="mb-4 w-full">
             <label htmlFor="7ed0e6ee-47bf-48ff-b54b-d919c60faad5">Tile Set Definition: </label>
             <select id="7ed0e6ee-47bf-48ff-b54b-d919c60faad5" className={TAILWIND_INPUT_CLASS_NAME} onChange={onTileSetDefinitionIdChange} value={tileSetDefinitionId}>
-                {preset.tileSetDefinitionId || <option key={""} value={null}>-</option>}
+                {preset.tileSetDefinitionId || <option key={""} value={""}>-</option>}
                 {tileSetDefinitions.map((ts) => <option key={ts.id} value={ts.id}>{ts.name}</option>)}
             </select>
         </div>

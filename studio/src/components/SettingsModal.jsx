@@ -469,12 +469,12 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                                 <div className={`grid grid-cols-2 gap-4`}>
                                                     <div className="mb-4 w-full">
                                                         <label htmlFor="063ce7b6-c327-4ab2-b343-0556f0e7158d">Width: </label>
-                                                        <input placeholder="Preset Name" type="number" id="063ce7b6-c327-4ab2-b343-0556f0e7158d" className={TAILWIND_INPUT_CLASS_NAME} value={width} onChange={widthChange} />
+                                                        <input placeholder="Width" type="number" id="063ce7b6-c327-4ab2-b343-0556f0e7158d" className={TAILWIND_INPUT_CLASS_NAME} value={width} onChange={widthChange} />
                                                     </div>
 
                                                     <div className="mb-4 w-full">
                                                         <label htmlFor="c3efc55a-36cd-4f12-b546-308893448ade">Y Position: </label>
-                                                        <input placeholder="Preset Name" type="number" id="c3efc55a-36cd-4f12-b546-308893448ade" className={TAILWIND_INPUT_CLASS_NAME} value={height} onChange={heightChange} />
+                                                        <input placeholder="Height" type="number" id="c3efc55a-36cd-4f12-b546-308893448ade" className={TAILWIND_INPUT_CLASS_NAME} value={height} onChange={heightChange} />
                                                     </div>
                                                 </div>
                                                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
@@ -492,7 +492,6 @@ const SettingsModal = ({ isModalHidden, onReturnToCanvas, onWorkspaceChange, wor
                                                 <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
                                         case FormStates.PRESET:
-                                            if (!workspace.tileSetDefinitions)
                                             return (!activePreset) ? "" : (
                                                 <PresetEditor key={activePreset.id} preset={activePreset} tileSheets={workspace.tileSheets} tileSetDefinitions={workspace.tileSetDefinitions} onPresetChange={onPresetChange} onPresetDelete={onPresetDelete} onReturnToCanvas={() => onReturnToCanvas(workspace)} />
                                             );
