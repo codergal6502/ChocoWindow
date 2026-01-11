@@ -16,7 +16,6 @@ const downloadZip = (workspace) => {
             new Promise(resolve =>
                 renderer.generateLayoutImageBlob(layout.id).then((blob) => {
                     const reader = new BlobReader(blob);
-                    console.log("debugging:", URL.createObjectURL(blob));
                     resolve({ name: `${layout.name.replaceAll(/[<>:""\\\/|?*]/g, '-')}.png`, reader: reader });
                 })
             )

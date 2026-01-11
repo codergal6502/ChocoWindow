@@ -74,14 +74,6 @@ class ChocoWorkspaceRenderer {
                 canvas.toBlob(blob => resolve(blob), "image/png", 10);
             })
         })
-        // return this.#generateCanvas(layoutId, (canvas) => {
-        //     return new Promise(resolve => {
-        //         canvas.toBlob((blobbie) => {
-        //             onComplete(blobbie);
-        //             resolve();
-        //         }, "image/png", 10);
-        //     })
-        // });
     }
 
     /**
