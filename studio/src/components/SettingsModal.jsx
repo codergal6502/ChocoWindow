@@ -522,6 +522,9 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                 </ul>
                                                 <h3 className="mb-2 text-xl">Repository</h3>
                                                 <p className="mb-2 text-sm italic">The code for this tool and related tools is available on <a className="underline text-blue-700 dark:text-blue-300" href="https://github.com/codergal6502/ChocoWindow" target="_blank">Git Hub</a> and is released under the <a className="underline text-blue-700 dark:text-blue-300" href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">GPL 3.0 License</a></p>
+                                                <div className="flex justify-between">
+                                                    <button onClick={() => onReturnToEditor(workspace)} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
+                                                </div>
                                             </>)
                                         case FormStates.SETTINGS:
                                         default:
