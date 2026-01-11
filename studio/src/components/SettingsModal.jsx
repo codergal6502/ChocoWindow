@@ -454,7 +454,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                 <p className="mb-2 text-sm">This tool lets you take tile sheets containing tiles for window backgrounds and create layouts using windows derived from those tiles.</p>
                                                 <h3 className="mb-2 text-xl">Using Configuration Mode</h3>
                                                 <p className="mb-2 text-sm">In general, navigating the settings on the left side of this dialog box from top to bottom will result in creating usable layouts. Each layout can also be edited graphically once windows have been added to the layouts.</p>
-                                                <h3 className="mb-2 text-xl">Using Graphic Mode</h3>
+                                                <h3 className="mb-2 text-xl">Using Graphical Mode</h3>
                                                 <p className="mb-2 text-sm">Graphical mode lets you edit the position and dimensions of each window within a layout. If you hold down the <span className="italic">Control</span> or <span className="italic">Command</span> key, changes will snap to the nearest 10 pixels.</p>
                                                 <h3 className="mb-2 text-xl">Concepts</h3>
                                                 <ul className="list-disc pl-10">
