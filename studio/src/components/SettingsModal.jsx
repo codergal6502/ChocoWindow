@@ -479,7 +479,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                 </div>
                                                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                                                 <div className="flex justify-between">
-                                                    <button onClick={() => onReturnToEditor(workspace)} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Close</button>
+                                                    <button onClick={() => onReturnToEditor(workspace)} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
                                                 </div>
                                             </>);
 

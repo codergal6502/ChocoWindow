@@ -139,12 +139,12 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
             isSubordinate || <>
                 <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Preset Settings <span className="text-sm">({preset.id})</span></h2>
                 <p className="mb-2 text-sm italic">You can use presets to reuse the same settings on multiple windows.</p>
-        
+
                 <div className="mb-4 w-full">
                     <label htmlFor="e4486061-7422-490d-be92-533ff31711a1">Name: </label>
                     <input placeholder="Preset Name" type="text" autoComplete="off" id="e4486061-7422-490d-be92-533ff31711a1" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
                 </div>
-            </> 
+            </>
         }
 
         <div className="mb-4 w-full">
@@ -163,14 +163,11 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
         <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
         {(tileSetDefinition?.defaultColors?.length > 0) || <p className="mb-2 text-sm italic">No default colors were generated for the selected tile set definition.</p>}
         {(tileSetDefinition?.defaultColors?.length > 0) && <div className={`grid grid-cols-4 gap-4`}>
-            {tileSetDefinition.defaultColors.map((color, i) =>
-                {console.log(`[${i}]: ${substituteColors[i]?.toHexString?.() || color.toHexString()}`);
-                return <div key={i}>
-                    <div className="text-sm w-full text-center">Color {i + 1}</div>
-                    <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString?.() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
-                    <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
-                </div>}
-            )}
+            {tileSetDefinition.defaultColors.map((color, i) => <div key={i}>
+                <div className="text-sm w-full text-center">Color {i + 1}</div>
+                <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString?.() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
+                <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
+            </div>)}
         </div>}
 
         <h3 className="mb-2 mt-4 text-xl">Preview</h3>
@@ -180,7 +177,7 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
             isSubordinate || <>
                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                 <div className="flex justify-between">
-                    <button onClick={onReturnToEditor} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Close</button>
+                    <button onClick={onReturnToEditor} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
                     <button onClick={deletePresetOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button>
                 </div>
             </>

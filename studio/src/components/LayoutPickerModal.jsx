@@ -29,7 +29,7 @@ const LayoutPickerModal = ({ workspace, currentLayoutId, isModalHidden, onReturn
                             </select>
                         </label>
                         <div className="flex justify-between">
-                            <button onClick={() => { onReturnToEditor(selection) }} className="m-2 w-[12em] bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Select</button>
+                            <button onClick={() => { onReturnToEditor(selection) }} className="m-2 w-[12em] bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Select</button>
                             <button onClick={() => { onReturnToEditor(null); }} className="m-2 w-[12em] bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Cancel</button>
                         </div>
                     </div>

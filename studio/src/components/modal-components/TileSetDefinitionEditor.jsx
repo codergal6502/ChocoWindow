@@ -694,7 +694,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             <div className='mx-6' id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={previewRef} /></div>
 
             <h3 className="mb-2 mt-4 text-xl">Color Palette</h3>
-            <button onClick={onGenerateColorPaletteButtonClick} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-500">Generate Color Palette</button>
+            <button onClick={onGenerateColorPaletteButtonClick} className="bg-gray-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Generate Color Palette</button>
             {tooManyColors && <p className="my-2 text-sm mx-6">The selected tiles contain {colorCount} colors but only {MAX_COLOR_COUNT} colors are supported. Please reduce the colors in an external tool or select different tiles.</p>}
             {!tooManyColors && defaultColors && <>
                 <h4 className="mb-1 mt-2 font-bold">Default Colors</h4>
@@ -711,7 +711,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
-            <button onClick={onReturnToEditor} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Close</button>
+            <button onClick={onReturnToEditor} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
             <button onClick={deleteTileSetDefinitionOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set Definition</button>
         </div>
     </>

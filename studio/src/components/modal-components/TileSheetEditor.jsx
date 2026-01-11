@@ -83,13 +83,13 @@ const TileSheetEditor = ({ tileSheet, onTileSheetChange, onTileSheetDelete, onRe
         {hasTileSheet && <div className="mb-4 w-full">
             <h3 className="mb-2 mt-4 text-xl">Tile Sheet Quick View</h3>
             <div className="mb-4 w-full">
-                <img className="block rounded-lg border dark:border-none dark:bg-gray-800 py-[9px] px-3 text-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none" ref={tileSheetRef} src={tileSheetDataUrl} />
+                <img className="block rounded-lg border dark:border-none dark:bg-gray-800 py-[9px] px-3 text-sm focus:border-gray-400 focus:ring-1 focus:ring-gray-400 focus:outline-none" ref={tileSheetRef} src={tileSheetDataUrl} />
             </div>
         </div>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
-            <button onClick={onReturnToEditor} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Close</button>
+            <button onClick={onReturnToEditor} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
             {canPropogateDelete && <button onClick={() => onTileSheetDelete(tileSheet.id)} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Sheet</button>}
         </div>
     </>)
