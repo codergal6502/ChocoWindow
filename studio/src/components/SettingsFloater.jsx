@@ -54,26 +54,26 @@ const SettingsFloater = ({ onGearClick, onSelectLayoutClick, onDownloadPngClick,
 
     return (
         <>
-            <div id="center-settings-container" className={`${(currentPosition == Positions.CENTER) || "hidden"} top-0 ml-auto mr-auto w-[5em] bg-gray-500 opacity-50 rounded-b-lg relative z-20 text-black dark:text-white hover:opacity-75`}>
+            <div id="center-settings-container" className={`${(currentPosition == Positions.CENTER) || "hidden"} top-0 ml-auto mr-auto w-[5em] bg-gray-500 opacity-50 rounded-b-lg relative z-20 text-white hover:opacity-75`}>
                 <button onClick={onSettingLeftClick} className="m-1 absolute left-0 text-xl opacity-75 hover:opacity-100"><FontAwesomeIcon icon={faCircleLeft} /></button>
                 <button onClick={onSettingRightClick} className="m-1 absolute right-0 text-xl opacity-75 hover:opacity-100"><FontAwesomeIcon icon={faCircleRight} /></button>
                 <div className='text-center'>
                     <button onClick={onSettingsOpenClick} className="text-xl m-1 opacity-75 hover:opacity-100"><FontAwesomeIcon icon={faAnglesDown} /></button>
                 </div>
             </div>
-            <div id="left-settings-container" className={`${(currentPosition == Positions.LEFT) || "hidden"} top-0 left-0 w-[4em] bg-gray-500 opacity-25 rounded-b-lg absolute z-20 text-black dark:text-white hover:opacity-75`}>
+            <div id="left-settings-container" className={`${(currentPosition == Positions.LEFT) || "hidden"} top-0 left-0 w-[4em] bg-gray-500 opacity-25 rounded-b-lg absolute z-20 text-white hover:opacity-75`}>
                 <button onClick={onSettingRightClick} className="m-1 absolute right-0 text-xl opacity-75 hover:opacity-100"><FontAwesomeIcon icon={faCircleRight} /></button>
                 <div className='text-left'>
                     <button onClick={onSettingsOpenClick} className="text-xl m-1 opacity-75 hover:opacity-100"><FontAwesomeIcon icon={faAnglesDown} /></button>
                 </div>
             </div>
-            <div id="right-settings-container" className={`${(currentPosition == Positions.RIGHT) || "hidden"} top-0 right-0 w-[4em] bg-gray-500 opacity-25 rounded-b-lg absolute z-20 text-black dark:text-white hover:opacity-75`}>
+            <div id="right-settings-container" className={`${(currentPosition == Positions.RIGHT) || "hidden"} top-0 right-0 w-[4em] bg-gray-500 opacity-25 rounded-b-lg absolute z-20 text-white hover:opacity-75`}>
                 <button onClick={onSettingLeftClick} className="m-1 absolute left-0 text-xl opacity-75 hover:opacity-100"><FontAwesomeIcon icon={faCircleLeft} /></button>
                 <div className='text-right'>
                     <button onClick={onSettingsOpenClick} className="text-xl m-1 opacity-75 hover:opacity-100"><FontAwesomeIcon icon={faAnglesDown} /></button>
                 </div>
             </div>
-            <div id="settings-tray" className={`${(currentPosition == Positions.OPEN) || "hidden"} text-center top-0 ml-auto mr-auto w-[45em] bg-gray-500 opacity-75 rounded-b-lg relative z-20 text-black dark:text-white`}>
+            <div id="settings-tray" className={`${(currentPosition == Positions.OPEN) || "hidden"} text-center top-0 ml-auto mr-auto w-[45em] bg-gray-500 opacity-75 rounded-b-lg relative z-20 text-white`}>
                 <div className="flex justify-around items-center w-full p-2">
                     <button className="flex flex-col items-center ml-2 w-[12em]" onClick={onGearClick}>
                         <FontAwesomeIcon className="text-3xl" icon={faGear} />

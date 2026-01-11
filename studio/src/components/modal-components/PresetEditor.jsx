@@ -137,7 +137,7 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
     return <>
         {
             isSubordinate || <>
-                <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Preset Settings <span className="text-sm">({preset.id})</span></h2>
+                <h2 className="text-2xl font-bold sticky top-0 bg-white dark:bg-gray-600">Preset Settings <span className="text-sm">({preset.id})</span></h2>
                 <p className="mb-2 text-sm italic">You can use presets to reuse the same settings on multiple windows.</p>
 
                 <div className="mb-4 w-full">

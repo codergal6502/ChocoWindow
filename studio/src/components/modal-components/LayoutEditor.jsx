@@ -96,7 +96,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
     }
 
     return (<>
-        <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Layout Settings <span className="text-sm">({layout.id})</span></h2>
+        <h2 className="text-2xl font-bold sticky top-0 bg-white dark:bg-gray-600">Layout Settings <span className="text-sm">({layout.id})</span></h2>
         <p className="mb-2 text-sm italic">A layout is a collection of windows, analogous to a scene.</p>
         <div className="mb-4 w-full">
             <label htmlFor="c2c6dc82-1188-41ae-a8ba-24b3c3748b95">Name: </label>
@@ -118,7 +118,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
                     windowIds.map((windowId) => {
                         const window = windows.find((w) => w.id == windowId);
                         return (
-                            <tr key={windowId} className="even:bg-gray-600 odd:bg-gray-700">
+                            <tr key={windowId} className="even:bg-gray-200 odd:bg-gray-300 dark:even:bg-gray-600 dark:odd:bg-gray-700">
                                 <td className="p-1">
                                     <button className="hover:text-yellow-400" key={`u-${window.id}`} onClick={() => moveWindowUpClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowUp} /></button>
                                     <button className="hover:text-yellow-400" key={`d-${window.id}`} onClick={() => moveWindowDownClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowDown} /></button>

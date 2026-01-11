@@ -59,7 +59,7 @@ const TileSheetEditor = ({ tileSheet, onTileSheetChange, onTileSheetDelete, onRe
     }
 
     return (<>
-        <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600 mb-2">Tile Sheet Editor <span className="text-sm">({tileSheet.id})</span></h2>
+        <h2 className="text-2xl font-bold sticky top-0 mb-2 bg-white dark:bg-gray-600">Tile Sheet Editor <span className="text-sm">({tileSheet.id})</span></h2>
         <p className="mb-2 text-sm italic">A tile sheet is an image file that contains the tiles used to create windows.</p>
 
         <div className={`grid grid-cols-4 gap-4`}>

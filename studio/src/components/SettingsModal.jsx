@@ -49,9 +49,9 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
     const [/** @type {ChocoStudioWindow} */ activeWindow, setActiveWindow] = useState(null);
 
     const fileInputRef = useRef(null);
-    const [workspaceName, setWorkspaceName] = useState("");
-    const [width, setWidth] = useState(1920);
-    const [height, setHeight] = useState(1080);
+    const [workspaceName, setWorkspaceName] = useState(workspace?.workspaceName);
+    const [width, setWidth] = useState(workspace?.width ?? 1920);
+    const [height, setHeight] = useState(workspace?.height ?? 1080);
 
     const exportButtonClick = () => {
         const json = JSON.stringify(workspace);
@@ -343,102 +343,101 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
     return (
         <div id="modal" className={`settings-modal fixed inset-0 ${isModalHidden ? 'hidden' : ''} bg-black bg-opacity-50 z-40`}>
             <div className="flex items-center justify-center w-full h-full">
-                <div className="bg-white rounded-lg shadow-lg w-5/6 h-5/6 flex relative dark:bg-gray-600">
-                    <button id="closeModal" className="mt-2 mr-2 text-red-300 text-xl absolute top-0 right-0"><i className="fa-solid fa-square-xmark"></i></button>
-                    <div className="bg-gray-800 text-white p-4 pr-6 rounded-l-lg flex-none">
+                <div className="rounded-lg shadow-lg w-5/6 h-5/6 flex relative bg-white dark:bg-gray-600 dark:text-gray-100 ">
+                    <div className="bg-gray-300 dark:bg-gray-800 text-gray-700 dark:text-white p-4 pr-6 rounded-l-lg flex-none">
                         <nav className="h-full overflow-y-auto">
-                            <h2 className="bg-gray-800 font-bold text-lg sticky top-0">Workspace</h2>
+                            <h2 className="font-bold text-lg sticky top-0 bg-gray-300 dark:bg-gray-800">Workspace</h2>
                             <ul>
                                 <li>
-                                    <button onClick={() => setFormState(FormStates.SETTINGS)} className="block py-1 hover:bg-gray-600">Workspace Settings</button>
+                                    <button onClick={() => setFormState(FormStates.SETTINGS)} className="block py-1 hover:underline">Workspace Settings</button>
                                 </li>
                                 <li>
-                                    <button onClick={() => setTileSetsNavOpen(!tileSetsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                    <button onClick={() => setTileSetsNavOpen(!tileSetsNavOpen)} className="block py-1 hover:underline">
                                         <FontAwesomeIcon icon={tileSetsNavOpen ? faAngleDown : faAngleRight} />
                                         Tile Sheets
                                     </button>
                                     <ul className={`ml-8 ${tileSetsNavOpen ? '' : 'hidden'}`}>
-                                        <button onClick={newTileSheetOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        <button onClick={newTileSheetOnClick} className="block py-1 hover:underline">Add New...</button>
                                         {workspace.tileSheets.map((tileSheet) => <li key={tileSheet.id}>
-                                            <button onClick={() => tileSheetNavOnClick(tileSheet)} className="block py-1 hover:bg-gray-600">{String(tileSheet.name).trim() || <span className="italic">no name</span>}</button>
+                                            <button onClick={() => tileSheetNavOnClick(tileSheet)} className="block py-1 hover:underline">{String(tileSheet.name).trim() || <span className="italic">no name</span>}</button>
                                         </li>)
                                         }
                                     </ul>
                                 </li>
                                 <li>
-                                    <button onClick={() => setTileSetDefinitionsNavOpen(!tileSetDefinitionsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                    <button onClick={() => setTileSetDefinitionsNavOpen(!tileSetDefinitionsNavOpen)} className="block py-1 hover:underline">
                                         <FontAwesomeIcon icon={tileSetDefinitionsNavOpen ? faAngleDown : faAngleRight} />
                                         Tile Set Definitions
                                     </button>
                                     <ul className={`ml-8 ${tileSetDefinitionsNavOpen ? '' : 'hidden'}`}>
-                                        <button onClick={newTileSetDefinitionOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        <button onClick={newTileSetDefinitionOnClick} className="block py-1 hover:underline">Add New...</button>
                                         {workspace.tileSetDefinitions.map((tileSetDefinition) => <li key={tileSetDefinition.id}>
-                                            <button onClick={() => tileSetDefinitionNavOnClick(tileSetDefinition)} className="block py-1 hover:bg-gray-600">{String(tileSetDefinition.name).trim() || <span className="italic">no name</span>}</button>
+                                            <button onClick={() => tileSetDefinitionNavOnClick(tileSetDefinition)} className="block py-1 hover:underline">{String(tileSetDefinition.name).trim() || <span className="italic">no name</span>}</button>
                                         </li>)
                                         }
                                     </ul>
                                 </li>
                                 <li>
-                                    <button onClick={() => setPresetsNavOpen(!presetsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                    <button onClick={() => setPresetsNavOpen(!presetsNavOpen)} className="block py-1 hover:underline">
                                         <FontAwesomeIcon icon={presetsNavOpen ? faAngleDown : faAngleRight} />
                                         Presets
                                     </button>
                                     <ul className={`ml-8 ${presetsNavOpen ? '' : 'hidden'}`}>
-                                        <button onClick={newPresetNavOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        <button onClick={newPresetNavOnClick} className="block py-1 hover:underline">Add New...</button>
                                         {workspace.presets.map((preset) => {
                                             return (<li key={preset.id}>
-                                                <button onClick={() => presetNavOnClick(preset)} className="block py-1 hover:bg-gray-600">{String(preset.name).trim() || <span className="italic">no name</span>}</button>
+                                                <button onClick={() => presetNavOnClick(preset)} className="block py-1 hover:underline">{String(preset.name).trim() || <span className="italic">no name</span>}</button>
                                             </li>)
                                         })}
                                     </ul>
                                 </li>
                                 <li>
-                                    <button onClick={() => setWindowsNavOpen(!windowsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                    <button onClick={() => setWindowsNavOpen(!windowsNavOpen)} className="block py-1 hover:underline">
                                         <FontAwesomeIcon icon={windowsNavOpen ? faAngleDown : faAngleRight} />
                                         Windows
                                     </button>
                                     <ul className={`ml-8 ${windowsNavOpen ? '' : 'hidden'}`}>
-                                        <button onClick={newWindowOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        <button onClick={newWindowOnClick} className="block py-1 hover:underline">Add New...</button>
                                         {workspace.windows.map((window) => {
                                             return (<li key={window.id}>
-                                                <button onClick={() => windowNavOnClick(window)} className="block py-1 hover:bg-gray-600">{String(window.name).trim() || <span className="italic">no name</span>}</button>
+                                                <button onClick={() => windowNavOnClick(window)} className="block py-1 hover:underline">{String(window.name).trim() || <span className="italic">no name</span>}</button>
                                             </li>)
                                         })}
                                     </ul>
                                 </li>
                                 <li>
-                                    <button onClick={() => setLayoutsNavOpen(!layoutsNavOpen)} className="block py-1 hover:bg-gray-700">
+                                    <button onClick={() => setLayoutsNavOpen(!layoutsNavOpen)} className="block py-1 hover:underline">
                                         <FontAwesomeIcon icon={layoutsNavOpen ? faAngleDown : faAngleRight} />
                                         Layouts
                                     </button>
                                     <ul className={`ml-8 ${layoutsNavOpen ? '' : 'hidden'}`}>
-                                        <button onClick={newLayoutOnClick} className="block py-1 hover:bg-gray-600">Add New...</button>
+                                        <button onClick={newLayoutOnClick} className="block py-1 hover:underline">Add New...</button>
                                         {workspace.layouts.map((layout) => {
                                             return (<li key={layout.id}>
-                                                <button onClick={() => layoutNavOnClick(layout)} className="block py-1 hover:bg-gray-600">{String(layout.name).trim() || <span className="italic">no name</span>}</button>
+                                                <button onClick={() => layoutNavOnClick(layout)} className="block py-1 hover:underline">{String(layout.name).trim() || <span className="italic">no name</span>}</button>
                                             </li>)
                                         })}
                                     </ul>
                                 </li>
-                                <li>
-                                    <button onClick={() => setVariablesNavOpen(!variablesNavOpen)} className="block py-1 hover:bg-gray-700">
+                                {/* <li>
+                                    <button onClick={() => setVariablesNavOpen(!variablesNavOpen)} className="block py-1 hover:underline">
                                         <FontAwesomeIcon icon={variablesNavOpen ? faAngleDown : faAngleRight} />
                                         Variables
                                     </button>
                                     <ul className={`ml-8 ${variablesNavOpen ? '' : 'hidden'}`}>
-                                        <a href="#" className="block py-1 hover:bg-gray-600">Add New...</a>
+                                        <a href="#" className="block py-1 hover:underline">Add New...</a>
                                         {workspace.variables.map((variable) => {
                                             return (<li key={variable.id}>
-                                                <a href="#" className="block py-1 hover:bg-gray-600">{variable.name}</a>
+                                                <a href="#" className="block py-1 hover:underline">{variable.name}</a>
                                             </li>)
                                         })}
                                     </ul>
-                                </li>
+                                </li> */}
                             </ul>
                         </nav>
                     </div>
 
-                    <div className="flex-grow p-6 bg-white rounded-lg dark:bg-gray-600 dark:text-gray-300">
+                    <div className="flex-grow p-6 rounded-lg">
                         <div className="h-full overflow-y-auto">
                             {
                                 (() => {
@@ -446,7 +445,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                         case FormStates.SETTINGS:
                                         default:
                                             return (<>
-                                                <h2 className="mb-3 bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Export/Load Workspace</h2>
+                                                <h2 className="mb-3 text-2xl font-bold sticky top-0">Export/Load Workspace</h2>
                                                 <div className="flex justify-around items-center w-full">
                                                     <button className="flex flex-col items-center" onClick={importButtonClick}>
                                                         <FontAwesomeIcon className="text-6xl" icon={faFolderOpen} />
@@ -462,7 +461,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                     </button>
                                                     <input className="hidden" accept="application/json" type="file" onChange={importInputChange} ref={fileInputRef} />
                                                 </div>
-                                                <h2 className="mt-3 mb-3 bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Workspace Settings</h2>
+                                                <h2 className="mt-3 mb-3 text-2xl font-bold sticky top-0">Workspace Settings</h2>
                                                 <div className="mb-4 w-full">
                                                     <label htmlFor="ccd163fa-8b14-4f68-9b0d-753b093c28ff">Name: </label>
                                                     <input placeholder="Workspace Name" type="text" autoComplete="off" id="ccd163fa-8b14-4f68-9b0d-753b093c28ff" className={TAILWIND_INPUT_CLASS_NAME} onChange={workspaceNameChange} value={workspaceName} />
@@ -474,7 +473,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                     </div>
 
                                                     <div className="mb-4 w-full">
-                                                        <label htmlFor="c3efc55a-36cd-4f12-b546-308893448ade">Y Position: </label>
+                                                        <label htmlFor="c3efc55a-36cd-4f12-b546-308893448ade">Height: </label>
                                                         <input placeholder="Height" type="number" id="c3efc55a-36cd-4f12-b546-308893448ade" className={TAILWIND_INPUT_CLASS_NAME} value={height} onChange={heightChange} />
                                                     </div>
                                                 </div>
@@ -505,7 +504,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                 <LayoutEditor key={activeLayout.id} layout={activeLayout} windows={workspace.windows} onLayoutChange={onLayoutChange} onLayoutDelete={onLayoutDelete} onReturnToEditor={() => onReturnToEditor(workspace)} onEditThisLayout={(layoutId) => { onReturnToEditor(workspace, layoutId) }} />
                                             )
                                         case FormStates.VARIABLE:
-                                            return <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">variable</h2>;
+                                            return <h2 className="text-2xl font-bold sticky top-0">variable</h2>;
                                     }
                                 })()
                             }

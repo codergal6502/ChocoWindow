@@ -129,7 +129,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     }
 
     return <>
-        <h2 className="bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Window Settings <span className="text-sm">({window.id})</span></h2>
+        <h2 className="text-2xl font-bold sticky top-0 bg-white dark:bg-gray-600">Window Settings <span className="text-sm">({window.id})</span></h2>
         <p className="mb-2 text-sm italic"></p>
         <div className="mb-4 w-full">
             <label htmlFor="c2c6dc82-1188-41ae-a8ba-24b3c3748b95">Name: </label>
