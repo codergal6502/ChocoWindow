@@ -297,7 +297,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             naturalX = tileSize * Math.floor(naturalX / tileSize);
             naturalY = tileSize * Math.floor(naturalY / tileSize);
         }
-        
+
         const preciseTilePosition = {
             x: preciseTileSelectionScale * (tileSize - naturalX),
             y: preciseTileSelectionScale * (tileSize - naturalY),
@@ -382,6 +382,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const onRegionWidthChange = (e) => {
         const newRegions = structuredClone(regions);
         newRegions[windowRegionIdentifier].width = e.target.value;
+        newRegions[windowRegionIdentifier].tileSheetPositions.length = Math.max(newRegions[windowRegionIdentifier].tileSheetPositions.length, e.target.value);
         setRegions(newRegions);
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
     };
@@ -390,10 +391,14 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      * @param {InputEvent} e
      */
     const onRegionHeightChange = (e) => {
-        const newRegionSizes = structuredClone(regions);
-        newRegionSizes[windowRegionIdentifier].height = e.target.value;
-        setRegions(newRegionSizes);
-        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegionSizes);
+        const newRegions = structuredClone(regions);
+        newRegions[windowRegionIdentifier].height = e.target.value;
+        newRegions[windowRegionIdentifier].tileSheetPositions.forEach((col, rowNum) => {
+            col.length = Math.max(col.length, e.target.value);
+            newRegions[windowRegionIdentifier].tileSheetPositions[rowNum] = col;
+        });
+        setRegions(newRegions);
+        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
     };
 
     // tile assignment UI element event handlers
@@ -511,8 +516,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
                 Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
                     const /** @type {ChocoStudioWindowRegionDefinition} */ r = regions[whichRegion];
-                    r.tileSheetPositions.forEach((tspRow) => {
-                        tspRow.forEach((tsp) => {
+                    r.tileSheetPositions.filter((_, cn) => cn < r.width).forEach((tspRow) => {
+                        tspRow.filter((_, rn) => rn < r.height).forEach((tsp) => {
                             for (let x = tsp.x; x < tsp.x + tileSize; x++) {
                                 for (let y = tsp.y; y < tsp.y + tileSize; y++) {
                                     const idx = (png.width * y + x) << 2;
@@ -535,7 +540,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
                 setTooManyColors(colors.length > MAX_COLOR_COUNT);
                 setColorCount(colors.length);
-                
+
                 if (colors.length <= MAX_COLOR_COUNT) {
                     onDefaultColorsChange(colors);
                 }

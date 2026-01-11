@@ -310,9 +310,13 @@ class ChocoWinWindow {
         }
 
         for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.patternRows.length) {
-            let row = wo.patternRows[i];
+            let row = wo?.patternRows?.[i];
+            if (!row) continue;
+
             for (let dx = destSize, j = 0; dx < this.#w - destSize; dx += destSize, j = (j + 1) % wo.patternRows[i].length) {
-                let tile = wo.patternRows[i][j];
+                let tile = row[j];
+                if (!tile) continue;
+
                 this.#doDrawTile(ctx, tileSize, tile.x, tile.y, dx, dy);
             }
         }

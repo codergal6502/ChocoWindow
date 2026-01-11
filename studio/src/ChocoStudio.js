@@ -141,7 +141,7 @@ class ChocoStudioWindowRegionDefinition {
             this.tileSheetPositions = arg1.tileSheetPositions.map((col) =>
                 // pos could be null if passed in from a not-yet-assignd value in the GUI.
                 // ?? will coalesce undefined but not zero. JavaScript is weird.
-                col.map((pos) => ({ x: pos?.x ?? null, y: pos?.y ?? null }))
+                !col ? null : col.map((pos) => ({ x: pos?.x ?? null, y: pos?.y ?? null }))
             )
         }
     }
@@ -162,7 +162,7 @@ class ChocoStudioTileSetDefinition {
             /** @type {String} */ this.tileSheetId = "";
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
             // todo: replace this with a map at some point
-            /** @type {Object.<String, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
+            /** @type {Object<string, ChocoStudioWindowRegionDefinition>} */ this.regions = { }
             /** @type {Array.<ChocoWinColor> } */ this.defaultColors = []
 
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition();
@@ -181,7 +181,7 @@ class ChocoStudioTileSetDefinition {
             this.tileSheetId = arg1.tileSheetId;
             this.tileSize = arg1.tileSize;
 
-            /** @type {Object.<String, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
+            this.regions = {};
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT]);
             this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP]);
             this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT]);
@@ -221,13 +221,13 @@ class ChocoStudioTileSetDefinition {
                 }
             },
             "edges": {
-                "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions[0].map((col) => ({ "x": col.x, "y": col.y })),
-                "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions[0].map((col) => ({ "x": col.x, "y": col.y })),
-                "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions.map((row) => ({ "x": row[0].x, "y": row[0].y })),
-                "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions.map((row) => ({ "x": row[0].x, "y": row[0].y })),
+                "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions[0].filter((_, cn) => cn < this.regions[CHOCO_WINDOW_REGIONS.TOP].width).map((col) => ({ "x": col.x, "y": col.y })),
+                "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions[0].filter((_, cn) => cn < this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].width).map((col) => ({ "x": col.x, "y": col.y })),
+                "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions.filter((_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.LEFT].height).map((row) => ({ "x": row[0].x, "y": row[0].y })),
+                "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions.filter((_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.RIGHT].height).map((row) => ({ "x": row[0].x, "y": row[0].y })),
             },
-            "patternRows": this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.map((row) =>
-                row.map((col) => ({ x: col.x, y: col.y }))
+            "patternRows": this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.filter((_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.CENTER].width).map((row) =>
+                row.filter((_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.CENTER].height).map((col) => ({ x: col.x, y: col.y }))
             ),
             "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? []
         });
