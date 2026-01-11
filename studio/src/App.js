@@ -11,6 +11,7 @@ import LayoutRenderResult from './components/LayoutRenderResult';
 import { ChocoStudioWorkspace } from './ChocoStudio';
 import { ChocoWinSettings } from './ChocoWindow';
 import { ChocoWorkspaceRenderer } from './ChocoRender';
+import downloadZip from './ZipDownloader';
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
@@ -95,10 +96,14 @@ const App = () => {
     const layoutId = editorLayoutId || editorWorkspace.layouts[0].id;
     const downloadName = (editorWorkspace.layouts.find((l) => l.id == layoutId)?.name || "window") + ".png";
     setRenderDownloadName(downloadName);
-    renderer.generateLayoutImageDataUrl(layoutId, (dataUrl) => {
+    renderer.generateLayoutImageDataUrl(layoutId).then(dataUrl => {
       setRenderResultDataUrl(dataUrl);
       setHasRenderResult(true);
     });
+  }
+
+  const onDownloadAllAssetsClick = () => {
+    downloadZip(editorWorkspace);
   }
 
   const onRenderResultReturn = () => {

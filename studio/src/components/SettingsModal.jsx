@@ -8,6 +8,7 @@ import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
 import WindowEditor from "./modal-components/WindowEditor.jsx";
 import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
+import downloadZip from "../ZipDownloader.jsx";
 
 export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheetBlobUrlManager())
 
@@ -67,7 +68,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
     }
 
     const downloadButtonClick = () => {
-
+        downloadZip(workspace);
     }
 
     const importButtonClick = () => {
@@ -464,7 +465,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                 <h2 className="mt-3 mb-3 bg-white text-2xl font-bold sticky top-0 dark:bg-gray-600">Workspace Settings</h2>
                                                 <div className="mb-4 w-full">
                                                     <label htmlFor="ccd163fa-8b14-4f68-9b0d-753b093c28ff">Name: </label>
-                                                    <input placeholder="Workspace Name" type="text" autoComplete="off" id="ccd163fa-8b14-4f68-9b0d-753b093c28ff" className={TAILWIND_INPUT_CLASS_NAME} onChange={workspaceNameChange} value={workspace.workspaceName} />
+                                                    <input placeholder="Workspace Name" type="text" autoComplete="off" id="ccd163fa-8b14-4f68-9b0d-753b093c28ff" className={TAILWIND_INPUT_CLASS_NAME} onChange={workspaceNameChange} value={workspaceName} />
                                                 </div>
                                                 <div className={`grid grid-cols-2 gap-4`}>
                                                     <div className="mb-4 w-full">

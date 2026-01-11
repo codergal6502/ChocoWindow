@@ -12,9 +12,9 @@ class ChocoWorkspaceRenderer {
 
     /**
      * @param {String} layoutId The UUID of the layout to render.
-     * @returns A ata URL containing a PNG rendering of the layout.
+     * @param {(param:{HTMLCanvasElement})=>Promise} onComplete Callback passing a canvas containing a rendering of the layout.
      */
-    generateLayoutImageDataUrl = (layoutId, onComplete) => {
+    #generateCanvas = (layoutId, onComplete) => {
         const layout = this.workspace.layouts.find((l) => layoutId == l.id);
         if (!layout) {
             console.error(`No layout with ID ${layoutId}`);
@@ -30,36 +30,72 @@ class ChocoWorkspaceRenderer {
 
             const tileSetDefinition = this.workspace.tileSetDefinitions.find((tsd) => tsd.id == studioPreset.tileSetDefinitionId);
             if (!tileSetDefinition) { console.error(`No tile set definition with ID ${studioPreset.tileSetDefinitionId}.`); return; }
-            
+
             const tileSheet = this.workspace.tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
             if (!tileSheet) { console.error(`No tile sheet with ID ${tileSetDefinition.tileSheetId}.`); return; }
 
             const chocoWindow = new ChocoWinWindow(
                 tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl)
-              , studioPreset.tileScale
-              , studioWindow.x
-              , studioWindow.y
-              , studioWindow.w
-              , studioWindow.h
-              , studioPreset.substituteColors
+                , studioPreset.tileScale
+                , studioWindow.x
+                , studioWindow.y
+                , studioWindow.w
+                , studioWindow.h
+                , studioPreset.substituteColors
             );
 
             return chocoWindow;
         });
 
-        Promise.all(wins.map((w) => w.isReady())).then(() => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
+        const bigPromise = Promise.all(wins.map((w) => w.isReady()));
 
-            canvas.width = this.workspace.width;
-            canvas.height = this.workspace.height;
+        return new Promise((resolve) => {
+            bigPromise.then(() => {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
 
-            wins.forEach((w) => w.drawTo(ctx));
+                canvas.width = this.workspace.width;
+                canvas.height = this.workspace.height;
 
-            const dataUrl = canvas.toDataURL("image/png", 10);
-            if (onComplete) onComplete(dataUrl);
+                wins.forEach((w) => w.drawTo(ctx));
+
+                resolve(canvas);
+            });
         });
     }
+
+    /**
+     * @param {String} layoutId The UUID of the layout to render.
+     * @return {Promise<Blob>} Promise to yield a data URL containing a PNG rendering of the layout.
+     */
+    generateLayoutImageBlob = (layoutId) => {
+        return new Promise((resolve) => {
+            this.#generateCanvas(layoutId).then((canvas) => {
+                canvas.toBlob(blob => resolve(blob), "image/png", 10);
+            })
+        })
+        // return this.#generateCanvas(layoutId, (canvas) => {
+        //     return new Promise(resolve => {
+        //         canvas.toBlob((blobbie) => {
+        //             onComplete(blobbie);
+        //             resolve();
+        //         }, "image/png", 10);
+        //     })
+        // });
+    }
+
+    /**
+     * @param {String} layoutId The UUID of the layout to render.
+     * @return {Promise<String>} Promise to yield a data URL containing a PNG rendering of the layout.
+     */
+    generateLayoutImageDataUrl = (layoutId) => {
+        return new Promise((resolve) => {
+            this.#generateCanvas(layoutId).then((canvas) => {
+                const dataUrl = canvas.toDataURL("image/png", 10);
+                resolve(dataUrl);
+            })
+        })
+    };
 }
 
 export { ChocoWorkspaceRenderer };

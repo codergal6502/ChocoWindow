@@ -12,7 +12,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^13.5.0",
-    "@zip.js/zip.js": "^2.8.11",
+    "@zip.js/zip.js": "^2.8.14",
     "fabric": "^7.1.0",
     "interactjs": "^1.10.27",
     "pngjs": "^7.0.0",

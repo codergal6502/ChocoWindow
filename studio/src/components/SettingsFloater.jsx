@@ -1,9 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAnglesDown, faAnglesUp, faCircleLeft, faCircleRight, faDownload, faGear, faPenToSquare } from '@fortawesome/free-solid-svg-icons'
+import { faAnglesDown, faAnglesUp, faCircleLeft, faCircleRight, faDownload, faGear, faImages, faPenToSquare } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react';
-import { ChocoWorkspaceRenderer } from '../ChocoRender';
 
-const SettingsFloater = ({ onGearClick, onSelectLayoutClick, onDownloadPngClick }) => {
+const SettingsFloater = ({ onGearClick, onSelectLayoutClick, onDownloadPngClick, onDownloadAllAssetsClick }) => {
     const Positions = Object.freeze({
         LEFT: 'LEFT',
         RIGHT: 'RIGHT',
