@@ -11,12 +11,24 @@ import LayoutRenderResult from './components/LayoutRenderResult';
 import { ChocoStudioWorkspace } from './ChocoStudio';
 import { ChocoWinSettings } from './ChocoWindow';
 import { ChocoWorkspaceRenderer } from './ChocoRender';
-import downloadZip from './ZipDownloader';
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
 
   const WORKSPACE_COOKIE_NAME = 'workspace';
+
+  const [isConfigModalHidden, setIsConfigModalHidden] = useState(true);
+  const [isLayoutPickerModalHidden, setIsLayoutPickerModalHidden] = useState(true);
+  const [editorLayoutId, setEditorLayoutId] = useState(null);
+  const [modalWorkspace, setModalWorkspace] = useState(null);
+  const [editorWorkspace, setEditorWorkspace] = useState(null);
+  const [editorIgnoreKeyInputs, setEditorIgnoreKeyInputs] = useState(false);
+
+  const [hasRenderResult, setHasRenderResult] = useState(false);
+  const [renderResultDataUrl, setRenderResultDataUrl] = useState(null);
+  const [renderDownloadName, setRenderDownloadName] = useState(null);
+
+  const [lastResizeTimestamp, setLastResizeTimestamp] = useState(null);
 
   const initialWorkspace = () => {
     try {
@@ -27,6 +39,9 @@ const App = () => {
         const ws = new ChocoStudioWorkspace(obj)
         return ws;
       }
+      else {
+        return null;
+      }
     }
     catch (e) {
       console.error(e);
@@ -36,24 +51,24 @@ const App = () => {
     return new ChocoStudioWorkspace();
   }
 
+  useEffect(() => {
+    const ws = initialWorkspace();
+    if (ws) {
+      setModalWorkspace(new ChocoStudioWorkspace(ws));
+      setEditorWorkspace(new ChocoStudioWorkspace(ws));
+    }
+    else {
+      setModalWorkspace(new ChocoStudioWorkspace(null));
+      setEditorWorkspace(new ChocoStudioWorkspace(null));
+      setIsConfigModalHidden(false);
+    }
+  }, [])
+
   const storeWorkspaceToCookie = (workspace) => {
     const json = JSON.stringify(workspace);
     const b64 = btoa(json);
     window.localStorage.setItem(WORKSPACE_COOKIE_NAME, b64);
   }
-
-  const [isConfigModalHidden, setIsConfigModalHidden] = useState(true);
-  const [isLayoutPickerModalHidden, setIsLayoutPickerModalHidden] = useState(true);
-  const [editorLayoutId, setEditorLayoutId] = useState(null);
-  const [modalWorkspace, setModalWorkspace] = useState(initialWorkspace());
-  const [editorWorkspace, setEditorWorkspace] = useState(initialWorkspace());
-  const [editorIgnoreKeyInputs, setEditorIgnoreKeyInputs] = useState(false);
-
-  const [hasRenderResult, setHasRenderResult] = useState(false);
-  const [renderResultDataUrl, setRenderResultDataUrl] = useState(null);
-  const [renderDownloadName, setRenderDownloadName] = useState(null);
-
-  const [lastResizeTimestamp, setLastResizeTimestamp] = useState(null);
 
   const openModalOnClick = () => {
     setIsConfigModalHidden(false);
@@ -102,10 +117,6 @@ const App = () => {
     });
   }
 
-  const onDownloadAllAssetsClick = () => {
-    downloadZip(editorWorkspace);
-  }
-
   const onRenderResultReturn = () => {
     setHasRenderResult(false);
     setRenderResultDataUrl(null);
@@ -119,7 +130,7 @@ const App = () => {
 
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
-        setLastResizeTimestamp(Date.now());
+      setLastResizeTimestamp(Date.now());
     }, 125);
   }
 
@@ -129,7 +140,7 @@ const App = () => {
   }, []);
 
   return (
-    <div id="app-div">
+    modalWorkspace && editorWorkspace && <div id="app-div">
       <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} onDownloadPngClick={onDownloadPngClick} />
       {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
       {isLayoutPickerModalHidden || <LayoutPickerModal workspace={editorWorkspace} currentLayoutId={editorLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToEditor={onLayoutPickerReturn} />}
