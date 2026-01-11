@@ -29,8 +29,9 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
     /**
      * @param {HTMLElement} dd 
+     * @param {String} debugMessage
      */
-    const updateBoundingBoxDisplayCoordinates = (dd) => {
+    const updateBoundingBoxDisplayCoordinates = (dd, debugMessage) => {
         let /** @type {HTMLElement} */ textDiv;
         let /** @type {HTMLElement} */ boundingBoxDiv;
 
@@ -49,6 +50,13 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
         const x = Math.floor(boundingBoxDiv.style.left.replace("px", ""))
         const y = Math.floor(boundingBoxDiv.style.top.replace("px", ""))
         textDiv.innerText = `${width} x ${height} @ (${x}, ${y})`;
+
+        if (debugMessage) {
+            const nameDiv = Array.from(boundingBoxDiv.childNodes).find(c => c.classList.contains('window-name'));
+            if (nameDiv) {
+                nameDiv.innerText = debugMessage;
+            }
+        }
     }
 
     const isGridSnapModifierHeld = (event) => {
@@ -74,6 +82,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
     }
 
     const snapCoordinate = (x) => Math.floor(1.0 * x / SNAP_SIZE) * SNAP_SIZE;
+    const snapCoordinateCeil = (x) => Math.ceil(1.0 * x / SNAP_SIZE) * SNAP_SIZE;
 
     const toGridSnap = ({ x, y }, event) => {
         if (isGridSnapModifierHeld(event)) {
@@ -92,24 +101,19 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
     }
 
     const resizeEditorDiv = () => {
-        const menuBarHeight = 0;
         const clientWidth = window.innerWidth;
         const clientHeight = window.innerHeight;
 
         const widthRatio = 1.0 * clientWidth / workspace.width;
-        const heightRatio = 1.0 * (clientHeight - menuBarHeight) / workspace.height;
+        const heightRatio = 1.0 * (clientHeight) / workspace.height;
 
-        uiScale = Math.min(widthRatio, heightRatio);
+        uiScale = Math.min(widthRatio, heightRatio, 1);
 
         if (uiScale < 1) {
             const /** @type {HTMLElement} */ graphicalEditorDiv = document.getElementById("graphical-editor-div");
 
-            const newWidth = Math.floor(1.0 * workspace.width * uiScale);
-            const newHeight = Math.floor(1.0 * workspace.height * uiScale);
-
-
-            console.log(`workspace is ${workspace.width} x ${workspace.height}, client is ${clientWidth} x ${clientHeight}, scale is ${uiScale}, new size is ${newWidth} x ${newHeight} at (${graphicalEditorDiv.offsetLeft}, ${graphicalEditorDiv.offsetTop})`);
-
+            graphicalEditorDiv.setAttribute("editor-div-offset-x", (graphicalEditorDiv.parentNode.clientWidth - (graphicalEditorDiv.clientWidth * uiScale)) / 2);
+            graphicalEditorDiv.setAttribute("editor-div-offset-y", (graphicalEditorDiv.parentNode.clientHeight - (graphicalEditorDiv.clientHeight * uiScale)) / 2);
 
             graphicalEditorDiv.style.scale = `${100.0 * uiScale}%`;
             graphicalEditorDiv.style.left = `-${(workspace.width - clientWidth) / 2}px`
@@ -193,7 +197,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                             e.target.setAttribute("data-window-start-x", e.target.style.left.replace("px", ""));
                             e.target.setAttribute("data-window-start-y", e.target.style.top.replace("px", ""));
                         },
-                        move(e) {
+                        move(/** @type {InteractEvent} */ e) {
                             makeChocoWinBoundingBoxActive(e);
 
                             const windowStartX = Number(e.target.getAttribute("data-window-start-x").replace("px", ""));
@@ -250,62 +254,65 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                 })
                 .resizable({
                     edges: { top: true, left: true, bottom: true, right: true },
+                    // "Logical" dimensions are relative to the upper-left corner of the layout and unscaled.
                     listeners: {
                         start(e) {
+                            const /** @type {HTMLElement} */ targetElement = e.target;
+
                             makeChocoWinBoundingBoxActive(e);
                             const edges = e.interaction.prepared.edges;
 
-                            e.target.setAttribute("data-resize-start-x", e.pageX);
-                            e.target.setAttribute("data-resize-start-y", e.pageY);
-                            e.target.setAttribute("data-resize-left", edges.left);
-                            e.target.setAttribute("data-resize-right", edges.right);
-                            e.target.setAttribute("data-resize-top", edges.top);
-                            e.target.setAttribute("data-resize-bottom", edges.bottom);
-                            e.target.setAttribute("data-drag-delta-x", 0);
-                            e.target.setAttribute("data-drag-delta-y", 0);
+                            targetElement.setAttribute("data-resize-logical-start-x", targetElement.offsetLeft);
+                            targetElement.setAttribute("data-resize-logical-start-y", targetElement.offsetTop);
+                            targetElement.setAttribute("data-resize-logical-start-width", targetElement.offsetWidth);
+                            targetElement.setAttribute("data-resize-logical-start-height", targetElement.offsetHeight);
+                            targetElement.setAttribute("data-resize-left", edges.left);
+                            targetElement.setAttribute("data-resize-right", edges.right);
+                            targetElement.setAttribute("data-resize-top", edges.top);
+                            targetElement.setAttribute("data-resize-bottom", edges.bottom);
+                            targetElement.setAttribute("data-drag-delta-x", 0);
+                            targetElement.setAttribute("data-drag-delta-y", 0);
                         },
                         move: function (e) {
+                            let /** @type {String} */ debugMessage;
+
+                            const /** @type {HTMLElement} */ graphicalEditorDiv = document.getElementById("graphical-editor-div");
+                            const editorDivOffsetX = Number(graphicalEditorDiv.getAttribute("editor-div-offset-x"));
+                            const editorDivOffsetY = Number(graphicalEditorDiv.getAttribute("editor-div-offset-y"));
+
                             const doResizeLeft = e.interaction.prepared.edges.left;
                             const doResizeRight = e.interaction.prepared.edges.right;
                             const doResizeTop = e.interaction.prepared.edges.top;
                             const doResizeBottom = e.interaction.prepared.edges.bottom;
 
-                            if (isGridSnapModifierHeld(e) && doResizeTop) {
-                                const newTop = snapCoordinate(e.rect.top / uiScale)
-                                const deltaTop = (e.rect.top - newTop) / uiScale;
-                                const newHeight = (e.rect.height + deltaTop) / uiScale;
-                                e.target.style.top = `${Math.floor(newTop)}px`;
-                                e.target.style.height = `${Math.floor(newHeight)}px`;
-                            }
-                            else if (isGridSnapModifierHeld(e) && doResizeBottom) {
-                                const newTop = e.rect.top;
-                                const newBottom = snapCoordinate(newTop + e.rect.height);
-                                const newHeight = newBottom - e.rect.top;
-                                e.target.style.top = `${Math.floor(newTop)}px`;
-                                e.target.style.height = `${Math.floor(newHeight)}px`;
-                            }
-                            else {
-                                e.target.style.top = `${Math.floor(e.rect.top / uiScale)}px`;
-                                e.target.style.height = `${Math.floor(e.rect.height / uiScale)}px`;
-                            }
-
                             if (isGridSnapModifierHeld(e) && doResizeLeft) {
-                                const newLeft = snapCoordinate(e.rect.left)
-                                const deltaLeft = e.rect.left - newLeft;
-                                const newWidth = e.rect.width + deltaLeft;
-                                e.target.style.left = `${Math.floor(newLeft)}px`;
-                                e.target.style.width = `${Math.floor(newWidth)}px`;
+                                const nonSnappedLeft = (e.rect.left - editorDivOffsetX) / uiScale;
+                                const snappedLeft = snapCoordinate(nonSnappedLeft);
+                                const snapDelta = snappedLeft - nonSnappedLeft;
+                                e.target.style.left = `${(snappedLeft)}px`;
+                                e.target.style.width = `${snapCoordinate((e.rect.width - snapDelta) / uiScale)}px`;
                             }
                             else if (isGridSnapModifierHeld(e) && doResizeRight) {
-                                const newLeft = e.rect.left;
-                                const newBottom = snapCoordinate(newLeft + e.rect.width);
-                                const newWidth = newBottom - e.rect.left;
-                                e.target.style.left = `${Math.floor(newLeft)}px`;
-                                e.target.style.width = `${Math.floor(newWidth)}px`;
+                                e.target.style.width = `${snapCoordinate(e.rect.width / uiScale)}px`;
                             }
                             else {
-                                e.target.style.left = `${Math.floor(e.rect.left / uiScale)}px`;
-                                e.target.style.width = `${Math.floor(e.rect.width / uiScale)}px`;
+                                e.target.style.left = `${(e.rect.left - editorDivOffsetX) / uiScale}px`;
+                                e.target.style.width = `${e.rect.width / uiScale}px`;
+                            }
+
+                            if (isGridSnapModifierHeld(e) && doResizeTop) {
+                                const nonSnappedTop = (e.rect.top - editorDivOffsetY) / uiScale;
+                                const snappedTop = snapCoordinate(nonSnappedTop);
+                                const snapDelta = snappedTop - nonSnappedTop;
+                                e.target.style.top = `${(snappedTop)}px`;
+                                e.target.style.height = `${snapCoordinate((e.rect.height - snapDelta) / uiScale)}px`;
+                            }
+                            else if (isGridSnapModifierHeld(e) && doResizeBottom) {
+                                e.target.style.height = `${snapCoordinate(e.rect.height / uiScale)}px`;
+                            }
+                            else {
+                                e.target.style.top = `${(e.rect.top - editorDivOffsetY) / uiScale}px`;
+                                e.target.style.height = `${e.rect.height / uiScale}px`;
                             }
 
                             updateBoundingBoxDisplayCoordinates(e.target);
@@ -320,8 +327,11 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                             const studioWindow = workspace.windows.find((w) => `win-${w.id}` == e.target.dataset.chocoWinId);
                             const chocoWindowDivId = `win-${studioWindow.id}`;
 
-                            studioWindow.w = Number(chocoWinDiv.style.width.replace("px", ""));
-                            studioWindow.h = Number(chocoWinDiv.style.height.replace("px", ""))
+                            studioWindow.w = Math.round(chocoWinDiv.style.width.replace("px", ""));
+                            studioWindow.h = Math.round(chocoWinDiv.style.height.replace("px", ""))
+
+                            studioWindow.x = Math.round(chocoWinDiv.style.left.replace("px", ""));
+                            studioWindow.y = Math.round(chocoWinDiv.style.top.replace("px", ""))
 
                             if (onWorkspaceChange) onWorkspaceChange(workspace);
 

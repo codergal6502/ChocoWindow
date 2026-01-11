@@ -160,7 +160,7 @@ class ChocoWinWindow {
     /** @type {Number} */ #y;
     /** @type {Number} */ #w;
     /** @type {Number} */ #h;
-    /** @type {Object<Number, ChocoWinColor>} */ #colorSubstitutions;
+    /** @type {Array<Number, ChocoWinColor>} */ #colorSubstitutions;
 
     /**
      * 
@@ -170,7 +170,7 @@ class ChocoWinWindow {
      * @param {Number} y 
      * @param {Number} w 
      * @param {Number} h 
-     * @param {Object<Number, ChocoWinColor>} colorSubstitutions
+     * @param {Array<Number, ChocoWinColor>} colorSubstitutions
      */
     constructor(winTileSet, tileScale, x, y, w, h, colorSubstitutions) {
         this.#pixmap = new Image();
@@ -182,7 +182,7 @@ class ChocoWinWindow {
         this.#y = y;
         this.#w = w;
         this.#h = h;
-        this.#colorSubstitutions = colorSubstitutions || [ ];
+        this.#colorSubstitutions = colorSubstitutions || [];
 
         if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && ((this.#w % this.#tileScale != 0) || (this.#h % this.#tileScale != 0))) {
             console.warn(`Scale misalignment: one or both window dimensions [${this.#w}, ${this.#h}] are not multiples of tile scale ${tileScale}. Artifacts may occur on the right and bottom edges as a result, especially if the sprite map includes transparency. To ignore this warning, set ChocoWinSettings.ignoreScaleMisalignmentErrors = true`);
@@ -214,9 +214,9 @@ class ChocoWinWindow {
         this.#colorSubstitutions[index] = new ChocoWinColor(color);
         return this;
     }
-    
+
     hasColorSubstitutions() {
-        return Object.keys(this.#colorSubstitutions).length > 0;
+        return Object.keys(this.#colorSubstitutions).length > 0 && this.#colorSubstitutions.some(cs => cs != null);
     }
 
     #doDrawTile(
@@ -264,6 +264,11 @@ class ChocoWinWindow {
             for (const keyValuePair of Object.entries(this.#colorSubstitutions)) {
                 /** @type {number} */ const index = keyValuePair[0];
                 /** @type {ChocoWinColor} */ const newColor = keyValuePair[1];
+
+                if (!newColor) {
+                    continue;
+                }
+
                 /** @type {ChocoWinColor} */ const oldColor = this.#winTileSet.substitutableColors[index];
 
                 if (index < 0) continue;

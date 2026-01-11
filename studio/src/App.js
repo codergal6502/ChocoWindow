@@ -85,8 +85,9 @@ const App = () => {
   }
 
   const onEditorWorkspaceChange = (modifiedWorkspace) => {
-    setModalWorkspace(new ChocoStudioWorkspace(modifiedWorkspace));
-    storeWorkspaceToCookie(modalWorkspace);
+    modifiedWorkspace = new ChocoStudioWorkspace(modifiedWorkspace);
+    setModalWorkspace(modifiedWorkspace);
+    storeWorkspaceToCookie(modifiedWorkspace);
   }
 
   const onDownloadPngClick = () => {

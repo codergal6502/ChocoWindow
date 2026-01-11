@@ -255,7 +255,7 @@ class ChocoStudioPreset {
             this.id = arg1.id;
             this.tileSetDefinitionId = arg1.tileSetDefinitionId
             this.tileScale = arg1.tileScale
-            this.substituteColors = arg1?.substituteColors?.map((c) => new ChocoWinColor(c)) || [];
+            this.substituteColors = arg1?.substituteColors?.map((c) => c ? new ChocoWinColor(c) : null) || [];
         }
     }
 }
@@ -361,11 +361,11 @@ class ChocoStudioWorkspace {
             this.id = arg1.id;
             this.width = arg1.width;
             this.height = arg1.height;
-            this.tileSheets = arg1.tileSheets.map((ts => new ChocoStudioTileSheet(ts)));
+            this.tileSheets = arg1.tileSheets.map((ts) => new ChocoStudioTileSheet(ts));
             this.tileSetDefinitions = arg1.tileSetDefinitions.map((tsd) => new ChocoStudioTileSetDefinition(tsd));
             this.tileSets = arg1.tileSets.map((ts) => new ChocoWinTileSet(ts));
-            this.presets = arg1.presets.map((wp) => new ChocoStudioPreset(wp));
-            this.layouts = arg1.layouts.map((wp) => new ChocoStudioLayout(wp));
+            this.presets = arg1.presets.map((p) => new ChocoStudioPreset(p));
+            this.layouts = arg1.layouts.map((l) => new ChocoStudioLayout(l));
             this.windows = arg1.windows.map((w) => new ChocoStudioWindow(w));
             this.variables = arg1.variables.map((v) => new ChocoStudioVariable(v));
         }

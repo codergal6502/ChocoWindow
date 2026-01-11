@@ -111,6 +111,10 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
         let newSubCols = substituteColors.slice();
         delete newSubCols[colorIndex];
         setSubstituteColors(newSubCols);
+
+        const newPreset = new ChocoStudioPreset(preset);
+        newPreset.substituteColors = newSubCols;
+        doOnPresetChange(newPreset);
     };
 
     useEffect(() => {
@@ -160,11 +164,12 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
         {(tileSetDefinition?.defaultColors?.length > 0) || <p className="mb-2 text-sm italic">No default colors were generated for the selected tile set definition.</p>}
         {(tileSetDefinition?.defaultColors?.length > 0) && <div className={`grid grid-cols-4 gap-4`}>
             {tileSetDefinition.defaultColors.map((color, i) =>
-                <div key={i}>
+                {console.log(`[${i}]: ${substituteColors[i]?.toHexString?.() || color.toHexString()}`);
+                return <div key={i}>
                     <div className="text-sm w-full text-center">Color {i + 1}</div>
                     <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString?.() || color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
                     <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
-                </div>
+                </div>}
             )}
         </div>}
 
