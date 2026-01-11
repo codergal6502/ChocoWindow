@@ -20,7 +20,7 @@ const LayoutPickerModal = ({ workspace, currentLayoutId, isModalHidden, onReturn
     return (
         <div className={`settings-modal fixed inset-0 ${isModalHidden ? 'hidden' : ''} bg-black bg-opacity-50 z-40`}>
             <div className="flex items-center justify-center w-full h-full">
-                <div className="rounded-lg shadow-lg  flex relative">
+                <div className="rounded-lg shadow-lg flex relative bg-white dark:bg-gray-600 dark:text-gray-100">
                     <div className="flex-grow p-6 rounded-lg dark:text-gray-300">
                         <label>
                             <span>Select Layout:</span>
