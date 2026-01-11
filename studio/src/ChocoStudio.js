@@ -1,5 +1,5 @@
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
-import { ChocoWinColor, ChocoWinTileSet } from './ChocoWindow.js';
+import { ChocoWinColor, ChocoWinSettings, ChocoWinTileSet } from './ChocoWindow.js';
 
 /**
  * Provides 
@@ -343,6 +343,7 @@ class ChocoStudioWorkspace {
      * @param {ChocoStudioWorkspace} arg1 
      */
     constructor(arg1) {
+        this.version = ChocoWinSettings.CURRENT_VERSION;
         if (!arg1) {
             /** @type { String } */ this.workspaceName = "";
             /** @type { String } */ this.id = String(crypto.randomUUID());

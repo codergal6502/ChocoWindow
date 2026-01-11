@@ -2,7 +2,7 @@ import './TileSetDefinitionEditor.css';
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWinColor, ChocoWinWindow } from "../../ChocoWindow";
+import { ChocoWinColor, ChocoWinSettings, ChocoWinWindow } from "../../ChocoWindow";
 import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
 import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 import { PNG } from 'pngjs/browser'
@@ -13,7 +13,7 @@ const TILES_IN_PTS = 3;
 const DEFAULT_PTS_SCALE = 3
 const DEFAULT_TA_SCALE = 3
 const BIGGEST_ZOOM_FACTOR = 6;
-const MAX_COLOR_COUNT = 8;
+const MAX_COLOR_COUNT = ChocoWinSettings.suggestedMaximumTileSheetColorCount;
 
 // See https://bikeshedd.ing/posts/use_state_should_require_a_dependency_array/.
 
@@ -584,13 +584,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                     </select>
                 </div>
                 <div className="w-full col-span-2">
-                    <label htmlFor="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3">Sheet Snap Mode</label>
-                    <select className={TAILWIND_INPUT_CLASS_NAME} id="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3" value={tileSheetSnapSelectionMode} onChange={(e) => setTileSheetSnapSelectionMode(String(true) == e.target.value)}>
-                        <option value={true}>Tile Size ({tileSize}px)</option>
-                        <option value={false}>Do Not Snap</option>
-                    </select>
-                </div>
-                <div className="w-full col-span-2">
                     <label htmlFor="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961">Width (tiles)</label>
                     {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regions[windowRegionIdentifier].width || 1} onChange={onRegionWidthChange} />}
                     {(windowRegionIdentifier != CHOCO_WINDOW_REGIONS.TOP && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.BOTTOM && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
@@ -610,6 +603,16 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
             <h3 className="mb-1 text-xl font-bold">Tile Selection</h3>
             <p className="mb-2 text-sm mx-6"><span className="italic">First,</span> approximately click on location the tile sheet to load that area into the tile sheet detail selector. <span className="italic">Second,</span> precisely adjust the position or click on an adjacent tile. <span className="italic">Third,</span> click on the tile location to assign that part of the tile sheet to that tile in the regioon. If <span className="italic"> other tiles </span> to be assigned are <span className="italic">adjacent</span> in the tile sheet, use can use the precise tile selection without using the approximate tile selection.</p>
+
+            <div className={`grid grid-cols-10 gap-4 mb-2`}>
+                <div className="w-full col-span-2">
+                    <label htmlFor="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3">Sheet Snap Mode</label>
+                    <select className={TAILWIND_INPUT_CLASS_NAME} id="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3" value={tileSheetSnapSelectionMode} onChange={(e) => setTileSheetSnapSelectionMode(String(true) == e.target.value)}>
+                        <option value={true}>Tile Size ({tileSize}px)</option>
+                        <option value={false}>Do Not Snap</option>
+                    </select>
+                </div>
+            </div>
             <div className={`grid grid-cols-3 gap-4`}>
                 <div className="mb-4 w-full">
                     <h4 className="mb-1 font-bold">Approximate Tile Selection</h4>

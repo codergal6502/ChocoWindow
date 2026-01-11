@@ -1,5 +1,7 @@
 class ChocoWinSettings {
     static ignoreScaleMisalignmentErrors = false;
+    static suggestedMaximumTileSheetColorCount = 8;
+    static get CURRENT_VERSION() { return ("1.0.0") };
 }
 
 class ChocoWinColor {
