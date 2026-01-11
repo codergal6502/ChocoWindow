@@ -520,6 +520,8 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                                     <li className="mb-2"><span className="italics">User Interface Feedback: </span>Asynchronous operations should provide an indication that an asynchronous operation is happening until it's done.</li>
                                                     <li className="mb-2"><span className="italics">Color Inconsistencies: </span>There are some color inconsistencies that arise from using built-in HTML canvas objects. This seems to be limited to exported PNGs.</li>
                                                 </ul>
+                                                <h3 className="mb-2 text-xl">Repository</h3>
+                                                <p className="mb-2 text-sm italic">The code for this tool and related tools is available on <a className="underline text-blue-700 dark:text-blue-300" href="https://github.com/codergal6502/ChocoWindow" target="_blank">Git Hub</a> and is released under the <a className="underline text-blue-700 dark:text-blue-300" href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">GPL 3.0 License</a></p>
                                             </>)
                                         case FormStates.SETTINGS:
                                         default:
