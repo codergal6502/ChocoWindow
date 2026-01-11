@@ -107,11 +107,15 @@ const App = () => {
     setRenderDownloadName("");
   }
 
+  let resizeTimeout;
   const onResize = () => {
     // This forces any components that need to resize to "get the message" as it were.
     // See https://stackoverflow.com/a/69136763/1102726.
 
-    setLastResizeTimestamp(Date.now());
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        setLastResizeTimestamp(Date.now());
+    }, 125);
   }
 
   useEffect(() => {

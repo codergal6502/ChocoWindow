@@ -18,7 +18,6 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
     const graphicalEditorDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
-    let uiScale = 1.0;
 
     const ignoreKeyInputsRef = useRef(ignoreKeyInputs);
     useEffect(() => {
@@ -82,7 +81,6 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
     }
 
     const snapCoordinate = (x) => Math.floor(1.0 * x / SNAP_SIZE) * SNAP_SIZE;
-    const snapCoordinateCeil = (x) => Math.ceil(1.0 * x / SNAP_SIZE) * SNAP_SIZE;
 
     const toGridSnap = ({ x, y }, event) => {
         if (isGridSnapModifierHeld(event)) {
@@ -107,13 +105,17 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
         const widthRatio = 1.0 * clientWidth / workspace.width;
         const heightRatio = 1.0 * (clientHeight) / workspace.height;
 
-        uiScale = Math.min(widthRatio, heightRatio, 1);
+        const uiScale = Math.min(widthRatio, heightRatio, 1);
 
         if (uiScale < 1) {
             const /** @type {HTMLElement} */ graphicalEditorDiv = document.getElementById("graphical-editor-div");
 
-            graphicalEditorDiv.setAttribute("editor-div-offset-x", (graphicalEditorDiv.parentNode.clientWidth - (graphicalEditorDiv.clientWidth * uiScale)) / 2);
-            graphicalEditorDiv.setAttribute("editor-div-offset-y", (graphicalEditorDiv.parentNode.clientHeight - (graphicalEditorDiv.clientHeight * uiScale)) / 2);
+            const editorDivOffsetX = (graphicalEditorDiv.parentNode.clientWidth - (graphicalEditorDiv.clientWidth * uiScale)) / 2;
+            const editorDivOffsetY = (graphicalEditorDiv.parentNode.clientHeight - (graphicalEditorDiv.clientHeight * uiScale)) / 2;
+
+            graphicalEditorDiv.setAttribute("data-editor-div-offset-x", editorDivOffsetX);
+            graphicalEditorDiv.setAttribute("data-editor-div-offset-y", editorDivOffsetY);
+            graphicalEditorDiv.setAttribute("data-ui-scale", uiScale);
 
             graphicalEditorDiv.style.scale = `${100.0 * uiScale}%`;
             graphicalEditorDiv.style.left = `-${(workspace.width - clientWidth) / 2}px`
@@ -277,8 +279,9 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                             let /** @type {String} */ debugMessage;
 
                             const /** @type {HTMLElement} */ graphicalEditorDiv = document.getElementById("graphical-editor-div");
-                            const editorDivOffsetX = Number(graphicalEditorDiv.getAttribute("editor-div-offset-x"));
-                            const editorDivOffsetY = Number(graphicalEditorDiv.getAttribute("editor-div-offset-y"));
+                            const editorDivOffsetX = Number(graphicalEditorDiv.getAttribute("data-editor-div-offset-x"));
+                            const editorDivOffsetY = Number(graphicalEditorDiv.getAttribute("data-editor-div-offset-y"));
+                            const uiScale = Number(graphicalEditorDiv.getAttribute("data-ui-scale"));
 
                             const doResizeLeft = e.interaction.prepared.edges.left;
                             const doResizeRight = e.interaction.prepared.edges.right;
