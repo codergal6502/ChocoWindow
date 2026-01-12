@@ -35,7 +35,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
     });
 
     // Total state of the form; default to Settings with the entire nav tree open. 
-    const [formState, setFormState] = useState(FormStates.SETTINGS);
+    const [formState, setFormState] = useState(workspace?.tileSheets?.length ? FormStates.SETTINGS : FormStates.HELP);
     const [tileSetDefinitionsNavOpen, setTileSetDefinitionsNavOpen] = useState(true);
     const [tileSetsNavOpen, setTileSetsNavOpen] = useState(true);
     const [presetsNavOpen, setPresetsNavOpen] = useState(true);
