@@ -283,14 +283,17 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const showTileSheetTileInSheetTileSelection = ({ mouseEvent, naturalX, naturalY, overrideSnap = false }) => {
         if (!showLowerUi || !wholeTileSheetContainerRef || !wholeTileSheetContainerRef.current) return;
 
+        console.log(mouseEvent);
+
         const imageWidth = wholeTileSheetContainerRef.current.naturalWidth;
         const imageHeight = wholeTileSheetContainerRef.current.naturalHeight;
 
         if (mouseEvent) {
             /** @type {DOMRect} */ const rect = wholeTileSheetContainerRef.current.getBoundingClientRect();
+            const ratio = imageWidth / rect.width;
 
-            naturalX = Math.max(0, Math.min(Math.floor(mouseEvent.clientX - rect.left), imageWidth));
-            naturalY = Math.max(0, Math.min(Math.floor(mouseEvent.clientY - rect.top), imageHeight));
+            naturalX = Math.max(0, Math.min(Math.floor(ratio * (mouseEvent.clientX - rect.left)), imageWidth));
+            naturalY = Math.max(0, Math.min(Math.floor(ratio * (mouseEvent.clientY - rect.top)), imageHeight));
         }
 
         if (!overrideSnap && tileSheetSnapSelectionMode) {
@@ -381,7 +384,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      */
     const onRegionWidthChange = (e) => {
         const newRegions = structuredClone(regions);
-        newRegions[windowRegionIdentifier].width = e.target.value;
+        newRegions[windowRegionIdentifier].width = Number(e.target.value);
         newRegions[windowRegionIdentifier].tileSheetPositions.length = Math.max(newRegions[windowRegionIdentifier].tileSheetPositions.length, e.target.value);
         setRegions(newRegions);
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
@@ -392,8 +395,9 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      */
     const onRegionHeightChange = (e) => {
         const newRegions = structuredClone(regions);
-        newRegions[windowRegionIdentifier].height = e.target.value;
+        newRegions[windowRegionIdentifier].height = Number(e.target.value);
         newRegions[windowRegionIdentifier].tileSheetPositions.forEach((col, rowNum) => {
+            if (!col) col = [];
             col.length = Math.max(col.length, e.target.value);
             newRegions[windowRegionIdentifier].tileSheetPositions[rowNum] = col;
         });
