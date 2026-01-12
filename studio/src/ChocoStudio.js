@@ -250,15 +250,6 @@ class ChocoStudioTileSetDefinition {
                         ) :
                         new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height)).fill().map(() => ({ x: 0, y: 0 }))
                 ),
-
-
-            // this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions.filter((_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.CENTER].width).map((row) =>
-
-
-            //     !row ?
-            //         new Array(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height).map(() => ({ x: 0, y: 0 })) :
-            //         row.filter((_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.CENTER].height).map((col) => ({ x: col.x, y: col.y }))
-            // ),
             "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? []
         });
     }

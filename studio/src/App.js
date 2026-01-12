@@ -29,7 +29,7 @@ const App = () => {
   const [renderDownloadName, setRenderDownloadName] = useState(null);
 
   const [lastResizeTimestamp, setLastResizeTimestamp] = useState(null);
-
+  
   const initialWorkspace = () => {
     try {
       const b64 = window.localStorage.getItem(WORKSPACE_COOKIE_NAME);
@@ -142,7 +142,7 @@ const App = () => {
   return (
     modalWorkspace && editorWorkspace && <div id="app-div">
       <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} onDownloadPngClick={onDownloadPngClick} />
-      {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} />}
+      {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} lastResizeTimestamp={lastResizeTimestamp}  />}
       {isLayoutPickerModalHidden || <LayoutPickerModal workspace={editorWorkspace} currentLayoutId={editorLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToEditor={onLayoutPickerReturn} />}
       {hasRenderResult && <LayoutRenderResult isModalHidden={!hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToEditor={onRenderResultReturn} />}
       <GraphicalEditor ignoreKeyInputs={editorIgnoreKeyInputs} workspace={editorWorkspace} onWorkspaceChange={onEditorWorkspaceChange} editorLayoutId={editorLayoutId} lastResizeTimestamp={lastResizeTimestamp} />

@@ -24,12 +24,13 @@ const MAX_COLOR_COUNT = ChocoWinSettings.suggestedMaximumTileSheetColorCount;
  * @param {Function} props.onTileSetDefinitionChange
  * @param {Function} props.onTileSetDefinitionDelete
  * @param {Function} props.onReturnToEditor
+ * @param {Number} props.lastResizeTimestamp
  * @returns {JSX.Element}
  */
-const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete, onReturnToEditor }) => {
+const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete, onReturnToEditor, lastResizeTimestamp }) => {
     const hasChangeHandler = onTileSetDefinitionChange && typeof onTileSetDefinitionChange == "function";
     const hasDeleteHandler = onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == "function";
-
+    
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //            STATE, REFERENCE OBJECTS, AND UTILITY METHODS             //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -113,7 +114,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
     const [preciseSelectionBackgroundPosition, setPreciseSelectionBackgroundPosition] = useState(null);
     const [preciseTileSelectionScale, setPreciseTileSelectionScale] = useState(DEFAULT_PTS_SCALE);
-    const [preciseeTileSelectionSize, setPreciseTileSelectionSize] = useState(tileSetDefinition.tileSize * TILES_IN_PTS * DEFAULT_PTS_SCALE ?? 72);
+    const [preciseTileSelectionSize, setPreciseTileSelectionSize] = useState(tileSetDefinition.tileSize * TILES_IN_PTS * DEFAULT_PTS_SCALE ?? 72);
     const [tileAssignmentTileSize, setTileAssignmentTileSize] = useState(tileSetDefinition.tileSize * DEFAULT_TA_SCALE ?? 24);
 
     // workflow state and reference objects
@@ -173,14 +174,16 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             setPreciseTileSelectionScale(actualScale);
             setPreciseTileSelectionSize(TILES_IN_PTS * tileSize * actualScale);
         }
-    }, [showLowerUi, tileSize, preciseSelectionContainerRef])
+    }, [showLowerUi, tileSize, preciseSelectionContainerRef, lastResizeTimestamp])
 
     // draw grid over precise tile selection
     useEffect(() => {
         if (showLowerUi && preciseSelectionGridRef && preciseSelectionGridRef.current) {
             const canvas = new Canvas('canvasId');
+            canvas.width = preciseTileSelectionSize;
+            canvas.height = preciseTileSelectionSize;
             const lineWidth = 1;
-            const gridTileLength = preciseeTileSelectionSize / TILES_IN_PTS;
+            const gridTileLength = preciseTileSelectionSize / TILES_IN_PTS;
             const translucentYellow = 'rgba(128, 128, 00, 0.5)';
             const clear = 'rgba(00, 0, 00, 0)';
 
@@ -209,22 +212,22 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
             drawPolyline([
                 { x: gridTileLength, y: 0 },
-                { x: gridTileLength, y: preciseeTileSelectionSize }
+                { x: gridTileLength, y: preciseTileSelectionSize }
             ], true);
 
             drawPolyline([
                 { x: gridTileLength * 2, y: 0 },
-                { x: gridTileLength * 2, y: preciseeTileSelectionSize }
+                { x: gridTileLength * 2, y: preciseTileSelectionSize }
             ]);
 
             drawPolyline([
                 { x: 0, y: gridTileLength },
-                { x: preciseeTileSelectionSize, y: gridTileLength }
+                { x: preciseTileSelectionSize, y: gridTileLength }
             ]);
 
             drawPolyline([
                 { x: 0, y: gridTileLength * 2 },
-                { x: preciseeTileSelectionSize, y: gridTileLength * 2 }
+                { x: preciseTileSelectionSize, y: gridTileLength * 2 }
             ]);
 
             drawNonCenterTileHaze(0, 0, translucentYellow);
@@ -243,7 +246,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             const imageSrc = canvas.toDataURL();
             preciseSelectionGridRef.current.style.backgroundImage = `url(${imageSrc})`;
         }
-    }, [showLowerUi, preciseSelectionGridRef, preciseTileSelectionScale, preciseeTileSelectionSize])
+    }, [showLowerUi, preciseSelectionGridRef, preciseTileSelectionScale, preciseTileSelectionSize, lastResizeTimestamp])
 
     // set up the tile assignment grid
     useEffect(() => {
@@ -260,7 +263,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             setTileAssignmentTileSize(tileSize * Math.min(BIGGEST_ZOOM_FACTOR, possibleScale));
         }
 
-    }, [showLowerUi, tileAssignmentContainerRef, tileSize, regions, windowRegionIdentifier])
+    }, [showLowerUi, tileAssignmentContainerRef, tileSize, regions, windowRegionIdentifier, lastResizeTimestamp])
 
     // preview hooks
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -283,8 +286,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const showTileSheetTileInSheetTileSelection = ({ mouseEvent, naturalX, naturalY, overrideSnap = false }) => {
         if (!showLowerUi || !wholeTileSheetContainerRef || !wholeTileSheetContainerRef.current) return;
 
-        console.log(mouseEvent);
-
         const imageWidth = wholeTileSheetContainerRef.current.naturalWidth;
         const imageHeight = wholeTileSheetContainerRef.current.naturalHeight;
 
@@ -305,7 +306,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             x: preciseTileSelectionScale * (tileSize - naturalX),
             y: preciseTileSelectionScale * (tileSize - naturalY),
         };
-
+        
         setSelectedTileLocation({ x: naturalX, y: naturalY });
         setPreciseSelectionBackgroundPosition(preciseTilePosition);
     }
@@ -407,6 +408,10 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
     // tile assignment UI element event handlers
     // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    useEffect(() => {
+        
+    })
 
     const onWholeTileSheetMouseEnter = () => {
         setSheetTileSelectionSemiLocked(false);
@@ -630,7 +635,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
                 <div className="mb-4 w-full">
                     <h4 className="mb-1 font-bold">Precise Tile Selection</h4>
-                    <div ref={preciseSelectionContainerRef} style={{ '--tile-sel-size': `${preciseeTileSelectionSize}px` }} className="mb-3 mx-auto tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
+                    <div ref={preciseSelectionContainerRef} style={{ '--tile-sel-size': `${preciseTileSelectionSize}px` }} className="mb-3 mx-auto tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
                         <div
                             ref={preciseSelectionZoomedRef}
                             className="w-full h-full sheet-tile-selection-mid-ground"
@@ -653,7 +658,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                         </div>
                         <div className="ml-2 mb-2">
                             <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
-                            {/* temporary fix this */}
                             <input placeholder="x" type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={selectedTileLocation?.y ?? 0} />
                         </div>
                     </div>

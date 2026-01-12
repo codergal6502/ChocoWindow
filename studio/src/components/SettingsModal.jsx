@@ -19,8 +19,9 @@ export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheet
  * @param {function(ChocoStudioWorkspace):void} props.onReturnToEditor
  * @param {function(ChocoStudioWorkspace):void} props.onWorkspaceChange
  * @param {ChocoStudioWorkspace} props.workspace
+ * @param {Number} props.lastResizeTimestamp
  */
-const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, workspace }) => {
+const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, workspace, lastResizeTimestamp }) => {
     const FormStates = Object.freeze({
         HELP: 'HELP',
         SETTINGS: 'SETTINGS',
@@ -575,7 +576,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                             );
                                         case FormStates.TILE_SET_DEFINITION:
                                             return (!activeTileSetDefinition) ? "" : (
-                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToEditor={() => onReturnToEditor(workspace)} />
+                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToEditor={() => onReturnToEditor(workspace)} lastResizeTimestamp={lastResizeTimestamp}  />
                                             );
                                         case FormStates.PRESET:
                                             return (!activePreset) ? "" : (
