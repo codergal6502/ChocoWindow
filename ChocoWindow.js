@@ -66,6 +66,30 @@ class ChocoWinCoordinates {
     }
 }
 
+class ChocoWinRectangle {
+    /**
+     * Default consturctor
+     */
+    /**
+     * Copy constructor, useful for JSON objects.
+     * @param {ChocoWinCoordinates} arg1
+     */
+    constructor(arg1) {
+        if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y) && !isNaN(arg1.width) && !isNaN(arg1.height)) {
+            this.x = arg1.x;
+            this.y = arg1.y;
+            this.width = arg1.width;
+            this.height = arg1.height;
+        }
+        else {
+            /** @type {number} */ this.x = 0;
+            /** @type {number} */ this.y = 0;
+            /** @type {number} */ this.width = 0;
+            /** @type {number} */ this.height = 0;
+        }
+    }
+}
+
 class ChocoWinTilesetCorners {
     /**
      * Default consturctor
@@ -344,4 +368,4 @@ class ChocoWinWindow {
     };
 }
 
-export { ChocoWinSettings, ChocoWinColor, ChocoWinCoordinates, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinTileSet, ChocoWinWindow }
+export { ChocoWinSettings, ChocoWinColor, ChocoWinCoordinates, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinTileSet, ChocoWinWindow, ChocoWinRectangle }
