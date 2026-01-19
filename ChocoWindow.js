@@ -1,10 +1,10 @@
-class ChocoWinSettings {
+export class ChocoWinSettings {
     static ignoreScaleMisalignmentErrors = false;
     static suggestedMaximumTileSheetColorCount = 8;
-    static get CURRENT_VERSION() { return ("1.0.0") };
+    static get CURRENT_VERSION() { return ("1.0.1") };
 }
 
-class ChocoWinColor {
+export class ChocoWinColor {
     /**
      * Default consturctor
      */
@@ -41,12 +41,13 @@ class ChocoWinColor {
             /** @type {number} */ this.b = 0;
             /** @type {number} */ this.a = 255;
         }
+        this.id = arg1?.id ?? crypto.randomUUID();
     }
 
     toHexString() { return `#${this.r.toString(16).padStart(2, "0")}${this.g.toString(16).padStart(2, "0")}${this.b.toString(16).padStart(2, "0")}`; }
 }
 
-class ChocoWinCoordinates {
+export class ChocoWinCoordinates {
     /**
      * Default consturctor
      */
@@ -63,16 +64,17 @@ class ChocoWinCoordinates {
             /** @type {number} */ this.x = 0;
             /** @type {number} */ this.y = 0;
         }
+        this.id = arg1?.id ?? crypto.randomUUID();
     }
 }
 
-class ChocoWinRectangle {
+export class ChocoWinRectangle {
     /**
      * Default consturctor
      */
     /**
      * Copy constructor, useful for JSON objects.
-     * @param {ChocoWinCoordinates} arg1
+     * @param {ChocoWinRectangle} arg1
      */
     constructor(arg1) {
         if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y) && !isNaN(arg1.width) && !isNaN(arg1.height)) {
@@ -87,10 +89,11 @@ class ChocoWinRectangle {
             /** @type {number} */ this.width = 0;
             /** @type {number} */ this.height = 0;
         }
+        this.id = arg1?.id ?? crypto.randomUUID();
     }
 }
 
-class ChocoWinTilesetCorners {
+export class ChocoWinTilesetCorners {
     /**
      * Default consturctor
      */
@@ -111,10 +114,11 @@ class ChocoWinTilesetCorners {
             /** @type {ChocoWinCoordinates} - The bottom-left corner tile coordinates. */  this.BL = { x: 0, y: 0 };
             /** @type {ChocoWinCoordinates} - The bottom-right corner tile coordinates. */ this.BR = { x: 0, y: 0 };
         }
+        this.id = arg1?.id ?? crypto.randomUUID();
     }
 }
 
-class ChocoWinOptionEdges {
+export class ChocoWinOptionEdges {
     /**
      * Default consturctor.
      */
@@ -135,10 +139,11 @@ class ChocoWinOptionEdges {
             /** @type {Array<ChocoWinCoordinates>} The left edge tile coordinate paors. */  this.L = [{ x: 0, y: 0 }];
             /** @type {Array<ChocoWinCoordinates>} The right edge tile coordinate pairs. */ this.R = [{ x: 0, y: 0 }];
         }
+        this.id = arg1?.id ?? crypto.randomUUID();
     }
 }
 
-class ChocoWinTileSet {
+export class ChocoWinTileSet {
     /**
      * Default consturctor
      */
@@ -147,14 +152,14 @@ class ChocoWinTileSet {
      * @param {ChocoWinTileSet} arg1
      */
     constructor(arg1) {
-        if (arg1 && arg1.sourceFileUrl && !isNaN(arg1.tileSize) && arg1.corners && arg1.edges && arg1.patternRows) {
+        if (arg1 && arg1.sourceFileUrl && !isNaN(arg1.tileSize) && arg1.corners && arg1.edges && arg1.centerRows) {
             this.id = arg1.id || null; // might be null in original
             this.name = arg1.name || null; // might be null in original
             this.sourceFileUrl = String(arg1.sourceFileUrl);
             this.tileSize = Number(arg1.tileSize);
             this.corners = new ChocoWinTilesetCorners(arg1.corners);
             this.edges = new ChocoWinOptionEdges(arg1.edges);
-            this.patternRows = arg1.patternRows.map((col) => col.map(coord => new ChocoWinCoordinates(coord)));
+            this.centerRows = arg1.centerRows.map((col) => col.map(coord => new ChocoWinCoordinates(coord)));
             if (arg1.substitutableColors) {
                 this.substitutableColors = arg1.substitutableColors.map((color) => new ChocoWinColor(color));
             }
@@ -171,15 +176,16 @@ class ChocoWinTileSet {
             /** @type {ChocoWinOptionEdges} */
             this.edges = { T: [{ y: 0, x: 0 }], L: [{ y: 0, x: 0 }], R: [{ y: 0, x: 0 }], B: [{ y: 0, x: 0, }] };
             /** @type {Array<Array<ChocoWinCoordinates>>} */
-            this.patternRows = [[{ y: 0, x: 0 }]];
+            this.centerRows = [[{ y: 0, x: 0 }]];
             /** @type {Array<ChocoWinColor>} */
             this.substitutableColors = []
         }
+        this.id = arg1?.id ?? crypto.randomUUID();
     }
 }
 
-class ChocoWinWindow {
-    /** @type {HTMLImageElement} */ #pixmap;
+export class ChocoWinWindow {
+    /** @type {ChocoWinAbstractPixelReader} */ #tileSheetReader;
     /** @type {ChocoWinTileSet} */ #winTileSet;
     /** @type {Number} */ #tileScale;
     /** @type {Number} */ #x;
@@ -189,18 +195,21 @@ class ChocoWinWindow {
     /** @type {Array<Number, ChocoWinColor>} */ #colorSubstitutions;
 
     /**
-     * 
-     * @param {ChocoWinTileSet} winTileSet 
-     * @param {Number} tileScale 
-     * @param {Number} x 
-     * @param {Number} y 
-     * @param {Number} w 
-     * @param {Number} h 
-     * @param {Array<Number, ChocoWinColor>} colorSubstitutions
+     * @param {Object} args
+     * @param {ChocoWinTileSet} args.winTileSet 
+     * @param {Number} args.tileScale 
+     * @param {Number} args.x 
+     * @param {Number} args.y 
+     * @param {Number} args.w 
+     * @param {Number} args.h 
+     * @param {ChocoWinAbstractPixelReaderFactory} args.readerFactory
+     * @param {Array<Number, ChocoWinColor>} args.colorSubstitutions
      */
-    constructor(winTileSet, tileScale, x, y, w, h, colorSubstitutions) {
-        this.#pixmap = new Image();
-        this.#pixmap.src = winTileSet.sourceFileUrl;
+    constructor({ winTileSet, tileScale, x, y, w, h, readerFactory, colorSubstitutions }) {
+        this.id = crypto.randomUUID();
+        this.#tileSheetReader = readerFactory.build({
+            dataUrl: winTileSet.sourceFileUrl,
+        });
 
         this.#winTileSet = winTileSet;
         this.#tileScale = tileScale;
@@ -208,7 +217,7 @@ class ChocoWinWindow {
         this.#y = y;
         this.#w = w;
         this.#h = h;
-        this.#colorSubstitutions = colorSubstitutions || [];
+        this.#colorSubstitutions = colorSubstitutions ?? [];
 
         if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && ((this.#w % this.#tileScale != 0) || (this.#h % this.#tileScale != 0))) {
             console.warn(`Scale misalignment: one or both window dimensions [${this.#w}, ${this.#h}] are not multiples of tile scale ${tileScale}. Artifacts may occur on the right and bottom edges as a result, especially if the sprite map includes transparency. To ignore this warning, set ChocoWinSettings.ignoreScaleMisalignmentErrors = true`);
@@ -217,20 +226,18 @@ class ChocoWinWindow {
 
     isReady() {
         return new Promise((resolve) => {
-            this.#pixmap.onload = () => {
-                resolve();
-            }
-            if (this.#pixmap.complete) {
-                resolve();
-            }
+            this.#tileSheetReader.isReady().then(read => resolve());
+            // this.#reader.onload = () => {
+            //     resolve();
+            // }
+            // if (this.#reader.complete) {
+            //     resolve();
+            // }
         });
     }
 
-    drawTo(/** @type {CanvasRenderingContext2D} */ ctx) {
-        const oldSmoothing = ctx.imageSmoothingEnabled;
-        ctx.imageSmoothingEnabled = false;
-        this.#doDrawWindow(ctx);
-        ctx.imageSmoothingEnabled = oldSmoothing
+    drawTo(/** @type {ChocoWinAbstractPixelWriter} */ writer) {
+        this.#doDrawWindow(writer);
     }
 
     /**
@@ -245,85 +252,71 @@ class ChocoWinWindow {
         return Object.keys(this.#colorSubstitutions).length > 0 && this.#colorSubstitutions.some(cs => cs != null);
     }
 
-    #doDrawTile(
-        /** @type {CanvasRenderingContext2D} */ ctx
-        , /** @type {Number} */ tileSize
-        , /** @type {Number} */ sx
-        , /** @type {Number} */ sy
-        , /** @type {Number} */ dxRelative
-        , /** @type {Number} */ dyRelative
-        , /** @type {Boolean} */ allowOverrunX
-        , /** @type {Boolean} */ allowOverrunY
+    #doDrawTile( // reader, writer, this.#w - destSize, dy
+        /** @type {ChocoWinAbstractPixelReader} */ reader,
+        /** @type {ChocoWinAbstractPixelWriter} */ writer,
+        /** @type {Number} */ destX,
+        /** @type {Number} */ destY,
+        /** @type {Boolean} */ allowOverrunX,
+        /** @type {Boolean} */ allowOverrunY
     ) {
-        let destWidth = tileSize * this.#tileScale;
-        let destHeight = tileSize * this.#tileScale;
-        let sw = tileSize;
-        let sh = tileSize;
-        const pixmap = this.#pixmap;
-
-        if ((true != allowOverrunX) && (dxRelative + destWidth > this.#w - destWidth)) {
-            const pixelsToDraw = this.#w - destWidth - dxRelative;
-            const pixelsToSource = Math.ceil(pixelsToDraw / this.#tileScale);
-            if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && (pixelsToSource != Math.floor(pixelsToDraw / this.#tileScale))) {
-                console.warn(`Scale horizontal misalignment: cannot trim precisely at {${dxRelative}, ${dyRelative}}; drawing desination tile size ${destWidth} will horizontally overrun right edge/corner tiles at x=${this.#w - destWidth}; draw ${pixelsToSource} source tile pixels where ${pixelsToDraw} destination pixels should be drawn.`);
-            }
-            sw = pixelsToSource;
-            destWidth = sw * this.#tileScale;
+        const areColorsExactMatch = (/** @type {ChocoWinColor} */ oldColor, /** @type {ChocoWinColor} */ newColor) => {
+            return oldColor.r == newColor.r && oldColor.g == newColor.g && oldColor.b == newColor.b;
         }
 
-        if ((true != allowOverrunY) && (dyRelative + destHeight > this.#h - destHeight)) {
-            const pixelsToDraw = this.#h - destHeight - dyRelative;
-            const pixelsToSource = Math.ceil(pixelsToDraw / this.#tileScale);
-            if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && (pixelsToSource != Math.floor(pixelsToDraw / this.#tileScale))) {
-                console.warn(`Scale vertical misalignment: cannot trim precisely at {${dxRelative}, ${dyRelative}}; drawing desination tile size ${destHeight} will vertically overrun right edge/corner tiles at y=${this.#h - destHeight}; draw ${pixelsToSource} source tile pixels where ${pixelsToDraw} destination pixels should be drawn.`);
-            }
-            sh = pixelsToSource;
-            destHeight = sh * this.#tileScale;
+        const areColorRmsClose = (/** @type {ChocoWinColor} */ oldColor, /** @type {ChocoWinColor} */ newColor) => {
+            const maxDistance = 2;
+            const dr = oldColor.r - newColor.r;
+            const dg = oldColor.g - newColor.g;
+            const db = oldColor.b - newColor.b;
+
+            return Math.sqrt(0.33 * dr * dr + 0.33 * dg * dg + 0.33 * db * db) < maxDistance
         }
 
-        const dxAbsolute = this.#x + dxRelative;
-        ctx.drawImage(pixmap, sx, sy, sw, sh, dxAbsolute, this.#y + dyRelative, destWidth, destHeight);
+        for (let sourceX = 0; sourceX < reader.width; sourceX++) {
+            for (let sourceY = 0; sourceY < reader.width; sourceY++) {
+                let pixelColor = reader.getPixel({ x: sourceX, y: sourceY });
 
-        if (this.hasColorSubstitutions() && this.#winTileSet.substitutableColors?.length) {
-            const imageData = ctx.getImageData(dxAbsolute, this.#y + dyRelative, destWidth, destHeight);
-            const imagePixelBytes = imageData.data;
-            for (const keyValuePair of Object.entries(this.#colorSubstitutions)) {
-                /** @type {number} */ const index = keyValuePair[0];
-                /** @type {ChocoWinColor} */ const newColor = keyValuePair[1];
+                if (this.hasColorSubstitutions() && this.#winTileSet.substitutableColors?.length) {
+                    for (const keyValuePair of Object.entries(this.#colorSubstitutions)) {
+                        /** @type {number} */ const index = keyValuePair[0];
+                        /** @type {ChocoWinColor} */ const newColor = keyValuePair[1];
 
-                if (!newColor) {
-                    continue;
+                        if (!newColor) {
+                            continue;
+                        }
+
+                        /** @type {ChocoWinColor} */ const oldColor = this.#winTileSet.substitutableColors[index];
+
+                        if (index < 0) continue;
+                        if (index >= this.#winTileSet.substitutableColors.length) continue;
+
+                        if (areColorsExactMatch(oldColor, pixelColor)) {
+                            pixelColor = newColor;
+                        }
+                    }
                 }
 
-                /** @type {ChocoWinColor} */ const oldColor = this.#winTileSet.substitutableColors[index];
-
-                if (index < 0) continue;
-                if (index >= this.#winTileSet.substitutableColors.length) continue;
-
-                for (let i = 0; i < imagePixelBytes.length; i += 4) {
-                    const areColorsCloseEnough = (r1, r2, g1, g2, b1, b2) => {
-                        // const maxDistance = 5;
-                        // return (Math.abs(r1 - r2) < maxDistance) && (Math.abs(g1 - g2) < maxDistance) && (Math.abs(b1 - b2) < maxDistance);
-                        const maxDistance = 2;
-                        const dr = r2 - r1;
-                        const dg = g2 - g1;
-                        const db = b2 - b1
-
-                        return Math.sqrt(0.33 * dr * dr + 0.33 * dg * dg + 0.33 * db * db) < maxDistance
-                    }
-
-                    if (areColorsCloseEnough(imagePixelBytes[i], oldColor.r, imagePixelBytes[i + 1], oldColor.g, imagePixelBytes[i + 2], oldColor.b)) {
-                        imagePixelBytes[i] = newColor.r;
-                        imagePixelBytes[i + 1] = newColor.g;
-                        imagePixelBytes[i + 2] = newColor.b;
+                for (let offsetX = 0; offsetX < this.#tileScale; offsetX++) {
+                    for (let offsetY = 0; offsetY < this.#tileScale; offsetY++) {
+                        writer.writePixel({ x: destX + sourceX * this.#tileScale + offsetX, y: destY + sourceY * this.#tileScale + offsetY }, pixelColor);
                     }
                 }
             }
-            ctx.putImageData(imageData, dxAbsolute, this.#y + dyRelative);
         }
+
+        return;
     }
 
-    #doDrawWindow(/** @type {CanvasRenderingContext2D} */ ctx) {
+    // This will be calculated every time a window is instantiated but thankfully
+    // it's not an expensive operation.
+    // If anybody's tile sheet is more than 2^53 pixels in total, something's wrong.
+    // For reference, 1080p is less than 10^21, so that tile sheet would have more
+    // pixels than a 1920x1080 matrix of 1080p displays.
+    // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER.
+    #sillyMaxWidth = Math.sqrt(Number.MAX_SAFE_INTEGER);
+
+    #doDrawWindow(/** @type {ChocoWinAbstractPixelWriter} */ writer) {
         const wo = this.#winTileSet;
         const tileSize = wo.tileSize;
         const destSize = tileSize * this.#tileScale;
@@ -332,40 +325,402 @@ class ChocoWinWindow {
             console.error("tile size cannot be zero");
             return;
         }
+        const /** @type {Map<String, ChocoWinCoordinates>} */ cachedTileReaders = new Map();
+        const xyToCacheKey = ({/** @type { String } */ id, /** @type {Number} */ x, /* @type {Number} */ y }) => {
+            return id ?? String(this.#sillyMaxWidth / 2 * x + y);
+        }
+        const getTileReader = (/** @type {ChocoWinCoordinates} */ tilePos) => {
+            let reader = cachedTileReaders[xyToCacheKey(tilePos)];
+            if (!reader) {
+                reader = new ChocoWinRegionPixelReader(this.#tileSheetReader, new ChocoWinRectangle({ x: tilePos.x, y: tilePos.y, width: tileSize, height: tileSize }));
 
-        for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.patternRows.length) {
-            let row = wo?.patternRows?.[i];
+                // todo: when implementing transformations, iterate over and keep reassigning the reader.
+                cachedTileReaders[xyToCacheKey(tilePos)] = reader;
+            }
+            return reader;
+        }
+
+        for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.centerRows.length) {
+            let row = wo?.centerRows?.[i];
             if (!row) continue;
 
-            for (let dx = destSize, j = 0; dx < this.#w - destSize; dx += destSize, j = (j + 1) % wo.patternRows[i].length) {
-                let tile = row[j];
-                if (!tile) continue;
+            for (let dx = destSize, j = 0; dx < this.#w - destSize; dx += destSize, j = (j + 1) % wo.centerRows[i].length) {
+                let tilePos = row[j];
+                if (!tilePos) continue;
 
-                this.#doDrawTile(ctx, tileSize, tile.x, tile.y, dx, dy);
+                const reader = getTileReader(tilePos);
+                this.#doDrawTile(reader, writer, dx, dy);
             }
         }
+
         for (let dx = destSize, i = 0; dx < this.#w - destSize; dx += destSize, i = (i + 1) % wo.edges.T.length) {
-            let tile = wo.edges.T[i];
-            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, dx, 0, false, false);
+            let tilePos = wo.edges.T[i];
+            const reader = getTileReader(tilePos);
+            this.#doDrawTile(reader, writer, dx, 0, false, false);
         }
         for (let dx = destSize, i = 0; dx < this.#w - destSize; dx += destSize, i = (i + 1) % wo.edges.B.length) {
-            let tile = wo.edges.B[i];
-            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, dx, this.#h - destSize, false, true);
+            let tilePos = wo.edges.B[i];
+            const reader = getTileReader(tilePos);
+            this.#doDrawTile(reader, writer, dx, this.#h - destSize, false, true);
         }
         for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.edges.L.length) {
-            let tile = wo.edges.L[i];
-            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, 0, dy, false, false);
+            let tilePos = wo.edges.L[i];
+            const reader = getTileReader(tilePos);
+            this.#doDrawTile(reader, writer, 0, dy, false, true);
         }
         for (let dy = destSize, i = 0; dy < this.#h - destSize; dy += destSize, i = (i + 1) % wo.edges.R.length) {
-            let tile = wo.edges.R[i];
-            this.#doDrawTile(ctx, tileSize, tile.x, tile.y, this.#w - destSize, dy, true, false);
+            let tilePos = wo.edges.R[i];
+            const reader = getTileReader(tilePos);
+            this.#doDrawTile(reader, writer, this.#w - destSize, dy, true, false);
         }
 
-        this.#doDrawTile(ctx, tileSize, wo.corners.TL.x, wo.corners.TL.y, 0, 0, false, false);
-        this.#doDrawTile(ctx, tileSize, wo.corners.TR.x, wo.corners.TR.y, this.#w - destSize, 0, true, false);
-        this.#doDrawTile(ctx, tileSize, wo.corners.BL.x, wo.corners.BL.y, 0, this.#h - destSize, false, true);
-        this.#doDrawTile(ctx, tileSize, wo.corners.BR.x, wo.corners.BR.y, this.#w - destSize, this.#h - destSize, true, true);
+        this.#doDrawTile(getTileReader(wo.corners.TL), writer, 0, 0, false, false);
+        this.#doDrawTile(getTileReader(wo.corners.TR), writer, this.#w - destSize, 0, true, false);
+        this.#doDrawTile(getTileReader(wo.corners.BL), writer, 0, this.#h - destSize, false, true);
+        this.#doDrawTile(getTileReader(wo.corners.BR), writer, this.#w - destSize, this.#h - destSize, true, true);
     };
 }
 
-export { ChocoWinSettings, ChocoWinColor, ChocoWinCoordinates, ChocoWinTilesetCorners, ChocoWinOptionEdges, ChocoWinTileSet, ChocoWinWindow, ChocoWinRectangle }
+/**
+ * @interface
+ */
+export class ChocoWinAbstractPixelReader {
+    /**
+     * @return {Number}
+     */
+    get width() {
+        throw new Error("cannot call methods on abstract class");
+    }
+
+    /**
+     * @return {Number}
+     */
+    get height() {
+        throw new Error("cannot call methods on abstract class");
+    }
+
+    /**
+     * @param {ChocoWinCoordinates} coordinate
+     * @return {ChocoWinColor}
+     */
+    getPixel(coordinate) {
+        throw new Error("cannot call methods on abstract class");
+    }
+
+    /**
+     * Returns a Promise that passes the same pixel reader into the resolve
+     * callback.
+     * @return {Promise<ChocoWinAbstractPixelReader>}
+     */
+    isReady() {
+        throw new Error("cannot call methods on abstract class");
+    }
+}
+
+/**
+ * @interface 
+ */
+export class ChocoWinAbstractPixelWriterFactory {
+    /**
+     * @type {Number} width
+     * @type {Number} height
+     * @returns {ChocoWinAbstractPixelWriter}
+     */
+    build(width, height) {
+        throw new Error("cannot call methods on abstract class");
+    }
+}
+
+/**
+ * @interface
+ */
+export class ChocoWinAbstractPixelWriter {
+    /**
+     * @param {ChocoWinCoordinates} coordinate
+     * @param {ChocoWinColor} color
+     */
+    writePixel(coordinate, color) {
+        throw new Error("cannot call methods on abstract class");
+    }
+
+    /**
+     * Returns a Promise that passes the same pixel writer into the resolve
+     * callback.
+     * @return {Promise<ChocoWinAbstractPixelWriter>}
+     */
+    isReady() {
+        throw new Error("cannot call methods on abstract class");
+    }
+
+    /**
+     * @return {String}
+     */
+    makeDataUrl() {
+        throw new Error("cannot call methods on abstract class");
+    }
+
+    /**
+     * @return {Blob}
+     */
+    makeBlob() {
+        throw new Error("cannot call methods on abstract class");
+    }
+}
+
+export class ChocoWinAbstractPixelReaderFactory {
+    /**
+     * @param {Object} args
+     * @param {Blob} args.blob Will be prioritized over the data URL version.
+     * @param {String} args.dataUrl
+     * @return {ChocoWinAbstractPixelReader}
+     */
+    build({ blob, dataUrl }) {
+        throw new Error("cannot call methods on abstract class");
+    }
+}
+
+export class ChocoWinRegionPixelReader extends ChocoWinAbstractPixelReader {
+    /** @param {ChocoWinAbstractPixelReader} */ #reader;
+    /** @param {ChocoWinRectangle} */ #region;
+
+    /**
+     * @param {ChocoWinAbstractPixelReader} reader
+     * @param {ChocoWinRectangle} region
+     */
+    constructor(reader, region) {
+        super();
+        this.#reader = reader;
+        this.#region = region;
+    }
+
+    /**
+     * @return {Number}
+     */
+    get width() {
+        return this.#region.width;
+    }
+
+    /**
+     * @return {Number}
+     */
+    get height() {
+        return this.#region.height;
+    }
+
+    /**
+     * @param {ChocoWinCoordinates} coordinate
+     * @return {ChocoWinColor}
+     */
+    getPixel(coordinate) {
+        return this.#reader.getPixel({ x: this.#region.x + coordinate.x, y: this.#region.y + coordinate.y });
+    }
+
+    /**
+     * @return {Promise<ChocoWinAbstractPixelReader>}
+     */
+    isReady() {
+        return this.#reader.isReady();
+    }
+}
+
+/**
+ * Rotates in 90º increments.
+ */
+export class ChocoWinRotatePixelReader extends ChocoWinAbstractPixelReader {
+    /** @param {ChocoWinAbstractPixelReader} */ #reader;
+    /** @param {Number} */ #rotationCount;
+
+    /**
+     * @param {ChocoWinAbstractPixelReader} reader
+     * @param {Number} rotationCount
+     */
+    constructor(reader, rotationCount) {
+        super();
+        this.#reader = reader;
+        this.#rotationCount = Math.round(rotationCount ?? 0) % 4;
+    }
+
+    /**
+     * @return {Number}
+     */
+    get width() {
+        switch (this.#rotationCount) {
+            case 0: case 2: default: return this.#reader.width;
+            case 1: case 3: return this.#reader.height;
+        }
+    }
+
+    /**
+     * @return {Number}
+     */
+    get height() {
+        switch (this.#rotationCount) {
+            case 0: case 2: default: return this.#reader.height;
+            case 1: case 3: return this.#reader.width;
+        }
+    }
+
+    /**
+     * @param {ChocoWinCoordinates} coordinate
+     * @return {ChocoWinColor}
+     */
+    getPixel(coordinate) {
+        switch (this.#rotationCount) {
+            case 0: default:
+                return this.#reader.getPixel(coordinate);
+            case 1:
+                // {0, 0} -> { 0, h }
+                // {h, 0} => { 0, 0 }
+                // {h, w} => { w, 0 }
+                // {0, w} => { w, h }
+                return this.#reader.getPixel({ x: coordinate.y, y: this.#reader.height - coordinate.x });
+            case 2:
+                return this.#reader.getPixel({ x: this.#reader.width - coordinate.x, y: this.#reader.height - coordinate.y });
+            case 3:
+                // {0, 0} -> { w, 0 }
+                // {h, 0} => { 0, 0 }
+                // {h, w} => { 0, h }
+                // {0, w} => { w, h }
+                return this.#reader.getPixel({ x: this.#reader.width - coordinate.y, y: coordinate.x });
+        }
+    }
+
+    /**
+     * @return {Promise<ChocoWinAbstractPixelReader>}
+     */
+    isReady() {
+        return this.#reader.isReady();
+    }
+}
+
+/**
+ * @typedef {String} ReflectionTypes
+ **/
+
+/**
+ * @enum {ReflectionTypes}
+ */
+export const ChocoWinReflectionTypes = Object.freeze({
+    HORIZONTAL: "HORIZONTAL",
+    VERTICAL: "VERTICAL",
+    ASCENDING: "ASCENDING",
+    DESCENDING: "DESCENDING",
+    POINT: "POINT",
+})
+
+/**
+ * Reflects.
+ */
+export class ChocoWinReflectionPixelReader extends ChocoWinAbstractPixelReader {
+    /** @param {ChocoWinAbstractPixelReader} */ #reader;
+    /** @param {ReflectionTypes} */ #reflectionType;
+
+    /**
+     * @param {ChocoWinAbstractPixelReader} reader
+     * @param {Object} reflections
+     * @param {ReflectionTypes} reflectionType
+     */
+    constructor(reader, reflectionType) {
+        super();
+        this.#reader = reader;
+        this.#reflectionType = reflectionType;
+    }
+
+    /**
+     * @return {Number}
+     */
+    get width() {
+        return this.#reader.width;
+    }
+
+    /**
+     * @return {Number}
+     */
+    get height() {
+        return this.#reader.height;
+    }
+
+    /**
+     * @param {ChocoWinCoordinates} coordinate
+     * @return {ChocoWinColor}
+     */
+    getPixel(coordinate) {
+        let x = coordinate.x;
+        let y = coordinate.y;
+
+        // Ascending
+        // (0, 0) => (w, h)
+        // (h, 0) => (w, 0)
+        // (h, w) => (0, 0)
+        // (0, w) => (0, h)
+
+        switch (this.#reflectionType) {
+            case ChocoWinReflectionTypes.HORIZONTAL: case ChocoWinReflectionTypes.POINT: {
+                x = this.#reader.width - coordinate.x;
+                break;
+            }
+            case ChocoWinReflectionTypes.ASCENDING:
+                x = this.#reader.width - coordinate.y;
+                break;
+            case ChocoWinReflectionTypes.DESCENDING:
+                x = coordinate.y;
+                break;
+        }
+
+        switch (this.#reflectionType) {
+            case ChocoWinReflectionTypes.VERTICAL: case ChocoWinReflectionTypes.POINT: {
+                y = this.#reader.height - coordinate.y;
+                break;
+            }
+            case ChocoWinReflectionTypes.ASCENDING:
+                y = this.#reader.height - coordinate.x;
+                break;
+            case ChocoWinReflectionTypes.DESCENDING:
+                y = coordinate.x;
+                break;
+        }
+
+        return this.#reader.getPixel({ x, y });
+    }
+
+    /**
+     * @return {Promise<ChocoWinAbstractPixelReader>}
+     */
+    isReady() {
+        return this.#reader.isReady();
+    }
+}
+
+/**
+ * @param {String} dataUrl 
+ * @returns {Blob}
+*/
+export function pngBase64DataUrlToBlob(dataUrl) {
+    // This is permissive of weird URLs, but this application isn't a spaceship so good enough is good enough!
+    // Example: data:image/png;base64,iVBORw0KGg
+    const [protocol, mimeType, encoding, dataUrlEncodedBase64] = dataUrl.split(/[:,;]/);
+    if (!dataUrlEncodedBase64 || encoding != "base64" || mimeType != "image/png" || protocol != "data") {
+        console.warn(`Got unexpected data url (truncated): ${dataUrlEncodedBase64?.substring(0, 30)}:`);
+        return null;
+    }
+
+    // See https://stackoverflow.com/a/16245768/1102726
+    const sliceSize = 512;
+    const byteCharacters = atob(dataUrlEncodedBase64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+
+    const blob = new Blob(byteArrays, { type: "image/png;base64" });
+    return blob;
+};

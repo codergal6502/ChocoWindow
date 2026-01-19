@@ -1,5 +1,4 @@
-import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
-import { ChocoWinColor, ChocoWinSettings, ChocoWinTileSet } from './ChocoWindow.js';
+import { ChocoWinColor, ChocoWinSettings, ChocoWinTileSet, pngBase64DataUrlToBlob } from './ChocoWindow.js';
 
 /**
  * Provides 
@@ -45,43 +44,9 @@ class ChocoStudioTileSheetBlobUrlManager {
             URL.revokeObjectURL(oldBlobUrl);
         }
 
-        const blob = ChocoStudioTileSheetBlobUrlManager.#pngBase64DataUrlToBlob(dataUrl);
+        const blob = pngBase64DataUrlToBlob(dataUrl);
         const newBlobUrl = URL.createObjectURL(blob);
         this.#map.set(tileSheetId, newBlobUrl);
-    }
-
-    /**
-     * @param {String} dataUrl 
-     * @returns {Blob}
-     */
-    static #pngBase64DataUrlToBlob(dataUrl) {
-        // This is permissive of weird URLs, but this application isn't a spaceship so good enough is good enough!
-        // Example: data:image/png;base64,iVBORw0KGg
-        const [protocol, mimeType, encoding, dataUrlEncodedBase64] = dataUrl.split(/[:,;]/);
-        if (!dataUrlEncodedBase64 || encoding != "base64" || mimeType != "image/png" || protocol != "data") {
-            console.warn(`Got unexpected data url (truncated): ${dataUrlEncodedBase64?.substring(0, 30)}:`);
-            return null;
-        }
-
-        // See https://stackoverflow.com/a/16245768/1102726
-        const sliceSize = 512;
-        const byteCharacters = atob(dataUrlEncodedBase64);
-        const byteArrays = [];
-
-        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-            const slice = byteCharacters.slice(offset, offset + sliceSize);
-
-            const byteNumbers = new Array(slice.length);
-            for (let i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
-
-            const byteArray = new Uint8Array(byteNumbers);
-            byteArrays.push(byteArray);
-        }
-
-        const blob = new Blob(byteArrays, { type: "image/png;base64" });
-        return blob;
     }
 }
 
@@ -242,7 +207,7 @@ class ChocoStudioTileSetDefinition {
                     row => !row ? { x: 0, y: 0 } : ({ "x": row[0].x, "y": row[0].y })
                 ),
             },
-            "patternRows":
+            "centerRows":
                 new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].width)).fill().map((_, rowIdx) =>
                     this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions[rowIdx] ?
                         new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height)).fill().map((_, colIdx) =>
@@ -391,6 +356,25 @@ class ChocoStudioWorkspace {
             this.windows = arg1.windows.map((w) => new ChocoStudioWindow(w));
             this.variables = arg1.variables.map((v) => new ChocoStudioVariable(v));
         }
+    }
+}
+
+
+// Not exported intentionally
+class FileUpgrader {
+    doUpgrade(parsedJson) {
+        return new ChocoStudioWorkspace(this.#doUpgrade__1_0_1(parsedJson));
+    }
+
+    #doUpgrade__1_0_1(parsedJson) {
+        if (!parsedJson.version) {
+            parsedJson = this.#doUpgrade__1_0_0(parsedJson);
+        }
+    }
+
+    #doUpgrade__1_0_0(parsedJson) {
+        parsedJson.version = "1.0.0";
+        return parsedJson;
     }
 }
 

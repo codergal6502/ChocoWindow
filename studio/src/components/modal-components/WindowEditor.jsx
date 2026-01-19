@@ -3,6 +3,7 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindow } from "../../ChocoStudio"
 import { ChocoWinWindow } from "../../ChocoWindow";
 import PresetEditor from "./PresetEditor";
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../../ChocoWinPngJsReaderWriter";
 
 /**
  * @param {Object} props
@@ -15,6 +16,7 @@ import PresetEditor from "./PresetEditor";
  * @param {function():void} props.onReturnToEditor
  */
 const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindowChange, onWindowDelete, onReturnToEditor }) => {
+    const readerFactory = new ChocoWinPngJsPixelReaderFactory();
     const imageRef = useRef(null);
 
     const [name, setName] = useState(window.name)
@@ -100,23 +102,32 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
         let tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
         if (!tileSheet) { return; }
 
-        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), preset.tileScale, 0, 0, 450, 180, preset.substituteColors);
+        const tileSet = tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl);
+
+        let chocoWin = new ChocoWinWindow({
+            x: 0,
+            y: 0,
+            w: geometryW,
+            h: geometryH,
+            tileScale: preset.tileScale,
+            winTileSet: tileSet,
+            readerFactory: readerFactory,
+            colorSubstitutions: preset.substituteColors,
+        });
 
         chocoWin.isReady().then(() => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 450;
-            canvas.height = 180;
-            canvas.style.imageRendering = "pixelated";
+            if (!imageRef?.current) {
+                console.warn("imageRef.current falsy after it was truthy");
+                return;
+            }
 
-            const /** @type {CanvasRenderingContext2D} */ ctx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb", colorType: "unorm8", });
-            ctx.imageSmoothingEnabled = false;
+            const writer = new ChocoWinPngJsPixelWriter(geometryW, geometryH);
+            chocoWin.drawTo(writer);
 
-            chocoWin.drawTo(ctx);
-
-            let dataUrl = canvas.toDataURL("image/png", 1);
+            let dataUrl = writer.makeDataUrl();
             imageRef.current.src = dataUrl;
         });
-    }, [presetId, imageRef])
+    }, [presetId, imageRef, geometryW, geometryH])
 
     const doDeleteWindowOnClick = () => {
         if (onWindowDelete && typeof onWindowDelete == 'function') {
@@ -167,7 +178,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
         </div>
 
         {(!presetId) && <PresetEditor isSubordinate={true} preset={window.singularPreset || new ChocoStudioPreset()} tileSheets={tileSheets} tileSetDefinitions={tileSetDefinitions} onPresetChange={onSingularPresetChange} />}
-        {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={imageRef} /></div></>}
+        {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img className="max-w-full" alt="Window Preview" src={null} ref={imageRef} /></div></>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">

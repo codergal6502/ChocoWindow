@@ -2,8 +2,9 @@ import './GraphicalEditor.css'
 
 import { useRef, useEffect } from 'react';
 
-import { ChocoStudioLayout, ChocoStudioWorkspace } from '../ChocoStudio';
-import { ChocoWinWindow } from '../ChocoWindow';
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../ChocoWinPngJsReaderWriter';
+import { ChocoWinTileSet, ChocoWinWindow } from '../ChocoWindow';
+import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from '../ChocoStudio';
 
 import interact from 'interactjs';
 
@@ -15,6 +16,7 @@ import interact from 'interactjs';
  * @returns 
  */
 const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs, lastResizeTimestamp }) => {
+    const readerFactory = new ChocoWinPngJsPixelReaderFactory()
     const graphicalEditorDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
@@ -187,6 +189,56 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
         document.addEventListener("keydown", keydownListener);
 
+        /**
+         * @param {Object} args
+         * @param {ChocoStudioPreset} args.preset
+         * @param {ChocoStudioWindow} args.studioWindow
+         * @param {ChocoWinTileSet} args.tileSet
+         * @param {String} args.chocoWindowDivId
+         * @return {Promise<void>} Called once the created window is rendered into the HTML.
+         */
+        const drawSingleWindow = ({ preset, studioWindow, tileSet, chocoWindowDivId }) => {
+            const renderWindow = new ChocoWinWindow({
+                colorSubstitutions: preset.substituteColors,
+                readerFactory: readerFactory,
+                w: studioWindow.w,
+                h: studioWindow.h,
+                x: studioWindow.x,
+                y: studioWindow.y,
+                tileScale: preset.tileScale,
+                winTileSet: tileSet
+            });
+
+            return new Promise(resolve => {
+                renderWindow.isReady().then(() => {
+                    // also rename window to ChocoWindowRenderer, since it's not a window
+                    // const canvas = document.createElement("canvas");
+                    // const ctx = canvas.getContext("2d", { willReadFrequently: true });
+                    // canvas.width = studioWindow.w;
+                    // canvas.height = studioWindow.h;
+                    const writer = new ChocoWinPngJsPixelWriter(studioWindow.w, studioWindow.h);
+
+                    const styleSheet = styleRef.current.sheet;
+                    renderWindow.drawTo(writer);
+                    const imageData = writer.makeDataUrl();
+
+                    const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
+
+                    /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
+                    const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
+
+                    if (oldRuleInx >= 0) {
+                        styleSheet.deleteRule(oldRuleInx);
+                    }
+
+                    styleSheet.insertRule(newRule);
+
+                    resolve();
+                })
+            })
+        };
+
+
         const makeDraggable = (selector) => {
             interact(selector)
                 .draggable({
@@ -276,8 +328,6 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                             targetElement.setAttribute("data-drag-delta-y", 0);
                         },
                         move: function (e) {
-                            let /** @type {String} */ debugMessage;
-
                             const /** @type {HTMLElement} */ graphicalEditorDiv = document.getElementById("graphical-editor-div");
                             const editorDivOffsetX = Number(graphicalEditorDiv.getAttribute("data-editor-div-offset-x"));
                             const editorDivOffsetY = Number(graphicalEditorDiv.getAttribute("data-editor-div-offset-y"));
@@ -347,33 +397,51 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                             const tileSheet = workspace.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
                             if (!tileSheet) return;
 
-                            const tileSetDefinition = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
-                            if (!tileSetDefinition) return;
+                            const tileSet = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
+                            if (!tileSet) return;
 
-                            const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
-                            renderWindow.isReady().then(() => {
-                                // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
-                                // that way, the logic for drawing into the divs can be isoalted and reused
-                                // also rename window to ChocoWindowRenderer, since it's not a window
-                                const canvas = document.createElement("canvas");
-                                const ctx = canvas.getContext("2d", { willReadFrequently: true });
-                                canvas.width = studioWindow.w;
-                                canvas.height = studioWindow.h;
-
-                                const styleSheet = styleRef.current.sheet;
-                                renderWindow.drawTo(ctx);
-                                const imageData = canvas.toDataURL();
-                                const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
-
-                                    /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
-                                const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
-
-                                if (oldRuleInx >= 0) {
-                                    styleSheet.deleteRule(oldRuleInx);
-                                }
-
-                                styleSheet.insertRule(newRule);
+                            drawSingleWindow({
+                                chocoWindowDivId: chocoWindowDivId,
+                                preset: preset,
+                                studioWindow: studioWindow,
+                                tileSet: tileSet,
                             });
+
+                            // // this will cause an error! Wheeeee! So this now takes a reader factory. there's probably more optimization that can be done, but here's where at least that change needs to happen
+                            // // const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
+                            // const renderWindow = new ChocoWinWindow({
+                            //     colorSubstitutions: preset.colorSubstitutions,
+                            //     readerFactory: readerFactory,
+                            //     w: studioWindow.w,
+                            //     h: studioWindow.h,
+                            //     x: studioWindow.x,
+                            //     y: studioWindow.y,
+                            //     tileScale: preset.tileScale,
+                            //     winTileSet: tileSet
+                            // });
+                            // renderWindow.isReady().then(() => {
+                            //     // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
+                            //     // that way, the logic for drawing into the divs can be isoalted and reused
+                            //     // also rename window to ChocoWindowRenderer, since it's not a window
+                            //     const canvas = document.createElement("canvas");
+                            //     const ctx = canvas.getContext("2d", { willReadFrequently: true });
+                            //     canvas.width = studioWindow.w;
+                            //     canvas.height = studioWindow.h;
+
+                            //     const styleSheet = styleRef.current.sheet;
+                            //     renderWindow.drawTo(ctx);
+                            //     const imageData = canvas.toDataURL();
+                            //     const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
+
+                            //         /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
+                            //     const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
+
+                            //     if (oldRuleInx >= 0) {
+                            //         styleSheet.deleteRule(oldRuleInx);
+                            //     }
+
+                            //     styleSheet.insertRule(newRule);
+                            // });
                         },
                     }
                 })
@@ -455,31 +523,40 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                         const tileSheet = ws.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
                         if (!tileSheet) return;
 
-                        const tileSetDefinition = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
-                        if (!tileSetDefinition) return;
+                        const tileSet = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
+                        if (!tileSet) return;
 
-                        const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
-                        renderWindow.isReady().then(() => {
-                            // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
-                            // that way, the logic for drawing into the divs can be isoalted and reused
-                            // also rename window to ChocoWindowRenderer, since it's not a window
-
-                            const styleSheet = styleRef.current.sheet;
-                            renderWindow.drawTo(ctx);
-                            const imageData = canvas.toDataURL();
-                            const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
-
-                                /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
-                            const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
-
-                            if (oldRuleInx >= 0) {
-                                styleSheet.deleteRule(oldRuleInx);
-                            }
-
-                            styleSheet.insertRule(newRule);
-
+                        drawSingleWindow({
+                            chocoWindowDivId: chocoWindowDivId,
+                            preset: preset,
+                            studioWindow: studioWindow,
+                            tileSet: tileSet,
+                        }).then(() => {
                             makeDraggable(boundingBoxDiv);
                         });
+
+                        // const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
+                        // renderWindow.isReady().then(() => {
+                        //     // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
+                        //     // that way, the logic for drawing into the divs can be isoalted and reused
+                        //     // also rename window to ChocoWindowRenderer, since it's not a window
+
+                        //     const styleSheet = styleRef.current.sheet;
+                        //     renderWindow.drawTo(ctx);
+                        //     const imageData = canvas.toDataURL();
+                        //     const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
+
+                        //         /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
+                        //     const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
+
+                        //     if (oldRuleInx >= 0) {
+                        //         styleSheet.deleteRule(oldRuleInx);
+                        //     }
+
+                        //     styleSheet.insertRule(newRule);
+
+                        //     makeDraggable(boundingBoxDiv);
+                        // });
                     }
                 })
             }

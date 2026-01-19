@@ -7,6 +7,7 @@ import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRe
 import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 import { PNG } from 'pngjs/browser'
 import { TileSheetBlobUrlDictionary } from '../SettingsModal';
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../../ChocoWinPngJsReaderWriter';
 
 // Tiles in the sheet tile selection.
 const TILES_IN_PTS = 3;
@@ -30,7 +31,8 @@ const MAX_COLOR_COUNT = ChocoWinSettings.suggestedMaximumTileSheetColorCount;
 const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete, onReturnToEditor, lastResizeTimestamp }) => {
     const hasChangeHandler = onTileSetDefinitionChange && typeof onTileSetDefinitionChange == "function";
     const hasDeleteHandler = onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == "function";
-    
+    const readerFactory = new ChocoWinPngJsPixelReaderFactory();
+
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //            STATE, REFERENCE OBJECTS, AND UTILITY METHODS             //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -70,23 +72,25 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         if (!tileSheet) return;
         const tileSet = newTileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl);
 
-        let chocoWin = new ChocoWinWindow(tileSet, previewTileScale, 0, 0, 450, 180);
+        let chocoWin = new ChocoWinWindow({
+            x: 0,
+            y: 0,
+            w: 450,
+            h: 180,
+            tileScale: previewTileScale,
+            winTileSet: tileSet,
+            readerFactory: readerFactory
+        });
         chocoWin.isReady().then(() => {
             if (!previewRef?.current) {
                 console.warn("previewRef.current falsy after it was truthy");
                 return;
             }
-            const canvas = document.createElement("canvas");
-            canvas.width = 450;
-            canvas.height = 180;
-            canvas.style.imageRendering = "pixelated";
 
-            const /** @type {CanvasRenderingContext2D} */ ctx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb", colorType: "unorm8", });
-            ctx.imageSmoothingEnabled = false;
+            const writer = new ChocoWinPngJsPixelWriter(450, 180);
+            chocoWin.drawTo(writer);
 
-            chocoWin.drawTo(ctx);
-
-            let dataUrl = canvas.toDataURL("image/png", 1);
+            let dataUrl = writer.makeDataUrl();
             previewRef.current.src = dataUrl;
         });
     }
@@ -306,7 +310,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             x: preciseTileSelectionScale * (tileSize - naturalX),
             y: preciseTileSelectionScale * (tileSize - naturalY),
         };
-        
+
         setSelectedTileLocation({ x: naturalX, y: naturalY });
         setPreciseSelectionBackgroundPosition(preciseTilePosition);
     }
@@ -410,7 +414,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     useEffect(() => {
-        
+
     })
 
     const onWholeTileSheetMouseEnter = () => {

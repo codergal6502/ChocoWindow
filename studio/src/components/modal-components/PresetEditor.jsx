@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../ChocoStudio"
 import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../../ChocoWinPngJsReaderWriter";
 
 /**
  * @param {Object} props
@@ -14,6 +15,7 @@ import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
  * @param {function():void} props.onReturnToEditor
  */
 const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefinitions, onPresetChange, onPresetDelete, onReturnToEditor }) => {
+    const readerFactory = new ChocoWinPngJsPixelReaderFactory();
     const imageRef = useRef(null);
 
     const [name, setName] = useState(preset.name);
@@ -52,20 +54,27 @@ const PresetEditor = ({ isSubordinate = false, preset, tileSheets, tileSetDefini
         const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
         if (!tileSheet) { return; }
 
-        let chocoWin = new ChocoWinWindow(tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl), tileScale || 1, 0, 0, 450, 180, substituteColors);
+        let chocoWin = new ChocoWinWindow({
+            x: 0,
+            y: 0,
+            w: 450,
+            h: 180,
+            tileScale: tileScale ?? 1,
+            winTileSet: tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
+            readerFactory: readerFactory,
+            colorSubstitutions: substituteColors,
+        });
 
         chocoWin.isReady().then(() => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 450;
-            canvas.height = 180;
-            canvas.style.imageRendering = "pixelated";
+            if (!imageRef?.current) {
+                console.warn("imageRef.current falsy after it was truthy");
+                return;
+            }
 
-            const /** @type {CanvasRenderingContext2D} */ ctx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb", colorType: "unorm8", });
-            ctx.imageSmoothingEnabled = false;
+            const writer = new ChocoWinPngJsPixelWriter(450, 180);
+            chocoWin.drawTo(writer);
 
-            chocoWin.drawTo(ctx);
-
-            let dataUrl = canvas.toDataURL("image/png", 1);
+            let dataUrl = writer.makeDataUrl();
             imageRef.current.src = dataUrl;
         });
     }, [preset, tileScale, tileSetDefinition, substituteColors, imageRef])
