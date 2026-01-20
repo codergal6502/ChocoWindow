@@ -576,7 +576,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
     return (
         <div id='graphical-editor-div' ref={graphicalEditorDivRef}>
-            <style ref={styleRef}></style>
+            <style id="graphical-editor-style" ref={styleRef}></style>
         </div>
     );
 };

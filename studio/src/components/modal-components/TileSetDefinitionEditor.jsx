@@ -8,6 +8,7 @@ import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 import { PNG } from 'pngjs/browser'
 import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../../ChocoWinPngJsReaderWriter';
+import { TransformationImages, TileTransformationTypes } from '../../TransformationImages';
 
 // Tiles in the sheet tile selection.
 const TILES_IN_PTS = 3;
@@ -38,6 +39,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
+    const transformationImages = useContext(TransformationImages);
 
     /**
      * @overload
@@ -112,6 +114,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const preciseSelectionZoomedRef = useRef(null);
     const preciseSelectionGridRef = useRef(null);
     const tileAssignmentContainerRef = useRef(null);
+    const styleRef = useRef(null);
 
     const [selectedTileLocation, setSelectedTileLocation] = useState(null);
     const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
@@ -120,6 +123,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [preciseTileSelectionScale, setPreciseTileSelectionScale] = useState(DEFAULT_PTS_SCALE);
     const [preciseTileSelectionSize, setPreciseTileSelectionSize] = useState(tileSetDefinition.tileSize * TILES_IN_PTS * DEFAULT_PTS_SCALE ?? 72);
     const [tileAssignmentTileSize, setTileAssignmentTileSize] = useState(tileSetDefinition.tileSize * DEFAULT_TA_SCALE ?? 24);
+    const [preciseTileSelectionTransformationImages, setPreciseTileSelectionTransformationImages] = useState([]);
 
     // workflow state and reference objects
     const [windowRegionIdentifier, setWindowRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
@@ -251,6 +255,32 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             preciseSelectionGridRef.current.style.backgroundImage = `url(${imageSrc})`;
         }
     }, [showLowerUi, preciseSelectionGridRef, preciseTileSelectionScale, preciseTileSelectionSize, lastResizeTimestamp])
+
+    const transformationNameLabels = {
+        [TileTransformationTypes.BASE]: "No Transformation",
+        [TileTransformationTypes.ROTATE_90]: "Rotate 90º",
+        [TileTransformationTypes.ROTATE_180]: "Rotate 180º",
+        [TileTransformationTypes.ROTATE_270]: "Rotate 270º",
+        [TileTransformationTypes.REFLECT_HORIZONTAL]: "Horizontal",
+        [TileTransformationTypes.REFLECT_VERTICAL]: "Vertical",
+        [TileTransformationTypes.REFLECT_ASCENDING]: "Ascending Diag.",
+        [TileTransformationTypes.REFLECT_DESCENDING]: "Descending Diag.",
+    }
+
+    // precise tile image button styles
+    useEffect(() => {
+        if (transformationImages && styleRef && styleRef.current) {
+            transformationImages.isReady().then(tiArray => {
+                const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
+                tiArray.forEach(ti => {
+                    const isDarkPart = ti.isDark ? "dark-" : "light-";
+                    const newRule = `.${isDarkPart}${ti.transformationName} { background-image: url(${ti.url}); background-size: 100%; width: 48px; height: 48px; display: block; }`;
+                    styleSheet.insertRule(newRule);
+                })
+                setPreciseTileSelectionTransformationImages(tiArray);
+            })
+        }
+    }, [transformationImages, styleRef])
 
     // set up the tile assignment grid
     useEffect(() => {
@@ -562,6 +592,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     }
 
     return <>
+        <style ref={styleRef}></style>
         <h2 className="text-2xl font-bold sticky top-0 mb-2 bg-white dark:bg-gray-600">Tile Set Definition <span className="text-sm">({tileSetDefinition.id})</span></h2>
         <p className="mb-2 mx-6 text-sm italic">A tile set definition identifies locations in the sprite sheet for a window's corner tiles, repeating edge tiles, and repeating center tiles.</p>
 
@@ -664,6 +695,17 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                             <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
                             <input placeholder="x" type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={selectedTileLocation?.y ?? 0} />
                         </div>
+                    </div>
+
+                    <h4 className="my-3 font-bold">Tile Transformation</h4>
+                    <div className="grid grid-cols-2">
+                        {Object.values(TileTransformationTypes).map((transformationName, idx) =>
+                            <label className="flex items-center">
+                                <input type="radio" name="options" className="" key={idx} value={transformationName} />
+                                <span className={`light-${transformationName} dark:dark-${transformationName}`} />
+                                <span>{transformationNameLabels[transformationName]}</span>
+                            </label>
+                        )}
                     </div>
                 </div>
 

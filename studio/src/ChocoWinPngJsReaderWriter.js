@@ -90,6 +90,7 @@ export class ChocoWinPngJsPixelWriter extends ChocoWinAbstractPixelWriter {
     makeBlob() {
         const buffer = PNG.sync.write(this.#png);
         const blob = new Blob([buffer], { type: 'image/png' });
+        return blob;
     }
 
     /**

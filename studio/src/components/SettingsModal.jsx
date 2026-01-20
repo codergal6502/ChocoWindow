@@ -1,4 +1,4 @@
-import { createContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-svg-icons";
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
@@ -10,6 +10,7 @@ import WindowEditor from "./modal-components/WindowEditor.jsx";
 import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 import downloadZip from "../ZipDownloader.jsx";
 import { ChocoWinSettings } from "../ChocoWindow.js";
+import { TransformationImages } from "../TransformationImages.js";
 
 export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheetBlobUrlManager())
 
@@ -576,7 +577,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                             );
                                         case FormStates.TILE_SET_DEFINITION:
                                             return (!activeTileSetDefinition) ? "" : (
-                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToEditor={() => onReturnToEditor(workspace)} lastResizeTimestamp={lastResizeTimestamp}  />
+                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToEditor={() => onReturnToEditor(workspace)} lastResizeTimestamp={lastResizeTimestamp} />
                                             );
                                         case FormStates.PRESET:
                                             return (!activePreset) ? "" : (

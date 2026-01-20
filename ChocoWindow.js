@@ -465,6 +465,19 @@ export class ChocoWinAbstractPixelWriter {
     makeBlob() {
         throw new Error("cannot call methods on abstract class");
     }
+
+    /**
+     * 
+     * @param {ChocoWinAbstractPixelReader} reader 
+     */
+    writeAll(reader) {
+        for (let x = 0; x < reader.width; x++) {
+            for (let y = 0; y < reader.height; y++) {
+                const pixel = reader.getPixel({ x, y });
+                this.writePixel({ x, y }, pixel);
+            }
+        }
+    }
 }
 
 export class ChocoWinAbstractPixelReaderFactory {
@@ -479,8 +492,35 @@ export class ChocoWinAbstractPixelReaderFactory {
     }
 }
 
-export class ChocoWinRegionPixelReader extends ChocoWinAbstractPixelReader {
-    /** @param {ChocoWinAbstractPixelReader} */ #reader;
+class ChocoWinAbstractTransformationPixelReader extends ChocoWinAbstractPixelReader {
+    /** @param {ChocoWinAbstractPixelReader} */ _reader;
+    /** @type {Promise<ChocoWinAbstractPixelReader} */ _isReadyWrapper;
+
+    /**
+     * @param {ChocoWinAbstractPixelReader} reader
+     * @param {ChocoWinRectangle} region
+     */
+    constructor(reader) {
+        super();
+        this._reader = reader;
+
+        this._isReadyWrapper = new Promise(resolve => {
+            this._reader.isReady().then(r => {
+                if (r != this._reader) {
+                    console.warn("Wrapped reader fulfilled its promise with a different reader");
+                }
+
+                resolve(this);
+            })
+        });
+    }
+
+    isReady() {
+        return this._isReadyWrapper;
+    }
+}
+
+export class ChocoWinRegionPixelReader extends ChocoWinAbstractTransformationPixelReader {
     /** @param {ChocoWinRectangle} */ #region;
 
     /**
@@ -488,8 +528,8 @@ export class ChocoWinRegionPixelReader extends ChocoWinAbstractPixelReader {
      * @param {ChocoWinRectangle} region
      */
     constructor(reader, region) {
-        super();
-        this.#reader = reader;
+        super(reader);
+        this._reader = reader;
         this.#region = region;
     }
 
@@ -512,22 +552,14 @@ export class ChocoWinRegionPixelReader extends ChocoWinAbstractPixelReader {
      * @return {ChocoWinColor}
      */
     getPixel(coordinate) {
-        return this.#reader.getPixel({ x: this.#region.x + coordinate.x, y: this.#region.y + coordinate.y });
-    }
-
-    /**
-     * @return {Promise<ChocoWinAbstractPixelReader>}
-     */
-    isReady() {
-        return this.#reader.isReady();
+        return this._reader.getPixel({ x: this.#region.x + coordinate.x, y: this.#region.y + coordinate.y });
     }
 }
 
 /**
  * Rotates in 90º increments.
  */
-export class ChocoWinRotatePixelReader extends ChocoWinAbstractPixelReader {
-    /** @param {ChocoWinAbstractPixelReader} */ #reader;
+export class ChocoWinRotatePixelReader extends ChocoWinAbstractTransformationPixelReader {
     /** @param {Number} */ #rotationCount;
 
     /**
@@ -535,8 +567,8 @@ export class ChocoWinRotatePixelReader extends ChocoWinAbstractPixelReader {
      * @param {Number} rotationCount
      */
     constructor(reader, rotationCount) {
-        super();
-        this.#reader = reader;
+        super(reader);
+        this._reader = reader;
         this.#rotationCount = Math.round(rotationCount ?? 0) % 4;
     }
 
@@ -545,8 +577,8 @@ export class ChocoWinRotatePixelReader extends ChocoWinAbstractPixelReader {
      */
     get width() {
         switch (this.#rotationCount) {
-            case 0: case 2: default: return this.#reader.width;
-            case 1: case 3: return this.#reader.height;
+            case 0: case 2: default: return this._reader.width;
+            case 1: case 3: return this._reader.height;
         }
     }
 
@@ -555,8 +587,8 @@ export class ChocoWinRotatePixelReader extends ChocoWinAbstractPixelReader {
      */
     get height() {
         switch (this.#rotationCount) {
-            case 0: case 2: default: return this.#reader.height;
-            case 1: case 3: return this.#reader.width;
+            case 0: case 2: default: return this._reader.height;
+            case 1: case 3: return this._reader.width;
         }
     }
 
@@ -567,29 +599,22 @@ export class ChocoWinRotatePixelReader extends ChocoWinAbstractPixelReader {
     getPixel(coordinate) {
         switch (this.#rotationCount) {
             case 0: default:
-                return this.#reader.getPixel(coordinate);
+                return this._reader.getPixel(coordinate);
             case 1:
                 // {0, 0} -> { 0, h }
                 // {h, 0} => { 0, 0 }
                 // {h, w} => { w, 0 }
                 // {0, w} => { w, h }
-                return this.#reader.getPixel({ x: coordinate.y, y: this.#reader.height - coordinate.x });
+                return this._reader.getPixel({ x: coordinate.y, y: this._reader.height - 1 - coordinate.x});
             case 2:
-                return this.#reader.getPixel({ x: this.#reader.width - coordinate.x, y: this.#reader.height - coordinate.y });
+                return this._reader.getPixel({ x: this._reader.width - 1 - coordinate.x, y: this._reader.height - 1 - coordinate.y });
             case 3:
                 // {0, 0} -> { w, 0 }
                 // {h, 0} => { 0, 0 }
                 // {h, w} => { 0, h }
                 // {0, w} => { w, h }
-                return this.#reader.getPixel({ x: this.#reader.width - coordinate.y, y: coordinate.x });
+                return this._reader.getPixel({ x: this._reader.width - 1 - coordinate.y, y: coordinate.x });
         }
-    }
-
-    /**
-     * @return {Promise<ChocoWinAbstractPixelReader>}
-     */
-    isReady() {
-        return this.#reader.isReady();
     }
 }
 
@@ -611,8 +636,7 @@ export const ChocoWinReflectionTypes = Object.freeze({
 /**
  * Reflects.
  */
-export class ChocoWinReflectionPixelReader extends ChocoWinAbstractPixelReader {
-    /** @param {ChocoWinAbstractPixelReader} */ #reader;
+export class ChocoWinReflectionPixelReader extends ChocoWinAbstractTransformationPixelReader {
     /** @param {ReflectionTypes} */ #reflectionType;
 
     /**
@@ -621,23 +645,24 @@ export class ChocoWinReflectionPixelReader extends ChocoWinAbstractPixelReader {
      * @param {ReflectionTypes} reflectionType
      */
     constructor(reader, reflectionType) {
-        super();
-        this.#reader = reader;
+        super(reader);
+        this._reader = reader;
         this.#reflectionType = reflectionType;
+
     }
 
     /**
      * @return {Number}
      */
     get width() {
-        return this.#reader.width;
+        return this._reader.width;
     }
 
     /**
      * @return {Number}
      */
     get height() {
-        return this.#reader.height;
+        return this._reader.height;
     }
 
     /**
@@ -656,11 +681,11 @@ export class ChocoWinReflectionPixelReader extends ChocoWinAbstractPixelReader {
 
         switch (this.#reflectionType) {
             case ChocoWinReflectionTypes.HORIZONTAL: case ChocoWinReflectionTypes.POINT: {
-                x = this.#reader.width - coordinate.x;
+                x = this._reader.width - 1 - coordinate.x;
                 break;
             }
             case ChocoWinReflectionTypes.ASCENDING:
-                x = this.#reader.width - coordinate.y;
+                x = this._reader.width - 1 - coordinate.y;
                 break;
             case ChocoWinReflectionTypes.DESCENDING:
                 x = coordinate.y;
@@ -669,25 +694,18 @@ export class ChocoWinReflectionPixelReader extends ChocoWinAbstractPixelReader {
 
         switch (this.#reflectionType) {
             case ChocoWinReflectionTypes.VERTICAL: case ChocoWinReflectionTypes.POINT: {
-                y = this.#reader.height - coordinate.y;
+                y = this._reader.height - 1 - coordinate.y;
                 break;
             }
             case ChocoWinReflectionTypes.ASCENDING:
-                y = this.#reader.height - coordinate.x;
+                y = this._reader.height - 1 - coordinate.x;
                 break;
             case ChocoWinReflectionTypes.DESCENDING:
                 y = coordinate.x;
                 break;
         }
 
-        return this.#reader.getPixel({ x, y });
-    }
-
-    /**
-     * @return {Promise<ChocoWinAbstractPixelReader>}
-     */
-    isReady() {
-        return this.#reader.isReady();
+        return this._reader.getPixel({ x, y });
     }
 }
 
