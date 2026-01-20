@@ -1,7 +1,7 @@
 import { Canvas, Rect, Textbox } from "fabric";
 import { createContext } from "react";
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter, ChocoWinPngJSPixelWriterFactory } from "./ChocoWinPngJsReaderWriter";
-import { ChocoWinReflectionPixelReader, ChocoWinReflectionTypes, ChocoWinRotatePixelReader } from "./ChocoWindow";
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "./ChocoWinPngJsReaderWriter";
+import { ChocoWinReflectionPixelReader, ChocoWinReflectionTypes, ChocoWinRotatePixelReader, TileTransformationTypes } from "./ChocoWindow";
 
 // See https://stackoverflow.com/a/13983150 for info on the lifespan of URLs created with URL.toObjectUrl(blob)
 
@@ -17,24 +17,6 @@ export class TransformationImageSet {
         throw "abstract class"
     }
 }
-
-/**
- * @typedef {String} TransformationTypes
- */
-
-/**
- *  @enum {TransformationTypes} 
- */
-export const TileTransformationTypes = Object.freeze({
-    BASE: "base",
-    ROTATE_90: "rotate90",
-    ROTATE_180: "rotate180",
-    ROTATE_270: "rotate270",
-    REFLECT_HORIZONTAL: "reflectHorizontal",
-    REFLECT_VERTICAL: "reflectVertical",
-    REFLECT_ASCENDING: "reflectAscending",
-    REFLECT_DESCENDING: "reflectDescending",
-})
 
 class TransformationImageSetImpl extends TransformationImageSet {
     #size = 48;

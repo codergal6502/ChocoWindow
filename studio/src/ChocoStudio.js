@@ -106,7 +106,7 @@ class ChocoStudioWindowRegionDefinition {
             this.tileSheetPositions = arg1.tileSheetPositions.map((col) =>
                 // pos could be null if passed in from a not-yet-assignd value in the GUI.
                 // ?? will coalesce undefined but not zero. JavaScript is weird.
-                !col ? null : col.map((pos) => ({ x: pos?.x ?? null, y: pos?.y ?? null }))
+                !col ? null : col.map((pos) => ({ x: pos?.x ?? null, y: pos?.y ?? null, geometricTransformation: pos?.geometricTransformation }))
             )
         }
     }
@@ -170,50 +170,54 @@ class ChocoStudioTileSetDefinition {
             "corners": {
                 "TL": {
                     "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].y
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].y,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].geometricTransformation,
                 },
                 "TR": {
                     "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].y
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].y,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].geometricTransformation,
                 },
                 "BL": {
                     "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].y
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].y,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].geometricTransformation,
                 },
                 "BR": {
                     "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].y
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].y,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].geometricTransformation
                 }
             },
             "edges": {
                 "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions[0].filter(
                     (_, colIdx) => colIdx < this.regions[CHOCO_WINDOW_REGIONS.TOP].width
                 ).map(
-                    column => !column ? { x: 0, y: 0 } : { "x": column.x, "y": column.y }
+                    column => !column ? { x: 0, y: 0, "t": null } : { "x": column.x, "y": column.y, t: column.geometricTransformation }
                 ),
                 "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions[0].filter(
                     (_, colIdx) => colIdx < this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].width
                 ).map(
-                    column => !column ? { x: 0, y: 0 } : ({ "x": column.x, "y": column.y })
+                    column => !column ? { x: 0, y: 0, "t": null } : { "x": column.x, "y": column.y, t: column.geometricTransformation }
                 ),
                 "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions.filter(
                     (_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.LEFT].height
                 ).map(
-                    row => !row ? { x: 0, y: 0 } : ({ "x": row[0].x, "y": row[0].y })
+                    row => !row ? { x: 0, y: 0, "t": null } : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
                 ),
                 "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions.filter(
                     (_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.RIGHT].height
                 ).map(
-                    row => !row ? { x: 0, y: 0 } : ({ "x": row[0].x, "y": row[0].y })
+                    row => !row ? { x: 0, y: 0, "t": null } : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
                 ),
             },
             "centerRows":
                 new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].width)).fill().map((_, rowIdx) =>
                     this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions[rowIdx] ?
                         new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height)).fill().map((_, colIdx) =>
-                            this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions[rowIdx][colIdx] ?? { x: 0, y: 0 }
+                            this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions[rowIdx][colIdx] ?? { x: 0, y: 0, t: null }
                         ) :
-                        new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height)).fill().map(() => ({ x: 0, y: 0 }))
+                        new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height)).fill().map(() => ({ x: 0, y: 0, t: null }))
                 ),
             "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? []
         });

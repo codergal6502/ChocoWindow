@@ -220,7 +220,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
                     const styleSheet = styleRef.current.sheet;
                     renderWindow.drawTo(writer);
-                    const imageData = writer.makeDataUrl();
+                    const imageData = URL.createObjectURL(writer.makeBlob());// writer.makeDataUrl(); // temporary
 
                     const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
 

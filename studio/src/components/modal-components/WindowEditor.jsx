@@ -107,8 +107,8 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
         let chocoWin = new ChocoWinWindow({
             x: 0,
             y: 0,
-            w: geometryW,
-            h: geometryH,
+            w: 450,
+            h: 180,
             tileScale: preset.tileScale,
             winTileSet: tileSet,
             readerFactory: readerFactory,
@@ -121,11 +121,12 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
                 return;
             }
 
-            const writer = new ChocoWinPngJsPixelWriter(geometryW, geometryH);
+            const writer = new ChocoWinPngJsPixelWriter(450, 180);
             chocoWin.drawTo(writer);
 
-            let dataUrl = writer.makeDataUrl();
-            imageRef.current.src = dataUrl;
+            // let dataUrl = writer.makeDataUrl();
+            const blob = writer.makeBlob();
+            imageRef.current.src = URL.createObjectURL(blob); // temporary
         });
     }, [presetId, imageRef, geometryW, geometryH])
 

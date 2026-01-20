@@ -59,10 +59,12 @@ export class ChocoWinCoordinates {
         if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y)) {
             this.x = arg1.x;
             this.y = arg1.y;
+            this.t = arg1.t;
         }
         else {
-            /** @type {number} */ this.x = 0;
-            /** @type {number} */ this.y = 0;
+            /** @type {Number} */ this.x = 0;
+            /** @type {Number} */ this.y = 0;
+            /** @type {TileTransformationTypes} */ this.t = TileTransformationTypes.BASE;
         }
         this.id = arg1?.id ?? crypto.randomUUID();
     }
@@ -330,12 +332,47 @@ export class ChocoWinWindow {
             return id ?? String(this.#sillyMaxWidth / 2 * x + y);
         }
         const getTileReader = (/** @type {ChocoWinCoordinates} */ tilePos) => {
-            let reader = cachedTileReaders[xyToCacheKey(tilePos)];
+            let reader = cachedTileReaders.get(xyToCacheKey(tilePos));
             if (!reader) {
                 reader = new ChocoWinRegionPixelReader(this.#tileSheetReader, new ChocoWinRectangle({ x: tilePos.x, y: tilePos.y, width: tileSize, height: tileSize }));
 
+                switch(tilePos.t) {
+                    case TileTransformationTypes.BASE: default: {
+                        // don't modify reader
+                        break;
+                    }
+                    case TileTransformationTypes.REFLECT_HORIZONTAL: {
+                        reader = new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.HORIZONTAL);
+                        break;
+                    }
+                    case TileTransformationTypes.REFLECT_VERTICAL: {
+                        reader = new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.VERTICAL);
+                        break;
+                    }
+                    case TileTransformationTypes.REFLECT_ASCENDING: {
+                        reader = new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.ASCENDING);
+                        break;
+                    }
+                    case TileTransformationTypes.REFLECT_DESCENDING: {
+                        reader = new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.DESCENDING);
+                        break;
+                    }
+                    case TileTransformationTypes.ROTATE_90: {
+                        reader = new ChocoWinRotatePixelReader(reader, 1);
+                        break;
+                    }
+                    case TileTransformationTypes.ROTATE_180: {
+                        reader = new ChocoWinRotatePixelReader(reader, 2);
+                        break;
+                    }
+                    case TileTransformationTypes.ROTATE_270: {
+                        reader = new ChocoWinRotatePixelReader(reader, 3);
+                        break;
+                    }
+                }
+
                 // todo: when implementing transformations, iterate over and keep reassigning the reader.
-                cachedTileReaders[xyToCacheKey(tilePos)] = reader;
+                cachedTileReaders.set(xyToCacheKey(tilePos),reader);
             }
             return reader;
         }
@@ -742,3 +779,21 @@ export function pngBase64DataUrlToBlob(dataUrl) {
     const blob = new Blob(byteArrays, { type: "image/png;base64" });
     return blob;
 };
+
+/**
+ * @typedef {String} TransformationTypes
+ */
+
+/**
+ *  @enum {TransformationTypes} 
+ */
+export const TileTransformationTypes = Object.freeze({
+    BASE: "base",
+    ROTATE_90: "rotate90",
+    ROTATE_180: "rotate180",
+    ROTATE_270: "rotate270",
+    REFLECT_HORIZONTAL: "reflectHorizontal",
+    REFLECT_VERTICAL: "reflectVertical",
+    REFLECT_ASCENDING: "reflectAscending",
+    REFLECT_DESCENDING: "reflectDescending",
+})

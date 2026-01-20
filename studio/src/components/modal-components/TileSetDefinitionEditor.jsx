@@ -2,13 +2,13 @@ import './TileSetDefinitionEditor.css';
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWinColor, ChocoWinSettings, ChocoWinWindow } from "../../ChocoWindow";
+import { ChocoWinColor, ChocoWinSettings, ChocoWinWindow, TileTransformationTypes } from "../../ChocoWindow";
 import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
 import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 import { PNG } from 'pngjs/browser'
 import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../../ChocoWinPngJsReaderWriter';
-import { TransformationImages, TileTransformationTypes } from '../../TransformationImages';
+import { TransformationImages } from '../../TransformationImages';
 
 // Tiles in the sheet tile selection.
 const TILES_IN_PTS = 3;
@@ -124,6 +124,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [preciseTileSelectionSize, setPreciseTileSelectionSize] = useState(tileSetDefinition.tileSize * TILES_IN_PTS * DEFAULT_PTS_SCALE ?? 72);
     const [tileAssignmentTileSize, setTileAssignmentTileSize] = useState(tileSetDefinition.tileSize * DEFAULT_TA_SCALE ?? 24);
     const [preciseTileSelectionTransformationImages, setPreciseTileSelectionTransformationImages] = useState([]);
+
+    const [selectedTileTransformation, setSelectedTileTransformation] = useState(TileTransformationTypes.BASE);
 
     // workflow state and reference objects
     const [windowRegionIdentifier, setWindowRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
@@ -512,6 +514,14 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     }
 
     /**
+     * 
+     * @param {InputEvent} e 
+     */
+    const onSelectTileTransformationChange = (e) => {
+        setSelectedTileTransformation(e.target.value);
+    }
+
+    /**
      * @param {PointerEvent} e 
      * @param {Number} tileIndexX 
      * @param {Number} tileIndexY 
@@ -527,7 +537,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         if (!newRegions[windowRegionIdentifier].tileSheetPositions[tileIndexY]) {
             newRegions[windowRegionIdentifier].tileSheetPositions[tileIndexY] = []
         }
-        newRegions[windowRegionIdentifier].tileSheetPositions[tileIndexY][tileIndexX] = { x: selectedTileLocation?.x, y: selectedTileLocation?.y };
+        newRegions[windowRegionIdentifier].tileSheetPositions[tileIndexY][tileIndexX] = { x: selectedTileLocation?.x, y: selectedTileLocation?.y, geometricTransformation: selectedTileTransformation };
         setRegions(newRegions);
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
     }
@@ -701,7 +711,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                     <div className="grid grid-cols-2">
                         {Object.values(TileTransformationTypes).map((transformationName, idx) =>
                             <label className="flex items-center">
-                                <input type="radio" name="options" className="" key={idx} value={transformationName} />
+                                <input type="radio" name="tile-transformation" className="" key={idx} value={transformationName} checked={selectedTileTransformation == transformationName} onChange={onSelectTileTransformationChange} />
                                 <span className={`light-${transformationName} dark:dark-${transformationName}`} />
                                 <span>{transformationNameLabels[transformationName]}</span>
                             </label>
