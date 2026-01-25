@@ -9,6 +9,7 @@ import { PNG } from 'pngjs/browser'
 import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../../ChocoWinPngJsReaderWriter';
 import { TransformationImages } from '../../TransformationImages';
+import PreciseTileSelector from './tile-selector-components/precise-tile-selector';
 
 // Tiles in the sheet tile selection.
 const TILES_IN_PTS = 3;
@@ -41,6 +42,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
     const transformationImages = useContext(TransformationImages);
 
+    
     /**
      * @overload
      * @param {ChocoStudioTileSheet} tileSheet
@@ -101,6 +103,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     const [name, setName] = useState(tileSetDefinition.name);
+    const [selectedTileSheet, setSelectedTileSheet] = useState(null);
     const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
     const [tileSize, setTileSize] = useState(tileSetDefinition.tileSize);
     const [regions, setRegions] = useState(structuredClone(tileSetDefinition.regions));
@@ -394,6 +397,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      */
     const onTileSheetIdChange = (e) => {
         setTileSheetId(e.target.value);
+        setSelectedTileSheet(tileSheets.find(ts => ts.id == e.target.value));
         if (!showLowerUi) setShowLowerUi(true);
         doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.tileSheetId = e.target.value);
     };
@@ -604,7 +608,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     return <>
         <style ref={styleRef}></style>
         <h2 className="text-2xl font-bold sticky top-0 mb-2 bg-white dark:bg-gray-600">Tile Set Definition <span className="text-sm">({tileSetDefinition.id})</span></h2>
-        <p className="mb-2 mx-6 text-sm italic">A tile set definition identifies locations in the sprite sheet for a window's corner tiles, repeating edge tiles, and repeating center tiles.</p>
+        <p className="mb-2 mx-6 text-sm italic">A tile set definition identifies locations in the sprite sheet for a window's tiles.</p>
 
         <div className={`grid grid-cols-4 gap-4`}>
             <div className="mb-4 w-full">
@@ -625,6 +629,18 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         </div>
 
         {showLowerUi && <>
+            <PreciseTileSelector tileSetDefinition={tileSetDefinition} tileSheet={selectedTileSheet} tileSize={tileSize} defaultHelpVisible={true} />
+
+
+
+
+
+
+
+
+
+
+
             <h3 className="mb-1 font-bold text-xl">Window Regions</h3>
             <p className="mb-2 text-sm italic mx-6">There are nine window regions: four corners, four edges, and the center. Top and bottom edges will repeat horizontally. Left and right edges will repeat vertically. The center will repeat in both directions.</p>
             <div className={`grid grid-cols-10 gap-4`}>
