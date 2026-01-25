@@ -1,19 +1,18 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { use, useContext, useEffect, useRef, useState } from "react";
 import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from "../../SettingsModal";
 import { Canvas, Polyline, Rect } from "fabric";
 
 /**
- * 
- * @param {Object} props 
+ * @param {object} props 
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
- * @param {ChocoStudioTileSheet} props.tileSheet
- * @param {Number} props.tileSize
- * @param {Boolean} props.defaultHelpVisible
+ * @param {number} props.tileSize
+ * @param {boolean} props.defaultHelpVisible
+ * @param {function({x: number, y: number})} props.onSelectionMade
  * @returns 
  */
-const PreciseTileSelector = ({ tileSetDefinition, tileSheet, defaultHelpVisible, tileSize }) => {
+const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, onSelectionMade }) => {
     const TILES_IN_PTS = 3;
     const DEFAULT_PTS_SCALE = 3;
     const BIGGEST_ZOOM_FACTOR = 6;
@@ -29,6 +28,13 @@ const PreciseTileSelector = ({ tileSetDefinition, tileSheet, defaultHelpVisible,
 
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
     const tileSheetImgRef = useRef(null);
+
+    // // utility for developers only during strict mode; "pretends" the selected tile location just got selected
+    // useEffect(() => {
+    //     if (selectedTileLocation) {
+    //         onSelectionMade && onSelectionMade(selectedTileLocation);
+    //     }
+    // }, []);
 
 
     const toggleHelp = () => setHelpVisible(!helpVisibile);
@@ -72,7 +78,7 @@ const PreciseTileSelector = ({ tileSetDefinition, tileSheet, defaultHelpVisible,
     const [preciseTileSelectionScale, setPreciseTileSelectionScale] = useState(DEFAULT_PTS_SCALE);
 
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
-    const [selectedPreciseTileLocation, setSelectedTileLocation] = useState(null);
+    const [selectedTileLocation, setSelectedTileLocation] = useState(null);
 
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
     const [displayPreciseTileLocation, setDisplayPreciseTileLocation] = useState(null);
@@ -203,10 +209,9 @@ const PreciseTileSelector = ({ tileSetDefinition, tileSheet, defaultHelpVisible,
      * @param {MouseEvent}
      */
     const onSheetMouseLeave = (e) => {
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: selectedPreciseTileLocation.x, sheetNaturalY: selectedPreciseTileLocation.y });
+        if (!selectedTileLocation) return;
+        showTileSheetTileInSheetTileSelection({ sheetNaturalX: selectedTileLocation.x, sheetNaturalY: selectedTileLocation.y });
     }
-
-    useEffect(() => console.log("selected precise tile location", selectedPreciseTileLocation), [selectedPreciseTileLocation])
 
     /**
      * @param {MouseEvent} e 
@@ -344,6 +349,7 @@ const PreciseTileSelector = ({ tileSetDefinition, tileSheet, defaultHelpVisible,
     }
 
 
+    useEffect(() => onSelectionMade && onSelectionMade(selectedTileLocation), [selectedTileLocation]);
 
     return (
         <>

@@ -1,0 +1,39 @@
+/* See https://stackoverflow.com/a/20852489 */
+
+.tile-transformation .label-image {
+    background-size: 100%;
+    width: 48px;
+    height: 48px;
+    display: block;
+    margin: 3px;
+}
+
+.tile-transformation.not-selected {
+    opacity: .5;
+}
+
+.tile-transformation.not-selected:hover {
+    animation: hover-tile-transformation 2s infinite;
+}
+
+.tile-transformation.selected {
+    opacity: 1;
+}
+
+
+@keyframes hover-tile-transformation {
+    0% {
+        opacity: .5;
+        filter: brightness(1)
+    }
+
+    50% {
+        opacity: 1;
+        filter: brightness(1.25)
+    }
+
+    100% {
+        opacity: .5;
+        filter: brightness(1)
+    }
+}

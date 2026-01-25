@@ -2,14 +2,15 @@ import './TileSetDefinitionEditor.css';
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoWinColor, ChocoWinSettings, ChocoWinWindow, TileTransformationTypes } from "../../ChocoWindow";
+import { ChocoWinAbstractPixelReader, ChocoWinColor, ChocoWinRegionPixelReader, ChocoWinSettings, ChocoWinWindow, TileTransformationTypes } from "../../ChocoWindow";
 import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
 import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
 import { PNG } from 'pngjs/browser'
 import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../../ChocoWinPngJsReaderWriter';
 import { TransformationImages } from '../../TransformationImages';
-import PreciseTileSelector from './tile-selector-components/precise-tile-selector';
+import PreciseTileSelector from './tile-selector-components/PreciseTileSelector';
+import TileTransformationSelector from './tile-selector-components/TileTransformationSelector'
 
 // Tiles in the sheet tile selection.
 const TILES_IN_PTS = 3;
@@ -35,6 +36,41 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const hasDeleteHandler = onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == "function";
     const readerFactory = new ChocoWinPngJsPixelReaderFactory();
 
+
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //            COMPONENTIZATION -- REORGANIZE LATER                      //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
+    const [untransformedTileBlobUrl, setUntransformedTileBlobUrl] = useState(null);
+
+    /**
+     * @param {{x: Number, y: Number}} c 
+     */
+    const onTileSelectionMade = (c) => {
+        if (c && tileSheetBlobUrlDictionary && tileSetDefinition) {
+            const url = tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId);
+            if (url) {
+                fetch(url).
+                    then(r => r.blob()).
+                    then(b => {
+                        const tileSheetReader = readerFactory.build({ blob: b });
+                        const tileReader = new ChocoWinRegionPixelReader(
+                            tileSheetReader,
+                            {
+                                x: c.x,
+                                y: c.y,
+                                width: tileSize,
+                                height: tileSize,
+                            }
+                        )
+                        setUntransformedTileBlobUrl(tileReader);
+                    });
+            }
+        }
+    }
+
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //            STATE, REFERENCE OBJECTS, AND UTILITY METHODS             //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -42,7 +78,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
     const transformationImages = useContext(TransformationImages);
 
-    
+
     /**
      * @overload
      * @param {ChocoStudioTileSheet} tileSheet
@@ -147,6 +183,18 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                               HOOKS                                  //
     // // // // // // // // // // // // // // // // // // // // // // // // //
+
+
+
+
+    useEffect(() => {
+
+    }, [])
+
+
+
+
+
 
     // tile selection and assignment hooks
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -629,10 +677,13 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         </div>
 
         {showLowerUi && <>
-            <PreciseTileSelector tileSetDefinition={tileSetDefinition} tileSheet={selectedTileSheet} tileSize={tileSize} defaultHelpVisible={true} />
-
-
-
+            <PreciseTileSelector tileSetDefinition={tileSetDefinition} tileSize={tileSize} defaultHelpVisible={true} onSelectionMade={onTileSelectionMade} />
+            
+            <div className='grid grid-cols-2 gap-4'>
+                <div className='w-full'>
+                    <TileTransformationSelector reader={untransformedTileBlobUrl} />
+                </div>
+            </div>
 
 
 

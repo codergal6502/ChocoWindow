@@ -22,3 +22,9 @@ div.sheet-tile-selection-mid-ground {
 button.selected-tile {
     animation: regionTileSelectionButtonOscillation 2s infinite;
 }
+
+h2 {
+    /* See https://stackoverflow.com/a/16505293 for information on stacking contexts. */
+    /* Some solution is needed to allow the tile transformation selections to go transparent. */
+    z-index: 999;
+}
