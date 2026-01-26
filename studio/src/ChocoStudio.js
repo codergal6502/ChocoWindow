@@ -98,7 +98,7 @@ class ChocoStudioWindowRegionDefinition {
         if (!arg1) {
             /** @type {Number} */ this.width = 1;
             /** @type {Number} */ this.height = 1;
-            /** @type {{ x: Number, y: Number }[][]} */ this.tileSheetPositions = [[{ x: null, y: null }]]
+            /** @type {{ x: Number, y: Number, geometricTransformation: String, transparencyOverrides: [] }[][]} */ this.tileSheetPositions = [[{ x: null, y: null }]]
         }
         else {
             this.width = arg1.width;

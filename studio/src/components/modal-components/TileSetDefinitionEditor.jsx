@@ -9,7 +9,6 @@ import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../..
 
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { TileSheetBlobUrlDictionary } from '../SettingsModal';
-import { TransformationImages } from '../../TransformationImages';
 
 import PreciseTileSelector from './tile-selector-components/PreciseTileSelector';
 import TileTransformationSelector from './tile-selector-components/TileTransformationSelector'
@@ -18,6 +17,15 @@ import WindowRegionDefinition from './tile-selector-components/WindowRegionDefin
 
 // Tiles in the sheet tile selection.
 const MAX_COLOR_COUNT = ChocoWinSettings.suggestedMaximumTileSheetColorCount;
+
+export class TileAssignment {
+    /** @type {number} */ x;
+    /** @type {number} */ y;
+    /** @type {TileTransformationTypes} */ geometricTransformation;
+    /** @type {{x: number, y: number}[]} */ transparencyOverrides;
+    /** @type {ChocoWinAbstractPixelReader} */ baseReader;
+    /** @type {ChocoWinAbstractPixelReader} */ transformedReader;
+}
 
 // See https://bikeshedd.ing/posts/use_state_should_require_a_dependency_array/.
 
@@ -43,8 +51,10 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // basic fields
     const [name, setName] = useState(tileSetDefinition.name);
     const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
+    /** @type {ReturnType<typeof useState<ChocoStudioTileSheet>>} */
     const [selectedTileSheet, setSelectedTileSheet] = useState(null);
     const [tileSize, setTileSize] = useState(tileSetDefinition.tileSize);
+    const [lastRegionDefinitionChangeTime, setLastRegionDefinitionChangeTime] = useState(Date.now());
 
     // tile sheet
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
@@ -53,73 +63,45 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [defaultColors, setDefaultColors] = useState(tileSetDefinition.defaultColors);
 
     // preview
-    const previewRef = useRef(null);
+    const previewImgRef = useRef(null);
+    const previewBlobUrlRef = useRef({url: ""});
+    const [previewTileScale, setPreviewTileScale] = useState(3);
 
-    // component interaction
-    const [listenToMe, setListenToMe] = useState({ x: 0, y: 0, geometricTransformation: [], transparencyOverrides: [] })
-
-
-    /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
-    const [untransformedTileReader, setUntransformedTileReader] = useState(null);
-    /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
-    const [transformedTileReader, setTransformedTileReader] = useState(null);
-    /** @type {ReturnType<typeof useState<{x: number, y: number}[]>} */
-    const [transparentPixels, setTransparentPixels] = useState([]);
-    /** @type {ReturnType<typeof useState<{width: number, height: number}>} */
-    const [tileSheetDimensions, setTileSheetDimensions] = useState(null);
-
+    /** @type {ReturnType<typeof useState<TileAssignment>>} */
+    const [activeTileSheetAssignment, setActiveTileSheetAssignment] = useState(null)
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          UTILITY FUNCTIONS                           //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    /**
-     * @overload
-     * @param {ChocoStudioTileSheet} tileSheet
-     */
-    /**
-     * @overload
-     * @param {Number} tileSheetId
-     */
-    const ensureBlobDictionaryHasWholeTileSheet = (arg1) => {
-        let /** @type {ChocoStudioTileSheet} */ tileSheet;
-        if (String(arg1) === arg1) {
-            tileSheet = tileSheets.find((ts) => ts.id == arg1)
-        }
-        else if (arg1 instanceof ChocoStudioTileSheet) {
-            tileSheet = arg1;
-        }
-
-        if (!tileSheetBlobUrlDictionary.has(tileSetDefinition.tileSheetId)) {
-            // If the tile sheet PNG isn't in the blob dictionary, we should assume we're loading this tile sheet for the first time.
-            tileSheetBlobUrlDictionary.setDataUrl(tileSheet.id, tileSheets.find((ts) => ts.id == tileSheet.id)?.imageDataUrl);
-        }
-    }
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                             EFFECT HOOKS                             //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    // process the selected tile sheet
-    useEffect(() => {
-        if (selectedTileSheet) {
-            readerFactory.
-                build({ dataUrl: selectedTileSheet.imageDataUrl }).
-                isReady().
-                then((r) => {
-                    // todo: create setTileSheetReader
-                    setTileSheetDimensions({ width: r.width, height: r.height })
-                });
-        }
-    }, [selectedTileSheet])
-
     // prepare the selected tile sheet
     useEffect(() => {
         if (tileSheetId) {
-            ensureBlobDictionaryHasWholeTileSheet(tileSheetId);
-            setSelectedTileSheet(tileSheets.find(ts => ts.id == tileSheetId));
+            const tileSheet = tileSheets.find((ts) => ts.id == tileSheetId)
+
+            if (!tileSheetBlobUrlDictionary.has(tileSetDefinition.tileSheetId)) {
+                // If the tile sheet PNG isn't in the blob dictionary, we should assume we're loading this tile sheet for the first time.
+                tileSheetBlobUrlDictionary.setDataUrl(tileSheet.id, tileSheets.find((ts) => ts.id == tileSheet.id)?.imageDataUrl);
+            }
+            setSelectedTileSheet(tileSheet);
         }
     }, [tileSheetId])
+
+    // initial render
+    useEffect(() => {
+        if (tileSetDefinition && lastRegionDefinitionChangeTime) {
+            // Because the default state of lastRegionDefinitionChangeTime is
+            // non-null, this will run as soon as there is a tile set
+            // definition.
+
+            updatePreviewRef(tileSetDefinition);
+        }
+    }, [tileSetDefinition, lastRegionDefinitionChangeTime, previewTileScale])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
@@ -164,6 +146,13 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // // // // // // // // // // // // // // 
 
     /**
+     * 
+     */
+    const onRegionDefinitionChange = (tsd) => {
+        setLastRegionDefinitionChangeTime(Date.now());
+    };
+
+    /**
      * @param {{x: Number, y: Number}} coordinates 
      */
     const onTileSelectionMade = (coordinates) => {
@@ -184,20 +173,16 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                                 height: tileSize,
                             }
                         )
-                        setUntransformedTileReader(tileReader);
-
-                        setListenToMe({
-                            x: coordinates.x,
-                            y: coordinates.y,
-                            geometricTransformation: listenToMe.geometricTransformation,
-                            transparencyOverrides: listenToMe.transparencyOverrides,
-                            reader: listenToMe.reader,
+                        tileReader.isReady().then(r => {
+                            setActiveTileSheetAssignment({
+                                x: coordinates.x,
+                                y: coordinates.y,
+                                geometricTransformation: TileTransformationTypes.BASE,
+                                baseReader: r,
+                                transformedReader: r,
+                                transparencyOverrides: [],
+                            })
                         });
-
-
-                        if (!transformedTileReader) {
-                            setTransformedTileReader(tileReader);
-                        }
                     });
             }
         }
@@ -210,13 +195,13 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      * @param {String} args.blobUrl
      */
     const onTransformationSelectionMade = ({ transformationType, reader, blobUrl }) => {
-        setTransformedTileReader(reader);
-        setListenToMe({
-            x: listenToMe.x,
-            y: listenToMe.y,
+        setActiveTileSheetAssignment({
+            x: activeTileSheetAssignment.x,
+            y: activeTileSheetAssignment.y,
             geometricTransformation: transformationType,
-            transparencyOverrides: listenToMe.transparencyOverrides,
-            reader: reader,
+            baseReader: activeTileSheetAssignment.baseReader,
+            transformedReader: reader,
+            transparencyOverrides: activeTileSheetAssignment.transparencyOverrides,
         });
         onTileSetDefinitionChange(tileSetDefinition);
     }
@@ -225,11 +210,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      * @param {{x: number, y: number}[]} pixels 
      */
     const onTransparencyOverrideSelectionMade = (pixels) => {
-        setTransparentPixels(pixels);
-        setListenToMe({
-            x: listenToMe.x,
-            y: listenToMe.y,
-            geometricTransformation: listenToMe.transformationType,
+        setActiveTileSheetAssignment({
+            x: activeTileSheetAssignment.x,
+            y: activeTileSheetAssignment.y,
+            geometricTransformation: activeTileSheetAssignment.transformationType,
+            baseReader: activeTileSheetAssignment.baseReader,
+            transformedReader: activeTileSheetAssignment.transformedReader,
             transparencyOverrides: pixels,
         });
     }
@@ -252,8 +238,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      * @param {ChocoStudioTileSetDefinition} newTileSetDefinition
      */
     const updatePreviewRef = (newTileSetDefinition) => {
-
-        if (!previewRef?.current) { return; }
+        if (previewTileScale < 1) { return; }
+        if (!previewImgRef?.current) { return; }
         const tileSheet = tileSheets.find((ts) => ts.id == newTileSetDefinition.tileSheetId);
         if (!tileSheet) return;
         const tileSet = newTileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl);
@@ -268,7 +254,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             readerFactory: readerFactory
         });
         chocoWin.isReady().then(() => {
-            if (!previewRef?.current) {
+            if (!previewImgRef?.current) {
                 console.warn("previewRef.current falsy after it was truthy");
                 return;
             }
@@ -276,8 +262,13 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             const writer = new ChocoWinPngJsPixelWriter(450, 180);
             chocoWin.drawTo(writer);
 
-            let dataUrl = writer.makeDataUrl();
-            previewRef.current.src = dataUrl;
+            const blob = writer.makeBlob();
+            const newUrl = URL.createObjectURL(blob);
+            if (previewBlobUrlRef.current) {
+                URL.revokeObjectURL(previewBlobUrlRef.current.url);
+            }
+            previewBlobUrlRef.current.url = newUrl;
+            previewImgRef.current.src = newUrl;
         });
     }
 
@@ -291,7 +282,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [tooManyColors, setTooManyColors] = useState(false);
     const [showLowerUi, setShowLowerUi] = useState(tileSetDefinition.tileSheetId ? true : false);
 
-    const [previewTileScale, setPreviewTileScale] = useState(3);
 
     // preview state and reference objects
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -368,10 +358,10 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 const y = 192;
 
                 Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
-                    const /** @type {ChocoStudioWindowRegionDefinition} */ r = null;//regions[whichRegion];
-                    throw "not implemented";
-                    r.tileSheetPositions.filter((_, cn) => cn < r.width).forEach((tspRow) => {
-                        tspRow.filter((_, rn) => rn < r.height).forEach((tsp) => {
+                    const /** @type {ChocoStudioWindowRegionDefinition} */ region = tileSetDefinition.regions[whichRegion];
+
+                    region.tileSheetPositions.filter((_, cn) => cn < region.width).forEach((tspRow) => {
+                        tspRow.filter((_, rn) => rn < region.height).forEach((tsp) => {
                             for (let x = tsp.x; x < tsp.x + tileSize; x++) {
                                 for (let y = tsp.y; y < tsp.y + tileSize; y++) {
                                     const idx = (png.width * y + x) << 2;
@@ -426,17 +416,13 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             </div>
         </div>
 
-        {showLowerUi && tileSheetDimensions && <>
+        {showLowerUi && <>
             <WindowRegionDefinition
                 tileSetDefinition={tileSetDefinition}
                 tileSize={tileSize}
-                sheetSize={tileSheetDimensions}
-                assignmentFromUser={listenToMe}
-                onTileSetDefinitionChange={(tsd) => {
-                    const clone = new ChocoStudioTileSetDefinition(tsd);
-                    onTileSetDefinitionChange(clone);
-                    updatePreviewRef(clone);
-                }}
+                tileSheet={selectedTileSheet}
+                activeTileSheetAssignment={activeTileSheetAssignment}
+                onChangeMade={onRegionDefinitionChange}
             />
             <PreciseTileSelector
                 tileSetDefinition={tileSetDefinition}
@@ -445,18 +431,21 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 onSelectionMade={onTileSelectionMade}
             />
 
-            {untransformedTileReader && <div className='grid grid-cols-2 gap-4'>
-                <div className='w-full'>
-                    <TileTransformationSelector reader={untransformedTileReader} onSelectionMade={onTransformationSelectionMade} />
-                </div>
-                <div className='w-full'>
-                    <PixelTransparencyOverideSelector reader={transformedTileReader} onSelectionMade={onTransparencyOverrideSelectionMade} />
-                </div>
-            </div>}
-
-
-
-
+            {
+                activeTileSheetAssignment ?
+                    <div className='grid grid-cols-2 gap-4'>
+                        <div className='w-full'>
+                            <TileTransformationSelector activeTileSheetAssignment={activeTileSheetAssignment} onSelectionMade={onTransformationSelectionMade} />
+                        </div>
+                        <div className='w-full'>
+                            <PixelTransparencyOverideSelector activeTileSheetAssignment={activeTileSheetAssignment} onSelectionMade={onTransparencyOverrideSelectionMade} />
+                        </div>
+                    </div> :
+                    <div className="w-full">
+                        <h4 className="my-3 font-bold">Tile Transformation & Transparency Override</h4>
+                        <p className="mb-2 text-sm mx-6">Select a position in the tile sheet to set transformation and tranparency overrides.</p>
+                    </div>
+            }
 
             <h3 className="mb-2 mt-4 text-xl">Window Preview</h3>
 
@@ -469,7 +458,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
             <p className="mb-2 text-sm mx-6">This is a preview of what a window with this tile set definition will look like.</p>
 
-            <div className='mx-6' id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={previewRef} /></div>
+            <div className='mx-6' id="tileSetPreviewDiv" ><img alt="Window Preview" src={null} ref={previewImgRef} /></div>
 
             <h3 className="mb-2 mt-4 text-xl">Color Palette</h3>
             <button onClick={onGenerateColorPaletteButtonClick} className="bg-gray-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-500">Generate Color Palette</button>

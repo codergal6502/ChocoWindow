@@ -1,15 +1,27 @@
-div.region-tile-container {
+div.assign-this-tile-container, div.region-tile-container {
     background-image: url("./tile-background-3.png");
-    grid-template-columns: repeat(var(--region-width), 1fr);
     display: grid;
     gap: 0px;
     padding: 3px;
     width: fit-content;
+    height: fit-content;
+}
+
+div.region-tile-container {
+    grid-template-columns: repeat(var(--region-width), 1fr);
+}
+
+div.assign-this-tile {
+    width: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
+    height: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
+}
+
+label.region-tile-radio {
+    width: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
+    height: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
 }
 
 div.assign-this-tile, label.region-tile-radio {
-    width: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
-    height: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
     border: 2px solid transparent;
     padding: 2px;
     display: block;

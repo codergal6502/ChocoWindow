@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChocoWinAbstractPixelReader, ChocoWinColor } from '../../../ChocoWindow'
 import "./PixelTransparencyOverideSelector.css"
+import { TileAssignment } from '../TileSetDefinitionEditor';
 
 /**
  * @param {object} props
- * @param {ChocoWinAbstractPixelReader} props.reader
+ * @param {TileAssignment} props.activeTileSheetAssignment
  * @param {function({x: number, y: number}[])} props.onSelectionMade
  */
-const PixelTransparencyOverideSelector = ({ reader, onSelectionMade }) => {
-
+const PixelTransparencyOverideSelector = ({ activeTileSheetAssignment, onSelectionMade }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                         STATE AND REF HOOKS                          //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -26,18 +26,21 @@ const PixelTransparencyOverideSelector = ({ reader, onSelectionMade }) => {
 
     // detect when the reader is ready
     useEffect(() => {
-        reader.isReady().then(() => setReaderIsReady(true))
-    }, [reader]);
+        if (activeTileSheetAssignment?.transformedReader) {
+            activeTileSheetAssignment.transformedReader.isReady().then(() => setReaderIsReady(true));
+        }
+    }, [activeTileSheetAssignment]);
 
     // size the pixel grid
     useEffect(() => {
-        if (reader && gridDivRef && gridDivRef.current) {
-            const smallestSize = .75*Math.min(gridDivRef.current.offsetWidth, gridDivRef.current.offsetHeight);
+        if (activeTileSheetAssignment?.transformedReader && gridDivRef && gridDivRef.current && activeTileSheetAssignment?.transformedReader) {
+            const reader = activeTileSheetAssignment.transformedReader;
+            const smallestSize = .75 * Math.min(gridDivRef.current.offsetWidth, gridDivRef.current.offsetHeight);
             const tileSize = Math.max(reader.width, reader.height); // should always be identical
             const pixelSize = Math.floor(smallestSize / tileSize); // round to nearest tile size multiple
             setPixelSize(pixelSize);
         }
-    }, [gridDivRef, reader, readerIsReady, lastResizeTimestamp])
+    }, [gridDivRef, activeTileSheetAssignment, readerIsReady, lastResizeTimestamp])
 
 
     // resize event handler to force a pixel grid resize
@@ -64,7 +67,7 @@ const PixelTransparencyOverideSelector = ({ reader, onSelectionMade }) => {
      * @param {HTMLElement} e.target
      */
     const checkboxOnChange = (e) => {
-        const coordinates = { x: e.target.dataset.x, y: e.target.dataset.y}
+        const coordinates = { x: e.target.dataset.x, y: e.target.dataset.y }
         const label = e.target.parentElement;
 
         if (true == e.target.checked) {
@@ -102,14 +105,14 @@ const PixelTransparencyOverideSelector = ({ reader, onSelectionMade }) => {
         return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a / 255.0})`
     }
 
-    return (reader && readerIsReady && <>
+    return (activeTileSheetAssignment?.transformedReader && readerIsReady && <>
         <div className='w-full h-full' ref={gridDivRef} >
             <h4 className="my-3 font-bold">Pixel Transparency Override</h4>
-            <div className='transparency-container' style={{ '--tile-size': reader.width }}>
+            <div className='transparency-container' style={{ '--tile-size': activeTileSheetAssignment.transformedReader.width }}>
                 {
-                    Array.from(Array(reader.height), (_, y) =>
-                        Array.from(Array(reader.width), (_, x) =>
-                            <label className='pixel-transparency-checkbox' key={`transparency-pixel-${x}-${y}`} style={{ width: pixelSize, height: pixelSize, backgroundColor: chocoWinColorToRgba(reader.getPixel({ x, y })) }}>
+                    Array.from(Array(activeTileSheetAssignment.transformedReader.height), (_, y) =>
+                        Array.from(Array(activeTileSheetAssignment.transformedReader.width), (_, x) =>
+                            <label className='pixel-transparency-checkbox' key={`transparency-pixel-${x}-${y}`} style={{ width: pixelSize, height: pixelSize, backgroundColor: chocoWinColorToRgba(activeTileSheetAssignment.transformedReader.getPixel({ x, y })) }}>
                                 <input className='sr-only' type="checkbox" onChange={checkboxOnChange} data-x={x} data-y={y} />
                             </label>
                         )

@@ -10,7 +10,6 @@ import WindowEditor from "./modal-components/WindowEditor.jsx";
 import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 import downloadZip from "../ZipDownloader.jsx";
 import { ChocoWinSettings } from "../ChocoWindow.js";
-import { TransformationImages } from "../TransformationImages.js";
 
 export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheetBlobUrlManager())
 

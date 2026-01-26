@@ -3,13 +3,14 @@ import { ChocoWinAbstractPixelReader, ChocoWinReflectionPixelReader, ChocoWinRef
 import { ChocoWinPngJsPixelWriter } from '../../../ChocoWinPngJsReaderWriter';
 import "./TileTransformationSelector.css"
 import { ERR_LOCAL_FILE_HEADER_NOT_FOUND } from '@zip.js/zip.js';
+import { TileAssignment } from '../TileSetDefinitionEditor';
 
 /**
  * @param {Object} props
- * @param {ChocoWinAbstractPixelReader} props.reader
+ * @param {TileAssignment} props.activeTileSheetAssignment
  * @param {function({transformationType: string, reader: ChocoWinAbstractPixelReader, blobUrl: String})} props.onSelectionMade
  */
-const TileTransformationSelector = ({ reader, onSelectionMade }) => {
+const TileTransformationSelector = ({ activeTileSheetAssignment, onSelectionMade }) => {
     const unique = useRef(crypto.randomUUID());
     const styleRef = useRef(null);
     const tileBlobUrlMap = useRef(new Map());
@@ -49,12 +50,16 @@ const TileTransformationSelector = ({ reader, onSelectionMade }) => {
         setSelectedTileTransformation(e.target.value)
 
         if (onSelectionMade && tileBlobUrlMap?.current && tileBlobUrlMap.current.has(e.target.value) && readerMap?.current && readerMap.current.has(e.target.value)) {
-            onSelectionMade({transformationType: e.target.value, reader: readerMap.current.get(e.target.value), blobUrl: tileBlobUrlMap.current.get(e.target.value)})
+            onSelectionMade({
+                transformationType: e.target.value,
+                reader: readerMap.current.get(e.target.value),
+                blobUrl: tileBlobUrlMap.current.get(e.target.value)
+            })
         }
     }
 
     useEffect(() => {
-        if (unique && unique.current && styleRef && styleRef.current && reader && tileBlobUrlMap?.current) {
+        if (unique && unique.current && styleRef && styleRef.current && activeTileSheetAssignment?.baseReader && tileBlobUrlMap?.current) {
             /**
              * @param {Object} args
              * @param {String} args.transformationType
@@ -89,6 +94,7 @@ const TileTransformationSelector = ({ reader, onSelectionMade }) => {
                 });
             }
 
+            const reader = activeTileSheetAssignment.baseReader;
             const promises = [];
             promises[promises.length] = doTheThing({ transformationType: TileTransformationTypes.BASE, reader: reader }); // a little inefficient to read and write the same tile but also super simple!
             promises[promises.length] = doTheThing({ transformationType: TileTransformationTypes.ROTATE_90, reader: new ChocoWinRotatePixelReader(reader, 1) });
@@ -99,12 +105,12 @@ const TileTransformationSelector = ({ reader, onSelectionMade }) => {
             promises[promises.length] = doTheThing({ transformationType: TileTransformationTypes.REFLECT_ASCENDING, reader: new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.ASCENDING) });
             promises[promises.length] = doTheThing({ transformationType: TileTransformationTypes.REFLECT_DESCENDING, reader: new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.DESCENDING) });
 
-            Promise.all(promises).then(() => {
-                // This is needed so that when a new reader is passed in, callback is called with the transformation of that reader.
-                onSelectionMade({transformationType: selectedTileTransformation, reader: readerMap.current.get(selectedTileTransformation), blobUrl: tileBlobUrlMap.current.get(selectedTileTransformation)})
-            });
+            // Promise.all(promises).then(() => {
+            //     // This is needed so that when a new reader is passed in, callback is called with the transformation of that reader.
+            //     onSelectionMade({transformationType: selectedTileTransformation, reader: readerMap.current.get(selectedTileTransformation), blobUrl: tileBlobUrlMap.current.get(selectedTileTransformation)})
+            // });
         }
-    }, [styleRef, reader])
+    }, [styleRef, activeTileSheetAssignment])
 
     return ((unique && unique.current) && <>
         <style ref={styleRef} />

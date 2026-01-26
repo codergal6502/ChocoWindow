@@ -3,16 +3,18 @@ import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../../Cho
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from "../../SettingsModal";
 import { Canvas, Polyline, Rect } from "fabric";
+import { TileAssignment } from "../TileSetDefinitionEditor";
 
 /**
  * @param {object} props 
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
  * @param {number} props.tileSize
+ * @param {TileAssignment} props.activeTileAssignment
  * @param {boolean} props.defaultHelpVisible
  * @param {function({x: number, y: number})} props.onSelectionMade
  * @returns 
  */
-const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, onSelectionMade }) => {
+const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, onSelectionMade }) => { // todo: do something with activeTileSheetAssignment
     const TILES_IN_PTS = 3;
     const DEFAULT_PTS_SCALE = 3;
     const BIGGEST_ZOOM_FACTOR = 6;
@@ -35,7 +37,6 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
             onSelectionMade && onSelectionMade(selectedTileLocation);
         }
     }, []);
-
 
     const toggleHelp = () => setHelpVisible(!helpVisibile);
 
@@ -210,7 +211,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
      */
     const onSheetMouseLeave = (e) => {
         if (!selectedTileLocation) return;
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: selectedTileLocation.x, sheetNaturalY: selectedTileLocation.y });
+        showTileSheetTileInSheetTileSelection({ sheetNaturalX: selectedTileLocation.x, sheetNaturalY: selectedTileLocation.y, overrideSnap: true });
     }
 
     /**
@@ -287,11 +288,11 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
 
     /**
      * Updates state refrenced by the precise tile selection CSS.
-     * @param {Object} args
+     * @param {object} args
      * @param {MouseEvent} args.mouseEvent The mouse event if triggered by a mouse event
-     * @param {Number} naturalX The "natural" X coordinate to use; will be overriden by mouse event.
-     * @param {Number} naturalY The "natural" Y coordinate to use; will be overriden by mouse event.
-     * @param {Booealn} overrideSnap Whether or not to ignore the snap-to-grid settings.
+     * @param {number} args.naturalX The "natural" X coordinate to use; will be overriden by mouse event.
+     * @param {number} args.naturalY The "natural" Y coordinate to use; will be overriden by mouse event.
+     * @param {boolean} args.overrideSnap Whether or not to ignore the snap-to-grid settings.
      */
     const showTileSheetTileInSheetTileSelection = ({ mouseEvent, sheetNaturalX, sheetNaturalY, overrideSnap = false }) => {
         const naturalSheetCoordinates = calculateTileSheetSelectionCoordinates({ mouseEvent, naturalX: sheetNaturalX, naturalY: sheetNaturalY, overrideSnap });
@@ -335,10 +336,12 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     }
 
     /**
-     * @param {InputEvent} e 
+     * @param {object} e 
+     * @param {HTMLInputElement} e.target 
      */
     const onSheetXManualInputChange = (e) => {
         showTileSheetTileInSheetTileSelection({ sheetNaturalX: Number(e.target.value), sheetNaturalY: displayPreciseTileLocation.y, overrideSnap: true });
+        setSelectedTileLocation({ x: Number(e.target.value), y: selectedTileLocation.y })
     }
 
     /**
@@ -346,6 +349,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
      */
     const onSheetYManualInputChange = (e) => {
         showTileSheetTileInSheetTileSelection({ sheetNaturalX: displayPreciseTileLocation.x, sheetNaturalY: Number(e.target.value), overrideSnap: true });
+        setSelectedTileLocation({ x: selectedTileLocation.x, y: Number(e.target.value) })
     }
 
 

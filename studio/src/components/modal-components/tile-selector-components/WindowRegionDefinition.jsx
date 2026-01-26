@@ -1,23 +1,24 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileSheetBlobUrlManager } from "../../../ChocoStudio";
+import { CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioTileSheetBlobUrlManager } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from '../../SettingsModal';
 import './WindowRegionDefinition.css'
-import { ChocoWinAbstractPixelReader } from "../../../ChocoWindow";
-import { ChocoWinPngJSPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
+import { ChocoWinAbstractPixelReader, ChocoWinRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJSPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faK, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { TileAssignment } from "../TileSetDefinitionEditor";
 
 /**
  * Directly modifies the provided tile set definition.
  * @param {object} props 
  * @param {number} props.tileSize
- * @param {{width: number, height: number}} props.sheetSize
+ * @param {ChocoStudioTileSheet} props.tileSheet
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
- * @param {Object} props.assignmentFromUser
- * @param {Function} props.onTileSetDefinitionChange
+ * @param {TileAssignment} props.activeTileSheetAssignment
+ * @param {function({ChocoStudioTileSetDefinition})} props.onChangeMade
  */
-const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assignmentFromUser, onTileSetDefinitionChange }) => {
+const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, activeTileSheetAssignment, onChangeMade }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                        CONSTANTS & GLOBALS                           //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -25,6 +26,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
     const BIGGEST_ZOOM_FACTOR = 6;
     const SELECTED_TILE_BLOB_KEY = "SELECTED_TILE_BLOB_KEY";
     const writerFactory = new ChocoWinPngJSPixelWriterFactory();
+    const readerFactory = new ChocoWinPngJsPixelReaderFactory();
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                    STATE, REF & CONTEXT HOOKS                        //
@@ -44,10 +46,17 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
     const [selectedTile, setSelectedTile] = useState({ x: 0, y: 0 });
     const [tileAssignments, setTileAssignments] = useState([]);
     const [isAssignThisReady, setIsAssignThisReady] = useState(false);
-    const [lastAssignThisButtonClick, setLastAssignThisButtonClick] = useState(Date.now());
+    const [lastAssignThisButtonClickTime, setLastAssignThisButtonClickTime] = useState(null);
+
+    /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
+    const [tileSheetReader, setTileSheetReader] = useState(null)
+    const [tileSheetReaderIsReady, setTileSheetReaderIsReady] = useState(false)
 
     /** @type {ReturnType<typeof useRef<Map<String, String>>>} */
     const tileBlobUrlMap = useRef(new Map());
+
+    /** @type {ReturnType<typeof useContext<ChocoStudioTileSheetBlobUrlManager>>} */
+    const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          UTILITY FUNCTIONS                           //
@@ -80,11 +89,61 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
     //                             EFFECT HOOKS                             //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
+    // reader for entire tile sheet
+    useEffect(() => {
+        if (tileSheet) {
+            const tileSheetReader = readerFactory.build({ dataUrl: tileSheet.imageDataUrl });
+            setTileSheetReader(tileSheetReader);
+            setTileSheetReaderIsReady(false);
+            tileSheetReader.isReady().then(() => setTileSheetReaderIsReady(true));
+        }
+    }, [tileSheet])
+
+    // initialize the tiles background images
+    useEffect(() => {
+        if (tileSetDefinition && tileSheetReader && tileSheetReaderIsReady && regionIdentifier && tileBlobUrlMap?.current) {
+
+            const region = tileSetDefinition.regions[regionIdentifier];
+
+            for (let rowIndex = 0; rowIndex < region.height; rowIndex++) {
+                for (let colIndex = 0; colIndex < region.width; colIndex++) {
+                    const tp = region.tileSheetPositions[rowIndex]?.[colIndex];
+
+                    if (tp) {
+                        const tileBlobKey = computeTileBlobKey(regionIdentifier, colIndex, rowIndex);
+
+                        let reader = new ChocoWinRegionPixelReader(tileSheetReader, new ChocoWinRectangle({ x: tp.x, y: tp.y, width: tileSize, height: tileSize }));
+                        reader = WrapReaderForTileTransformation(reader, tp.geometricTransformation);
+
+                        reader.isReady().then(r => {
+                            const writer = writerFactory.build(reader.width, reader.height);
+                            writer.writeAll(reader);
+
+                            if (tileBlobUrlMap.current.has(tileBlobKey)) {
+                                URL.revokeObjectURL(tileBlobUrlMap.current.get(tileBlobKey));
+                            }
+
+                            const tileUrl = URL.createObjectURL(writer.makeBlob());
+                            tileBlobUrlMap.current.set(tileBlobKey, tileUrl);
+
+                            const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
+
+                            const selectorText = `label.region-tile-radio.${tileBlobKey}`;
+                            const ruleText = `${selectorText} { background-image: url(${tileUrl}); }`;
+
+                            replaceRule(styleSheet, selectorText, ruleText);
+                        })
+                    }
+                }
+            }
+        }
+    }, [tileSetDefinition, tileSheetReader, tileSheetReaderIsReady, regionIdentifier, tileBlobUrlMap])
+
     // read the selected tile
     useEffect(() => {
-        if (styleRef?.current && tileBlobUrlMap?.current && assignmentFromUser?.reader?.isReady) {
+        if (styleRef?.current && tileBlobUrlMap?.current && activeTileSheetAssignment?.transformedReader?.isReady) {
             setIsAssignThisReady(false);
-            assignmentFromUser.reader.isReady().then(/** @param {ChocoWinAbstractPixelReader} r */ r => {
+            activeTileSheetAssignment.transformedReader.isReady().then(/** @param {ChocoWinAbstractPixelReader} r */ r => {
                 const tileBlobKey = SELECTED_TILE_BLOB_KEY;
                 const writer = writerFactory.build(r.width, r.height);
                 writer.writeAll(r);
@@ -104,7 +163,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
                 setIsAssignThisReady(true);
             })
         }
-    }, [tileBlobUrlMap, styleRef, assignmentFromUser])
+    }, [tileBlobUrlMap, styleRef, activeTileSheetAssignment])
 
     // resize the tile assignment container
     useEffect(() => {
@@ -133,9 +192,9 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
 
     // assign the selected tile to the region position
     useEffect(() => {
-        if (isAssignThisReady && styleRef?.current && tileBlobUrlMap?.current) {
+        if (lastAssignThisButtonClickTime && isAssignThisReady && styleRef?.current && tileBlobUrlMap?.current) {
             const tileBlobKey = computeTileBlobKey(regionIdentifier, selectedTile.x, selectedTile.y);
-            /** @type {ChocoWinAbstractPixelReader} */ const reader = assignmentFromUser.reader;
+            /** @type {ChocoWinAbstractPixelReader} */ const reader = activeTileSheetAssignment.transformedReader;
             const writer = writerFactory.build(reader.width, reader.height);
             writer.writeAll(reader);
 
@@ -157,15 +216,15 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
             if (!tileSheetPositions[selectedTile.y]) { tileSheetPositions[selectedTile.y] = []; }
 
             tileSheetPositions[selectedTile.y][selectedTile.x] = {
-                x: assignmentFromUser.x,
-                y: assignmentFromUser.y,
-                geometricTransformation: assignmentFromUser.geometricTransformation,
-                transparencyOverrides: assignmentFromUser.transparencyOverrides,
+                x: activeTileSheetAssignment.x,
+                y: activeTileSheetAssignment.y,
+                geometricTransformation: activeTileSheetAssignment.geometricTransformation,
+                transparencyOverrides: activeTileSheetAssignment.transparencyOverrides,
             };
 
-            onTileSetDefinitionChange(tileSetDefinition);
+            onChangeMade(tileSetDefinition);
         }
-    }, [isAssignThisReady, lastAssignThisButtonClick, styleRef, tileBlobUrlMap])
+    }, [isAssignThisReady, lastAssignThisButtonClickTime, styleRef, tileBlobUrlMap])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
@@ -261,6 +320,12 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
         setSelectedTile({ x: Number(e.target.dataset.x), y: Number(e.target.dataset.y) });
     }
 
+    /**
+     * @param {Object} e 
+     * @param {HTMLButtonElement} e.target
+     */
+    const onRetrieveTileButtonClick = (e) => {
+    }
 
     /**
      * @param {Object} e 
@@ -270,7 +335,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
         // It's conceivable that this button might get clicked between the
         // reader for the tile getting set and the tile getting read, so
         // this timestamp trick is used to assign the the tile.
-        setLastAssignThisButtonClick(Date.now());
+        setLastAssignThisButtonClickTime(Date.now());
     }
 
     return (<>
@@ -325,14 +390,20 @@ const WindowRegionDefinition = ({ tileSetDefinition, sheetSize, tileSize, assign
             <h4 className="mb-1 font-bold">Tile Assignment</h4>
             <style ref={styleRef} />
             <div className="grid grid-cols-6">
-                <div className="assign-this-tile"></div>
-                <div className="">
-                    <button onClick={onAssignTileButtonClick}>
+                <div className="assign-this-tile-container self-center">
+                    <div className="assign-this-tile"></div>
+                </div>
+                <div className="self-center justify-self-center">
+                    <button className="block" onClick={onAssignTileButtonClick}>
                         <FontAwesomeIcon icon={faRightFromBracket} className="text-3xl" />
                         <span className="sr-only">Assign to Region  Tile</span>
                     </button>
+                    <button className="block" onClick={onRetrieveTileButtonClick}>
+                        <FontAwesomeIcon icon={faRightFromBracket} flip="horizontal" className="text-3xl" />
+                        <span className="sr-only">Assign to Region  Tile</span>
+                    </button>
                 </div>
-                <div className="region-tile-container col-span-4">
+                <div className="region-tile-container col-span-4 self-center">
                     {
                         Array.from({ length: regionHeight || 1 }).map((_, y) =>
                             Array.from({ length: regionWidth || 1 }).map((_, x) =>
