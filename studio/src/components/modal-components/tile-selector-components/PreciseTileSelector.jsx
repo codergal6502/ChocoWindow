@@ -9,12 +9,12 @@ import { TileAssignment } from "../TileSetDefinitionEditor";
  * @param {object} props 
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
  * @param {number} props.tileSize
- * @param {TileAssignment} props.activeTileAssignment
+ * @param {TileAssignment} props.activeTileSheetAssignment
  * @param {boolean} props.defaultHelpVisible
  * @param {function({x: number, y: number})} props.onSelectionMade
  * @returns 
  */
-const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, onSelectionMade }) => { // todo: do something with activeTileSheetAssignment
+const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, activeTileSheetAssignment, onSelectionMade }) => {
     const TILES_IN_PTS = 3;
     const DEFAULT_PTS_SCALE = 3;
     const BIGGEST_ZOOM_FACTOR = 6;
@@ -37,6 +37,19 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
             onSelectionMade && onSelectionMade(selectedTileLocation);
         }
     }, []);
+
+    useEffect(() => {
+        if (activeTileSheetAssignment) {
+            if (activeTileSheetAssignment.x != selectedTileLocation.x && activeTileSheetAssignment.y != selectedTileLocation.y) {
+                setSelectedTileLocation({
+                    x: activeTileSheetAssignment.x,
+                    y: activeTileSheetAssignment.y,
+                })
+                
+                showTileSheetTileInSheetTileSelection({ sheetNaturalX: activeTileSheetAssignment.x, sheetNaturalY: activeTileSheetAssignment.y, overrideSnap: true })
+            }
+        }
+    }, [activeTileSheetAssignment])
 
     const toggleHelp = () => setHelpVisible(!helpVisibile);
 
@@ -244,14 +257,12 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                 null;
 
     /**
-     * 
-     * @param {Number} snapSize 
      * @param {{x: Number, y: Number}} naturalSheetCoordinates 
      * @returns 
      */
-    const calculatePreciseTilePosition = (snapSize, naturalSheetCoordinates) => ({
-        x: preciseTileSelectionScale * (snapSize - naturalSheetCoordinates.x),
-        y: preciseTileSelectionScale * (snapSize - naturalSheetCoordinates.y),
+    const calculatePreciseTilePosition = (naturalSheetCoordinates) => ({
+        x: preciseTileSelectionScale * (tileSize - naturalSheetCoordinates.x),
+        y: preciseTileSelectionScale * (tileSize - naturalSheetCoordinates.y),
     });
 
     /**
@@ -298,8 +309,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         const naturalSheetCoordinates = calculateTileSheetSelectionCoordinates({ mouseEvent, naturalX: sheetNaturalX, naturalY: sheetNaturalY, overrideSnap });
         if (!naturalSheetCoordinates) return;
 
-        const snapSize = calculateSnapSnize();
-        const preciseTilePosition = calculatePreciseTilePosition(snapSize, naturalSheetCoordinates);
+        const preciseTilePosition = calculatePreciseTilePosition(naturalSheetCoordinates);
 
         setDisplayPreciseTileLocation({ x: naturalSheetCoordinates.x, y: naturalSheetCoordinates.y });
         setPreciseSelectionBackgroundPosition(preciseTilePosition);
@@ -340,16 +350,20 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
      * @param {HTMLInputElement} e.target 
      */
     const onSheetXManualInputChange = (e) => {
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: Number(e.target.value), sheetNaturalY: displayPreciseTileLocation.y, overrideSnap: true });
-        setSelectedTileLocation({ x: Number(e.target.value), y: selectedTileLocation.y })
+        const x = Number(e.target.value);
+        if (x < 0) return;
+        showTileSheetTileInSheetTileSelection({ sheetNaturalX: x, sheetNaturalY: displayPreciseTileLocation.y, overrideSnap: true });
+        setSelectedTileLocation({ x: x, y: selectedTileLocation.y })
     }
 
     /**
      * @param {InputEvent} e 
      */
     const onSheetYManualInputChange = (e) => {
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: displayPreciseTileLocation.x, sheetNaturalY: Number(e.target.value), overrideSnap: true });
-        setSelectedTileLocation({ x: selectedTileLocation.x, y: Number(e.target.value) })
+        const y = Number(e.target.value);
+        if (y < 0) return;
+        showTileSheetTileInSheetTileSelection({ sheetNaturalX: displayPreciseTileLocation.x, sheetNaturalY: y, overrideSnap: true });
+        setSelectedTileLocation({ x: selectedTileLocation.x, y: y })
     }
 
 
@@ -359,7 +373,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         <>
             <h3 className="mb-1 text-xl font-bold">Tile Selection {helpVisibile || <a href="#" onClick={toggleHelp} className="text-xs font-normal text-blue-900 dark:text-blue-100 py-1 hover:underline italic">show help</a>}</h3>
             {helpVisibile && <p className="mb-2 text-sm mx-6">
-                <span><span className="italic">First,</span> approximately click on location the tile sheet to load that area into the tile sheet detail selector. <span className="italic">Second,</span> precisely adjust the position or click on an adjacent tile. <span className="italic">Third,</span> click on the tile location to assign that part of the tile sheet to that tile in the regioon. If <span className="italic"> other tiles </span> to be assigned are <span className="italic">adjacent</span> in the tile sheet, use can use the precise tile selection without using the approximate tile selection.</span>
+                <span><span className="italic">First,</span> approximately click on location the tile sheet to load that area into the tile sheet detail selector. <span className="italic">Second,</span> precisely adjust the position or click on an adjacent tile.</span>
                 &nbsp;<a href="#" onClick={toggleHelp} className="text-xs text-blue-900 dark:text-blue-100 py-1 hover:underline italic">hide help</a>
             </p>}
 
@@ -368,7 +382,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                     <label htmlFor="bdbf3176-cdef-4081-9cf1-e45615677954">Sheet Snap Mode</label>
                     <select className={TAILWIND_INPUT_CLASS_NAME} id="bdbf3176-cdef-4081-9cf1-e45615677954" value={snapMode} onChange={onSnapModeChange}>
                         <option value={SNAP_MODE_OPTIONS.TILE_SIZE}>Tile Size ({tileSize}px)</option>
-                        <option value={SNAP_MODE_OPTIONS.OTHER}>Other (Choose)</option>
+                        {/* <option value={SNAP_MODE_OPTIONS.OTHER}>Other (Choose)</option> */} {/* Disable this option since it needs refinement. */}
                         <option value={SNAP_MODE_OPTIONS.NONE}>Do Not Snap</option>
                     </select>
                 </div>
@@ -404,11 +418,11 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                     <div className="grid grid-cols-2">
                         <div className="mr-2 mb-2">
                             <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X</label>
-                            <input placeholder="x" type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetXManualInputChange} value={displayPreciseTileLocation?.x ?? 0} />
+                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetXManualInputChange} value={displayPreciseTileLocation?.x ?? 0} />
                         </div>
                         <div className="ml-2 mb-2">
                             <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
-                            <input placeholder="x" type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={displayPreciseTileLocation?.y ?? 0} />
+                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={displayPreciseTileLocation?.y ?? 0} />
                         </div>
                     </div>
                 </div>

@@ -16,9 +16,10 @@ import { TileAssignment } from "../TileSetDefinitionEditor";
  * @param {ChocoStudioTileSheet} props.tileSheet
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
  * @param {TileAssignment} props.activeTileSheetAssignment
- * @param {function({ChocoStudioTileSetDefinition})} props.onChangeMade
+ * @param {function(ChocoStudioTileSetDefinition)} props.onChangeMade
+ * @param {function(TileAssignment)} props.onTileAssignmentRetrieved
  */
-const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, activeTileSheetAssignment, onChangeMade }) => {
+const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, activeTileSheetAssignment, onChangeMade, onTileAssignmentRetrieved }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                        CONSTANTS & GLOBALS                           //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -175,7 +176,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         setAssignmentTileScale(assignmentTileScale);
     }, [tileAssignmentContainerRef, lastResizeTimestamp])
 
-    // resize event handler to force a pixel grid resize
+    // set up resize event handler to force a pixel grid resize
     useEffect(() => {
         // See https://www.geeksforgeeks.org/reactjs/react-onresize-event/
         // See https://react.dev/reference/react/useEffect#parameters
@@ -325,6 +326,19 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
      * @param {HTMLButtonElement} e.target
      */
     const onRetrieveTileButtonClick = (e) => {
+        if (!onTileAssignmentRetrieved) return;
+
+        const regionTileAssignment =
+            tileSetDefinition.regions[regionIdentifier].tileSheetPositions[selectedTile.y][selectedTile.x];
+
+        const /** @type {TileAssignment} */ outboundTileAssignment = {
+            x: regionTileAssignment.x,
+            y: regionTileAssignment.y,
+            geometricTransformation: regionTileAssignment.geometricTransformation,
+            transparencyOverrides: regionTileAssignment?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? [ ]
+        }
+
+        onTileAssignmentRetrieved(outboundTileAssignment);
     }
 
     /**

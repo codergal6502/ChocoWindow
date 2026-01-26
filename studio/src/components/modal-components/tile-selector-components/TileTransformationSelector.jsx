@@ -59,6 +59,14 @@ const TileTransformationSelector = ({ activeTileSheetAssignment, onSelectionMade
     }
 
     useEffect(() => {
+        if (activeTileSheetAssignment) {
+            if (activeTileSheetAssignment.geometricTransformation != selectedTileTransformation) {
+                setSelectedTileTransformation(activeTileSheetAssignment.geometricTransformation);
+            }
+        }
+    }, [activeTileSheetAssignment])
+
+    useEffect(() => {
         if (unique && unique.current && styleRef && styleRef.current && activeTileSheetAssignment?.baseReader && tileBlobUrlMap?.current) {
             /**
              * @param {Object} args
