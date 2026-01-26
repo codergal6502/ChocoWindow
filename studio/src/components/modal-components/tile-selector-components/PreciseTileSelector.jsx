@@ -30,11 +30,11 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     const tileSheetImgRef = useRef(null);
 
     // // utility for developers only during strict mode; "pretends" the selected tile location just got selected
-    // useEffect(() => {
-    //     if (selectedTileLocation) {
-    //         onSelectionMade && onSelectionMade(selectedTileLocation);
-    //     }
-    // }, []);
+    useEffect(() => {
+        if (selectedTileLocation) {
+            onSelectionMade && onSelectionMade(selectedTileLocation);
+        }
+    }, []);
 
 
     const toggleHelp = () => setHelpVisible(!helpVisibile);
@@ -376,7 +376,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
 
             <div className={`grid grid-cols-4 gap-4`}>
                 <div className="mb-4 w-full col-span-2">
-                    <h4 className="mb-1 font-bold">Approximate Tile Selection <span className="text-xs text-normal">{sheetTileSelectionSemiLocked ? "locked" : "not locked"}</span></h4>
+                    <h4 className="mb-1 font-bold">Approximate Tile Selection</h4>
                     <img onMouseLeave={onSheetMouseLeave} onMouseEnter={onSheetMouseEnter} onMouseMove={onSheetMouseMove} onClick={onSheetMouseClick} alt="Tile Selection" src={tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)} ref={tileSheetImgRef} />
                 </div>
                 <div className="mb-4 w-full col-span-2">

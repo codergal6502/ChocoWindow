@@ -1,22 +1,22 @@
 import './TileSetDefinitionEditor.css';
 
 import { useContext, useEffect, useRef, useState } from "react";
-import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
+import { PNG } from 'pngjs/browser'
+
 import { ChocoWinAbstractPixelReader, ChocoWinColor, ChocoWinRegionPixelReader, ChocoWinSettings, ChocoWinWindow, TileTransformationTypes } from "../../ChocoWindow";
 import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
-import { Polyline, Rect, Canvas, FabricImage } from 'fabric'
-import { PNG } from 'pngjs/browser'
-import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../../ChocoWinPngJsReaderWriter';
+
+import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
+import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 import { TransformationImages } from '../../TransformationImages';
+
 import PreciseTileSelector from './tile-selector-components/PreciseTileSelector';
 import TileTransformationSelector from './tile-selector-components/TileTransformationSelector'
+import PixelTransparencyOverideSelector from './tile-selector-components/PixelTransparencyOverideSelector';
+import WindowRegionDefinition from './tile-selector-components/WindowRegionDefinition';
 
 // Tiles in the sheet tile selection.
-const TILES_IN_PTS = 3;
-const DEFAULT_PTS_SCALE = 3
-const DEFAULT_TA_SCALE = 3
-const BIGGEST_ZOOM_FACTOR = 6;
 const MAX_COLOR_COUNT = ChocoWinSettings.suggestedMaximumTileSheetColorCount;
 
 // See https://bikeshedd.ing/posts/use_state_should_require_a_dependency_array/.
@@ -31,53 +31,47 @@ const MAX_COLOR_COUNT = ChocoWinSettings.suggestedMaximumTileSheetColorCount;
  * @param {Number} props.lastResizeTimestamp
  * @returns {JSX.Element}
  */
-const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete, onReturnToEditor, lastResizeTimestamp }) => {
+const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete, onReturnToEditor }) => {
     const hasChangeHandler = onTileSetDefinitionChange && typeof onTileSetDefinitionChange == "function";
     const hasDeleteHandler = onTileSetDefinitionDelete && typeof onTileSetDefinitionDelete == "function";
     const readerFactory = new ChocoWinPngJsPixelReaderFactory();
 
-
-
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    //            COMPONENTIZATION -- REORGANIZE LATER                      //
+    //                         STATE AND REF HOOKS                          //
     // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    // basic fields
+    const [name, setName] = useState(tileSetDefinition.name);
+    const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
+    const [selectedTileSheet, setSelectedTileSheet] = useState(null);
+    const [tileSize, setTileSize] = useState(tileSetDefinition.tileSize);
+
+    // tile sheet
+    const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
+
+    // colors
+    const [defaultColors, setDefaultColors] = useState(tileSetDefinition.defaultColors);
+
+    // preview
+    const previewRef = useRef(null);
+
+    // component interaction
+    const [listenToMe, setListenToMe] = useState({ x: 0, y: 0, geometricTransformation: [], transparencyOverrides: [] })
+
 
     /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
-    const [untransformedTileBlobUrl, setUntransformedTileBlobUrl] = useState(null);
+    const [untransformedTileReader, setUntransformedTileReader] = useState(null);
+    /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
+    const [transformedTileReader, setTransformedTileReader] = useState(null);
+    /** @type {ReturnType<typeof useState<{x: number, y: number}[]>} */
+    const [transparentPixels, setTransparentPixels] = useState([]);
+    /** @type {ReturnType<typeof useState<{width: number, height: number}>} */
+    const [tileSheetDimensions, setTileSheetDimensions] = useState(null);
 
-    /**
-     * @param {{x: Number, y: Number}} c 
-     */
-    const onTileSelectionMade = (c) => {
-        if (c && tileSheetBlobUrlDictionary && tileSetDefinition) {
-            const url = tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId);
-            if (url) {
-                fetch(url).
-                    then(r => r.blob()).
-                    then(b => {
-                        const tileSheetReader = readerFactory.build({ blob: b });
-                        const tileReader = new ChocoWinRegionPixelReader(
-                            tileSheetReader,
-                            {
-                                x: c.x,
-                                y: c.y,
-                                width: tileSize,
-                                height: tileSize,
-                            }
-                        )
-                        setUntransformedTileBlobUrl(tileReader);
-                    });
-            }
-        }
-    }
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    //            STATE, REFERENCE OBJECTS, AND UTILITY METHODS             //
+    //                          UTILITY FUNCTIONS                           //
     // // // // // // // // // // // // // // // // // // // // // // // // //
-
-    const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
-    const transformationImages = useContext(TransformationImages);
-
 
     /**
      * @overload
@@ -101,6 +95,158 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             tileSheetBlobUrlDictionary.setDataUrl(tileSheet.id, tileSheets.find((ts) => ts.id == tileSheet.id)?.imageDataUrl);
         }
     }
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                             EFFECT HOOKS                             //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    // process the selected tile sheet
+    useEffect(() => {
+        if (selectedTileSheet) {
+            readerFactory.
+                build({ dataUrl: selectedTileSheet.imageDataUrl }).
+                isReady().
+                then((r) => {
+                    // todo: create setTileSheetReader
+                    setTileSheetDimensions({ width: r.width, height: r.height })
+                });
+        }
+    }, [selectedTileSheet])
+
+    // prepare the selected tile sheet
+    useEffect(() => {
+        if (tileSheetId) {
+            ensureBlobDictionaryHasWholeTileSheet(tileSheetId);
+            setSelectedTileSheet(tileSheets.find(ts => ts.id == tileSheetId));
+        }
+    }, [tileSheetId])
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                            EVENT HANDLERS                            //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    // domain object field event and action handlers
+    // // // // // // // // // // // // // // // // //
+
+    /**
+     * @param {InputEvent} e
+     */
+    const onNameChange = (e) => {
+        setName(e.target.value);
+        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.name = e.target.value);
+    };
+
+    /**
+     * @param {InputEvent} e
+     */
+    const onTileSheetIdChange = (e) => {
+        setTileSheetId(e.target.value);
+        setSelectedTileSheet(tileSheets.find(ts => ts.id == e.target.value));
+        if (!showLowerUi) setShowLowerUi(true);
+        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.tileSheetId = e.target.value);
+    };
+
+    /**
+     * @param {InputEvent} e
+     */
+    const onTileSizeChange = (e) => {
+        setTileSize(Number(e.target.value));
+        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.tileSize = Number(e.target.value))
+    }
+
+    const deleteTileSetDefinitionOnClick = () => {
+        if (hasDeleteHandler) {
+            onTileSetDefinitionDelete(tileSetDefinition.id);
+        }
+    };
+
+    // tile component event handlers
+    // // // // // // // // // // // // // // 
+
+    /**
+     * @param {{x: Number, y: Number}} coordinates 
+     */
+    const onTileSelectionMade = (coordinates) => {
+        if (coordinates && tileSheetBlobUrlDictionary && tileSetDefinition) {
+            const url = tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId);
+            if (url) {
+                fetch(url).
+                    then(r => r.blob()).
+                    then(b => {
+                        // todo: create setTileSheetReader
+                        const tileSheetReader = readerFactory.build({ blob: b });
+                        const tileReader = new ChocoWinRegionPixelReader(
+                            tileSheetReader,
+                            {
+                                x: coordinates.x,
+                                y: coordinates.y,
+                                width: tileSize,
+                                height: tileSize,
+                            }
+                        )
+                        setUntransformedTileReader(tileReader);
+
+                        setListenToMe({
+                            x: coordinates.x,
+                            y: coordinates.y,
+                            geometricTransformation: listenToMe.geometricTransformation,
+                            transparencyOverrides: listenToMe.transparencyOverrides,
+                            reader: listenToMe.reader,
+                        });
+
+
+                        if (!transformedTileReader) {
+                            setTransformedTileReader(tileReader);
+                        }
+                    });
+            }
+        }
+    }
+
+    /**
+     * @param {Object} args
+     * @param {String} args.transformationType
+     * @param {ChocoWinAbstractPixelReader} args.reader
+     * @param {String} args.blobUrl
+     */
+    const onTransformationSelectionMade = ({ transformationType, reader, blobUrl }) => {
+        setTransformedTileReader(reader);
+        setListenToMe({
+            x: listenToMe.x,
+            y: listenToMe.y,
+            geometricTransformation: transformationType,
+            transparencyOverrides: listenToMe.transparencyOverrides,
+            reader: reader,
+        });
+        onTileSetDefinitionChange(tileSetDefinition);
+    }
+
+    /**
+     * @param {{x: number, y: number}[]} pixels 
+     */
+    const onTransparencyOverrideSelectionMade = (pixels) => {
+        setTransparentPixels(pixels);
+        setListenToMe({
+            x: listenToMe.x,
+            y: listenToMe.y,
+            geometricTransformation: listenToMe.transformationType,
+            transparencyOverrides: pixels,
+        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * @param {ChocoStudioTileSetDefinition} newTileSetDefinition
@@ -135,50 +281,21 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         });
     }
 
-    // domain object state and reference objects
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-
-    const [name, setName] = useState(tileSetDefinition.name);
-    const [selectedTileSheet, setSelectedTileSheet] = useState(null);
-    const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
-    const [tileSize, setTileSize] = useState(tileSetDefinition.tileSize);
-    const [regions, setRegions] = useState(structuredClone(tileSetDefinition.regions));
-    const [defaultColors, setDefaultColors] = useState(tileSetDefinition.defaultColors);
-
     // tile selection and assignment state and reference objects
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    const wholeTileSheetContainerRef = useRef(null);
-    const preciseSelectionContainerRef = useRef(null);
-    const preciseSelectionZoomedRef = useRef(null);
-    const preciseSelectionGridRef = useRef(null);
-    const tileAssignmentContainerRef = useRef(null);
     const styleRef = useRef(null);
 
-    const [selectedTileLocation, setSelectedTileLocation] = useState(null);
-    const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
 
-    const [preciseSelectionBackgroundPosition, setPreciseSelectionBackgroundPosition] = useState(null);
-    const [preciseTileSelectionScale, setPreciseTileSelectionScale] = useState(DEFAULT_PTS_SCALE);
-    const [preciseTileSelectionSize, setPreciseTileSelectionSize] = useState(tileSetDefinition.tileSize * TILES_IN_PTS * DEFAULT_PTS_SCALE ?? 72);
-    const [tileAssignmentTileSize, setTileAssignmentTileSize] = useState(tileSetDefinition.tileSize * DEFAULT_TA_SCALE ?? 24);
-    const [preciseTileSelectionTransformationImages, setPreciseTileSelectionTransformationImages] = useState([]);
-
-    const [selectedTileTransformation, setSelectedTileTransformation] = useState(TileTransformationTypes.BASE);
-
-    // workflow state and reference objects
-    const [windowRegionIdentifier, setWindowRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
-    const [tileSheetSnapSelectionMode, setTileSheetSnapSelectionMode] = useState(true);
     const [colorCount, setColorCount] = useState(0);
     const [tooManyColors, setTooManyColors] = useState(false);
     const [showLowerUi, setShowLowerUi] = useState(tileSetDefinition.tileSheetId ? true : false);
-    const [wholeTileSheetImage, setWholeTileSheetImage] = useState(null);
+
     const [previewTileScale, setPreviewTileScale] = useState(3);
 
     // preview state and reference objects
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    const previewRef = useRef(null);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                               HOOKS                                  //
@@ -187,233 +304,24 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
 
 
-    useEffect(() => {
-
-    }, [])
 
 
 
-
-
-
-    // tile selection and assignment hooks
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-
-    // store a Fabric image for the selected tile sheet once one is selected.
-    useEffect(() => {
-        if (!showLowerUi) return;
-
-        ensureBlobDictionaryHasWholeTileSheet(tileSheetId)
-        FabricImage
-            .fromURL(tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId))
-            .then((i) => setWholeTileSheetImage(i));
-
-    }, [showLowerUi, tileSheetId])
-
-    // set approximate selection image source to the whole tile sheet image 
-    useEffect(() => {
-        if (!showLowerUi || !wholeTileSheetContainerRef?.current || !tileSheetId) {
-            return;
-        }
-
-        ensureBlobDictionaryHasWholeTileSheet(tileSheetId);
-        wholeTileSheetContainerRef.current.src = tileSheetBlobUrlDictionary.get(tileSheetId);
-
-    }, [showLowerUi, tileSheetId, wholeTileSheetContainerRef])
-
-    // set the precise tile selection scale and total size
-    useEffect(() => {
-        if (!showLowerUi) return;
-        // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
-        if (!preciseSelectionContainerRef.current) {
-            setPreciseTileSelectionSize(TILES_IN_PTS * tileSize);
-        }
-        else {
-            // Similar to the region tile selection width, but this is always three tiles square.
-            const possibleScale = Math.floor((preciseSelectionContainerRef.current.parentElement.offsetWidth / TILES_IN_PTS) / tileSize);
-            const actualScale = Math.min(BIGGEST_ZOOM_FACTOR, possibleScale);
-            setPreciseTileSelectionScale(actualScale);
-            setPreciseTileSelectionSize(TILES_IN_PTS * tileSize * actualScale);
-        }
-    }, [showLowerUi, tileSize, preciseSelectionContainerRef, lastResizeTimestamp])
-
-    // draw grid over precise tile selection
-    useEffect(() => {
-        if (showLowerUi && preciseSelectionGridRef && preciseSelectionGridRef.current) {
-            const canvas = new Canvas('canvasId');
-            canvas.width = preciseTileSelectionSize;
-            canvas.height = preciseTileSelectionSize;
-            const lineWidth = 1;
-            const gridTileLength = preciseTileSelectionSize / TILES_IN_PTS;
-            const translucentYellow = 'rgba(128, 128, 00, 0.5)';
-            const clear = 'rgba(00, 0, 00, 0)';
-
-            const drawNonCenterTileHaze = (x, y, color) => {
-                const rectangle = new Rect({
-                    left: x - 1,
-                    top: y - 1,
-                    fill: color,
-                    width: gridTileLength - 1,
-                    height: gridTileLength - 1,
-                    objectCaching: false,
-                    originX: 'left',
-                    originY: 'top'
-                })
-                canvas.add(rectangle);
-            }
-
-            const drawPolyline = (points) => {
-                const polyline = new Polyline(points, {
-                    stroke: 'black',
-                    strokeWidth: lineWidth,
-                    fill: 'transparent'
-                });
-                canvas.add(polyline);
-            }
-
-            drawPolyline([
-                { x: gridTileLength, y: 0 },
-                { x: gridTileLength, y: preciseTileSelectionSize }
-            ], true);
-
-            drawPolyline([
-                { x: gridTileLength * 2, y: 0 },
-                { x: gridTileLength * 2, y: preciseTileSelectionSize }
-            ]);
-
-            drawPolyline([
-                { x: 0, y: gridTileLength },
-                { x: preciseTileSelectionSize, y: gridTileLength }
-            ]);
-
-            drawPolyline([
-                { x: 0, y: gridTileLength * 2 },
-                { x: preciseTileSelectionSize, y: gridTileLength * 2 }
-            ]);
-
-            drawNonCenterTileHaze(0, 0, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength, 0, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength * 2, 0, translucentYellow);
-
-            drawNonCenterTileHaze(0, gridTileLength, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength, gridTileLength, clear);
-            drawNonCenterTileHaze(gridTileLength * 2, gridTileLength, translucentYellow);
-
-            drawNonCenterTileHaze(0, gridTileLength * 2, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength, gridTileLength * 2, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength * 2, gridTileLength * 2, translucentYellow);
-
-            canvas.renderAll();
-            const imageSrc = canvas.toDataURL();
-            preciseSelectionGridRef.current.style.backgroundImage = `url(${imageSrc})`;
-        }
-    }, [showLowerUi, preciseSelectionGridRef, preciseTileSelectionScale, preciseTileSelectionSize, lastResizeTimestamp])
-
-    const transformationNameLabels = {
-        [TileTransformationTypes.BASE]: "No Transformation",
-        [TileTransformationTypes.ROTATE_90]: "Rotate 90º",
-        [TileTransformationTypes.ROTATE_180]: "Rotate 180º",
-        [TileTransformationTypes.ROTATE_270]: "Rotate 270º",
-        [TileTransformationTypes.REFLECT_HORIZONTAL]: "Horizontal",
-        [TileTransformationTypes.REFLECT_VERTICAL]: "Vertical",
-        [TileTransformationTypes.REFLECT_ASCENDING]: "Ascending Diag.",
-        [TileTransformationTypes.REFLECT_DESCENDING]: "Descending Diag.",
-    }
-
-    // precise tile image button styles
-    useEffect(() => {
-        if (transformationImages && styleRef && styleRef.current) {
-            transformationImages.isReady().then(tiArray => {
-                const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
-                tiArray.forEach(ti => {
-                    const isDarkPart = ti.isDark ? "dark-" : "light-";
-                    const newRule = `.${isDarkPart}${ti.transformationName} { background-image: url(${ti.url}); background-size: 100%; width: 48px; height: 48px; display: block; }`;
-                    styleSheet.insertRule(newRule);
-                })
-                setPreciseTileSelectionTransformationImages(tiArray);
-            })
-        }
-    }, [transformationImages, styleRef])
-
-    // set up the tile assignment grid
-    useEffect(() => {
-        if (!showLowerUi || !tileAssignmentContainerRef) return;
-        // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
-
-        const regionTileWidth = regions[windowRegionIdentifier].width || 1;
-        if (!tileAssignmentContainerRef.current || !regions[windowRegionIdentifier]) {
-            setTileAssignmentTileSize(tileSize);
-        }
-        else {
-            // Similar to the tile selection size, but this changes dynamically with how many tiles the region is.
-            const possibleScale = Math.floor((tileAssignmentContainerRef.current.offsetWidth / regionTileWidth - 4 * regionTileWidth) / tileSize);
-            setTileAssignmentTileSize(tileSize * Math.min(BIGGEST_ZOOM_FACTOR, possibleScale));
-        }
-
-    }, [showLowerUi, tileAssignmentContainerRef, tileSize, regions, windowRegionIdentifier, lastResizeTimestamp])
 
     // preview hooks
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     // draw the preview
-    useEffect(() => {
-        if (showLowerUi && previewRef && previewRef.current && tileSheets && tileSetDefinition && tileSetDefinition.tileSize) {
-            updatePreviewRef(tileSetDefinition)
-        }
-    }, [showLowerUi, previewRef, tileSheets, tileSetDefinition, previewTileScale])
-
-    /**
-     * Updates state refrenced by the precile tile selection CSS.
-     * @param {Object} args
-     * @param {MouseEvent} args.mouseEvent The mouse event if triggered by a mouse event
-     * @param {Number} naturalX The "natural" X coordinate to use; will be overriden by mouse event.
-     * @param {Number} naturalY The "natural" Y coordinate to use; will be overriden by mouse event.
-     * @param {Booealn} overrideSnap Whether or not to ignore the snap-to-grid settings.
-     */
-    const showTileSheetTileInSheetTileSelection = ({ mouseEvent, naturalX, naturalY, overrideSnap = false }) => {
-        if (!showLowerUi || !wholeTileSheetContainerRef || !wholeTileSheetContainerRef.current) return;
-
-        const imageWidth = wholeTileSheetContainerRef.current.naturalWidth;
-        const imageHeight = wholeTileSheetContainerRef.current.naturalHeight;
-
-        if (mouseEvent) {
-            /** @type {DOMRect} */ const rect = wholeTileSheetContainerRef.current.getBoundingClientRect();
-            const ratio = imageWidth / rect.width;
-
-            naturalX = Math.max(0, Math.min(Math.floor(ratio * (mouseEvent.clientX - rect.left)), imageWidth));
-            naturalY = Math.max(0, Math.min(Math.floor(ratio * (mouseEvent.clientY - rect.top)), imageHeight));
-        }
-
-        if (!overrideSnap && tileSheetSnapSelectionMode) {
-            naturalX = tileSize * Math.floor(naturalX / tileSize);
-            naturalY = tileSize * Math.floor(naturalY / tileSize);
-        }
-
-        const preciseTilePosition = {
-            x: preciseTileSelectionScale * (tileSize - naturalX),
-            y: preciseTileSelectionScale * (tileSize - naturalY),
-        };
-
-        setSelectedTileLocation({ x: naturalX, y: naturalY });
-        setPreciseSelectionBackgroundPosition(preciseTilePosition);
-    }
+    // useEffect(() => {
+    //     if (showLowerUi && previewRef && previewRef.current && tileSheets && tileSetDefinition && tileSetDefinition.tileSize) {
+    //         updatePreviewRef(tileSetDefinition)
+    //     }
+    // }, [showLowerUi, previewRef, tileSheets, tileSetDefinition, previewTileScale])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          EVENT HANDLERS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    /**
-     * @param {String} id 
-     */
-    const doOnTileSetDefinitionDelete = (id) => {
-        if (hasDeleteHandler) {
-            onTileSetDefinitionDelete(tileSetDefinition.id);
-        }
-    }
-
-    const deleteTileSetDefinitionOnClick = () => {
-        doOnTileSetDefinitionDelete(tileSetDefinition.id);
-    };
 
     /**
      * @param {function(ChocoStudioTileSetDefinition): void} propModCallback
@@ -432,167 +340,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
     // domain object UI element event handlers
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    /**
-     * @param {InputEvent} e
-     */
-    const onNameChange = (e) => {
-        setName(e.target.value);
-        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.name = e.target.value);
-    };
 
-    /**
-     * @param {InputEvent} e
-     */
-    const onTileSheetIdChange = (e) => {
-        setTileSheetId(e.target.value);
-        setSelectedTileSheet(tileSheets.find(ts => ts.id == e.target.value));
-        if (!showLowerUi) setShowLowerUi(true);
-        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.tileSheetId = e.target.value);
-    };
-
-    /**
-     * @param {InputEvent} e
-     */
-    const onTileSizeChange = (e) => {
-        setTileSize(Number(e.target.value));
-        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.tileSize = Number(e.target.value))
-    }
-
-    // workflow UI element event handlers
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-
-    /**
-     * @param {InputEvent} e 
-     */
-    const onWindowRegionIdentifierChange = (e) => {
-        setWindowRegionIdentifier(e.target.value);
-    }
-
-    /**
-     * @param {InputEvent} e
-     */
-    const onRegionWidthChange = (e) => {
-        const newRegions = structuredClone(regions);
-        newRegions[windowRegionIdentifier].width = Number(e.target.value);
-        newRegions[windowRegionIdentifier].tileSheetPositions.length = Math.max(newRegions[windowRegionIdentifier].tileSheetPositions.length, e.target.value);
-        setRegions(newRegions);
-        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
-    };
-
-    /**
-     * @param {InputEvent} e
-     */
-    const onRegionHeightChange = (e) => {
-        const newRegions = structuredClone(regions);
-        newRegions[windowRegionIdentifier].height = Number(e.target.value);
-        newRegions[windowRegionIdentifier].tileSheetPositions.forEach((col, rowNum) => {
-            if (!col) col = [];
-            col.length = Math.max(col.length, e.target.value);
-            newRegions[windowRegionIdentifier].tileSheetPositions[rowNum] = col;
-        });
-        setRegions(newRegions);
-        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
-    };
-
-    // tile assignment UI element event handlers
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-
-    useEffect(() => {
-
-    })
-
-    const onWholeTileSheetMouseEnter = () => {
-        setSheetTileSelectionSemiLocked(false);
-    }
-
-    /**
-     * @param {MouseEvent} e 
-     */
-    const onWholeTileSheetMouseMove = (e) => {
-        if (!sheetTileSelectionSemiLocked) {
-            showTileSheetTileInSheetTileSelection({ mouseEvent: e });
-        }
-    }
-
-    /**
-     * @param {MouseEvent} e 
-     */
-    const onWholeTileSeetMouseClick = (e) => {
-        setSheetTileSelectionSemiLocked(true);
-        showTileSheetTileInSheetTileSelection({ mouseEvent: e });
-    }
-
-    /**
-     * @param {MouseEvent} e 
-     */
-    const onPreciseTileSelectionClick = (e) => {
-        /** @type {DOMRect} */ const rect = e.target.getBoundingClientRect();
-
-        const /** @type {Number} */ x = e.clientX - rect.left + 1;
-        const /** @type {Number} */ y = e.clientY - rect.top + 1;
-
-        let deltaSheetX = 0;
-        let deltaSheetY = 0;
-
-        if (x / preciseTileSelectionScale < tileSize) {
-            deltaSheetX = -tileSize;
-        }
-        else if (x / preciseTileSelectionScale > 2 * tileSize) {
-            deltaSheetX = tileSize;
-        }
-
-        if (y / preciseTileSelectionScale < tileSize) {
-            deltaSheetY = -tileSize;
-        }
-        else if (y / preciseTileSelectionScale > 2 * tileSize) {
-            deltaSheetY = tileSize;
-        }
-
-        showTileSheetTileInSheetTileSelection({ naturalX: deltaSheetX + selectedTileLocation.x, naturalY: deltaSheetY + selectedTileLocation.y, overrideSnap: true });
-    }
-
-    /**
-     * @param {InputEvent} e 
-     */
-    const onSheetXManualInputChange = (e) => {
-        showTileSheetTileInSheetTileSelection({ naturalX: Number(e.target.value), naturalY: selectedTileLocation.y, overrideSnap: true });
-    }
-
-    /**
-     * @param {InputEvent} e 
-     */
-    const onSheetYManualInputChange = (e) => {
-        showTileSheetTileInSheetTileSelection({ naturalX: selectedTileLocation.x, naturalY: Number(e.target.value), overrideSnap: true });
-    }
-
-    /**
-     * 
-     * @param {InputEvent} e 
-     */
-    const onSelectTileTransformationChange = (e) => {
-        setSelectedTileTransformation(e.target.value);
-    }
-
-    /**
-     * @param {PointerEvent} e 
-     * @param {Number} tileIndexX 
-     * @param {Number} tileIndexY 
-     */
-    const tileAssignmentButtonOnClick = (tileIndexX, tileIndexY) => {
-        if (!wholeTileSheetImage) {
-            console.error("wholeTileSheetImage isn't loaded when the user tile assignment happeend.");
-            return;
-        }
-
-        // Store the selection.
-        const newRegions = structuredClone(regions);
-        if (!newRegions[windowRegionIdentifier].tileSheetPositions[tileIndexY]) {
-            newRegions[windowRegionIdentifier].tileSheetPositions[tileIndexY] = []
-        }
-        newRegions[windowRegionIdentifier].tileSheetPositions[tileIndexY][tileIndexX] = { x: selectedTileLocation?.x, y: selectedTileLocation?.y, geometricTransformation: selectedTileTransformation };
-        setRegions(newRegions);
-        doOnTileSetDefinitionChange((newTileSetDefinition) => newTileSetDefinition.regions = newRegions);
-    }
 
     // color palette UI element event handlers
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -620,7 +368,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 const y = 192;
 
                 Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
-                    const /** @type {ChocoStudioWindowRegionDefinition} */ r = regions[whichRegion];
+                    const /** @type {ChocoStudioWindowRegionDefinition} */ r = null;//regions[whichRegion];
+                    throw "not implemented";
                     r.tileSheetPositions.filter((_, cn) => cn < r.width).forEach((tspRow) => {
                         tspRow.filter((_, rn) => rn < r.height).forEach((tsp) => {
                             for (let x = tsp.x; x < tsp.x + tileSize; x++) {
@@ -656,6 +405,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     return <>
         <style ref={styleRef}></style>
         <h2 className="text-2xl font-bold sticky top-0 mb-2 bg-white dark:bg-gray-600">Tile Set Definition <span className="text-sm">({tileSetDefinition.id})</span></h2>
+
         <p className="mb-2 mx-6 text-sm italic">A tile set definition identifies locations in the sprite sheet for a window's tiles.</p>
 
         <div className={`grid grid-cols-4 gap-4`}>
@@ -676,148 +426,37 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             </div>
         </div>
 
-        {showLowerUi && <>
-            <PreciseTileSelector tileSetDefinition={tileSetDefinition} tileSize={tileSize} defaultHelpVisible={true} onSelectionMade={onTileSelectionMade} />
-            
-            <div className='grid grid-cols-2 gap-4'>
+        {showLowerUi && tileSheetDimensions && <>
+            <WindowRegionDefinition
+                tileSetDefinition={tileSetDefinition}
+                tileSize={tileSize}
+                sheetSize={tileSheetDimensions}
+                assignmentFromUser={listenToMe}
+                onTileSetDefinitionChange={(tsd) => {
+                    const clone = new ChocoStudioTileSetDefinition(tsd);
+                    onTileSetDefinitionChange(clone);
+                    updatePreviewRef(clone);
+                }}
+            />
+            <PreciseTileSelector
+                tileSetDefinition={tileSetDefinition}
+                tileSize={tileSize}
+                defaultHelpVisible={true}
+                onSelectionMade={onTileSelectionMade}
+            />
+
+            {untransformedTileReader && <div className='grid grid-cols-2 gap-4'>
                 <div className='w-full'>
-                    <TileTransformationSelector reader={untransformedTileBlobUrl} />
+                    <TileTransformationSelector reader={untransformedTileReader} onSelectionMade={onTransformationSelectionMade} />
                 </div>
-            </div>
-
-
-
-
-
-
-
-
-            <h3 className="mb-1 font-bold text-xl">Window Regions</h3>
-            <p className="mb-2 text-sm italic mx-6">There are nine window regions: four corners, four edges, and the center. Top and bottom edges will repeat horizontally. Left and right edges will repeat vertically. The center will repeat in both directions.</p>
-            <div className={`grid grid-cols-10 gap-4`}>
-                <div className="col-span-4 w-full">
-                    <label htmlFor="fca684ea-2f2e-459a-ae5c-99e602f3d57e">Window Region:</label>
-                    <select className={TAILWIND_INPUT_CLASS_NAME} id="fca684ea-2f2e-459a-ae5c-99e602f3d57e" value={windowRegionIdentifier} onChange={onWindowRegionIdentifierChange}>
-                        <option value={CHOCO_WINDOW_REGIONS.TOP_LEFT}>Top-Left Corner</option>
-                        <option value={CHOCO_WINDOW_REGIONS.TOP}>Top Edge</option>
-                        <option value={CHOCO_WINDOW_REGIONS.TOP_RIGHT}>Top-Right Corner</option>
-                        <option value={CHOCO_WINDOW_REGIONS.LEFT}>Left Edge</option>
-                        <option value={CHOCO_WINDOW_REGIONS.CENTER}>Center</option>
-                        <option value={CHOCO_WINDOW_REGIONS.RIGHT}>Right Edge</option>
-                        <option value={CHOCO_WINDOW_REGIONS.BOTTOM_LEFT}>Bottom-Left Corner</option>
-                        <option value={CHOCO_WINDOW_REGIONS.BOTTOM}>Bottom Edge</option>
-                        <option value={CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT}>Bottom-Right Corner</option>
-                    </select>
+                <div className='w-full'>
+                    <PixelTransparencyOverideSelector reader={transformedTileReader} onSelectionMade={onTransparencyOverrideSelectionMade} />
                 </div>
-                <div className="w-full col-span-2">
-                    <label htmlFor="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961">Width (tiles)</label>
-                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regions[windowRegionIdentifier].width || 1} onChange={onRegionWidthChange} />}
-                    {(windowRegionIdentifier != CHOCO_WINDOW_REGIONS.TOP && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.BOTTOM && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
-                </div>
-                <div className="w-full col-span-2">
-                    <label htmlFor="7ae42bae-9eeb-4491-be31-00161a3af632">Height (tiles)</label>
-                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regions[windowRegionIdentifier].height || 1} onChange={onRegionHeightChange} />}
-                    {(windowRegionIdentifier != CHOCO_WINDOW_REGIONS.LEFT && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.RIGHT && windowRegionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
-                </div>
-                <div className="col-span-10 -mt-4">
-                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP_LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP_RIGHT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM_LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT) && <p className="mb-2 text-sm italic">Corners can only be 1 tile wide and 1 tile high.</p>}
-                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.TOP || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM) && <p className="mb-2 text-sm italic">Top and bottom edge pattern can be any number of tiles wide.</p>}
-                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || windowRegionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT) && <p className="mb-2 text-sm italic">Left and right edge pattern can be any number of tiles wide.</p>}
-                    {(windowRegionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <p className="mb-2 text-sm italic">The center repeated pattern can be any number of tiles wide or high.</p>}
-                </div>
-            </div>
+            </div>}
 
-            <h3 className="mb-1 text-xl font-bold">Tile Selection</h3>
-            <p className="mb-2 text-sm mx-6"><span className="italic">First,</span> approximately click on location the tile sheet to load that area into the tile sheet detail selector. <span className="italic">Second,</span> precisely adjust the position or click on an adjacent tile. <span className="italic">Third,</span> click on the tile location to assign that part of the tile sheet to that tile in the regioon. If <span className="italic"> other tiles </span> to be assigned are <span className="italic">adjacent</span> in the tile sheet, use can use the precise tile selection without using the approximate tile selection.</p>
 
-            <div className={`grid grid-cols-10 gap-4 mb-2`}>
-                <div className="w-full col-span-2">
-                    <label htmlFor="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3">Sheet Snap Mode</label>
-                    <select className={TAILWIND_INPUT_CLASS_NAME} id="cbeb0e41-1266-432d-a3d4-0fbccc65b3e3" value={tileSheetSnapSelectionMode} onChange={(e) => setTileSheetSnapSelectionMode(String(true) == e.target.value)}>
-                        <option value={true}>Tile Size ({tileSize}px)</option>
-                        <option value={false}>Do Not Snap</option>
-                    </select>
-                </div>
-            </div>
-            <div className={`grid grid-cols-3 gap-4`}>
-                <div className="mb-4 w-full">
-                    <h4 className="mb-1 font-bold">Approximate Tile Selection</h4>
-                    <img onMouseEnter={onWholeTileSheetMouseEnter} onMouseMove={onWholeTileSheetMouseMove} onClick={onWholeTileSeetMouseClick} alt="Tile Selection" src={null} ref={wholeTileSheetContainerRef} />
-                </div>
 
-                <div className="mb-4 w-full">
-                    <h4 className="mb-1 font-bold">Precise Tile Selection</h4>
-                    <div ref={preciseSelectionContainerRef} style={{ '--tile-sel-size': `${preciseTileSelectionSize}px` }} className="mb-3 mx-auto tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
-                        <div
-                            ref={preciseSelectionZoomedRef}
-                            className="w-full h-full sheet-tile-selection-mid-ground"
-                            style={{
-                                backgroundImage: `url(${tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)})`,
-                                imageRendering: 'pixelated',
-                                backgroundSize: `${wholeTileSheetContainerRef?.current?.naturalWidth * preciseTileSelectionScale}px ${wholeTileSheetContainerRef?.current?.naturalHeight * preciseTileSelectionScale}px`,
-                                backgroundPositionX: preciseSelectionBackgroundPosition?.x || 0,
-                                backgroundPositionY: preciseSelectionBackgroundPosition?.y || 0,
-                            }}
-                            onClick={onPreciseTileSelectionClick}
-                        >
-                            <div ref={preciseSelectionGridRef} className="w-full h-full"></div>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2">
-                        <div className="mr-2 mb-2">
-                            <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X</label>
-                            <input placeholder="x" type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetXManualInputChange} value={selectedTileLocation?.x ?? 0} />
-                        </div>
-                        <div className="ml-2 mb-2">
-                            <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
-                            <input placeholder="x" type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={selectedTileLocation?.y ?? 0} />
-                        </div>
-                    </div>
 
-                    <h4 className="my-3 font-bold">Tile Transformation</h4>
-                    <div className="grid grid-cols-2">
-                        {Object.values(TileTransformationTypes).map((transformationName, idx) =>
-                            <label className="flex items-center">
-                                <input type="radio" name="tile-transformation" className="" key={idx} value={transformationName} checked={selectedTileTransformation == transformationName} onChange={onSelectTileTransformationChange} />
-                                <span className={`light-${transformationName} dark:dark-${transformationName}`} />
-                                <span>{transformationNameLabels[transformationName]}</span>
-                            </label>
-                        )}
-                    </div>
-                </div>
-
-                <div ref={tileAssignmentContainerRef} className="mb-4 w-full">
-                    <h4 className="mb-1 font-bold">Tile Assignment</h4>
-                    <div
-                        style={{ '--flex-width': `${regions[windowRegionIdentifier].width * tileAssignmentTileSize}px`, '--col-count': `${regions[windowRegionIdentifier].width}px`, '--tile-size': `${tileAssignmentTileSize}px` }}
-                        className="flex flex-wrap w-[var(--flex-width)] mx-auto"
-                    >
-                        {
-                            Array.from({ length: regions[windowRegionIdentifier].height || 1 }).map((_, tileIndexY) =>
-                                Array.from({ length: regions[windowRegionIdentifier].width || 1 }).map((_, tileIndexX) =>
-                                    <button
-                                        onClick={() => tileAssignmentButtonOnClick(tileIndexX, tileIndexY)}
-                                        key={`tile-selector-${tileIndexX}-${tileIndexY}`}
-                                        style={{
-                                            backgroundImage: `url(${tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)})`,
-                                            backgroundRepeat: "no-repeat",
-                                            imageRendering: "pixelated",
-                                            backgroundSize: (() => {
-                                                return `${wholeTileSheetContainerRef?.current?.naturalWidth * (tileAssignmentTileSize / tileSize)}px ${wholeTileSheetContainerRef?.current?.naturalHeight * (tileAssignmentTileSize / tileSize)}px`;
-                                            })(),
-                                            backgroundPositionX: (() => {
-                                                return (tileAssignmentTileSize / tileSize) * (-tileSetDefinition.regions[windowRegionIdentifier].tileSheetPositions?.[tileIndexY]?.[tileIndexX]?.x ?? 0);
-                                            })(),
-                                            backgroundPositionY: (() => {
-                                                return (tileAssignmentTileSize / tileSize) * (-tileSetDefinition.regions[windowRegionIdentifier].tileSheetPositions?.[tileIndexY]?.[tileIndexX]?.y ?? 0);
-                                            })(),
-                                        }}
-                                        className={`border-t-2 border-l-2 ${(tileIndexY == regions[windowRegionIdentifier].height - 1) && 'border-b-2'} ${(tileIndexX == regions[windowRegionIdentifier].width - 1) && 'border-r-2'} w-[var(--tile-size)] h-[var(--tile-size)] text-xs`}>({tileIndexX + 1}, {tileIndexY + 1})</button>)
-                            )
-                        }
-                    </div>
-                </div>
-            </div>
 
             <h3 className="mb-2 mt-4 text-xl">Window Preview</h3>
 

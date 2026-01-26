@@ -1,0 +1,23 @@
+div.transparency-container {
+    background-image: url("./tile-background-3.png");
+    grid-template-columns: repeat(var(--tile-size), 1fr);
+    display: grid;
+    gap: 3px;
+    padding: 3px;
+    width: fit-content;
+}
+
+label.pixel-transparency-checkbox {
+    border: 2px solid black;
+}
+
+label.pixel-transparency-checkbox.pixel-is-transparent {
+    /* background-image: url("tile-background-1.png");
+    background-blend-mode: overlay;
+    background-size: 100%; */
+    mask-image: url("tile-background-1.png");
+    mask-size: 100%;
+    mask-mode: luminance;
+    image-rendering: pixelated;
+    /* border-style: dotted; */
+}

@@ -203,12 +203,12 @@ class ChocoStudioTileSetDefinition {
                 "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions.filter(
                     (_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.LEFT].height
                 ).map(
-                    row => !row ? { x: 0, y: 0, "t": null } : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
+                    row => !(row?.[0]) ? ({ x: 0, y: 0, "t": null }) : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
                 ),
                 "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions.filter(
                     (_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.RIGHT].height
                 ).map(
-                    row => !row ? { x: 0, y: 0, "t": null } : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
+                    row => !(row?.[0]) ? ({ x: 0, y: 0, "t": null }) : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
                 ),
             },
             "centerRows":

@@ -1,0 +1,26 @@
+div.region-tile-container {
+    background-image: url("./tile-background-3.png");
+    grid-template-columns: repeat(var(--region-width), 1fr);
+    display: grid;
+    gap: 0px;
+    padding: 3px;
+    width: fit-content;
+}
+
+div.assign-this-tile, label.region-tile-radio {
+    width: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
+    height: calc(4px + var(--tile-sheet-scale) * var(--tile-size));
+    border: 2px solid transparent;
+    padding: 2px;
+    display: block;
+
+    background-size: calc(100%);
+    background-repeat: no-repeat;
+    background-clip: padding-box;
+    image-rendering: pixelated;
+}
+
+label.region-tile-radio.region-tile-selected {
+    filter: brightness(1.5);
+    border: 2px solid rgba(255, 255, 255, 1);
+}
