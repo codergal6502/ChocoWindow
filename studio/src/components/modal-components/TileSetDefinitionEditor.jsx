@@ -391,9 +391,9 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
                     const /** @type {ChocoStudioWindowRegionDefinition} */ region = tileSetDefinition.regions[whichRegion];
 
-                    for (let rowIdx = 0; rowIdx < region.assignments.colCount; rowIdx++) {
-                        for (let colIdx = 0; colIdx < region.assignments.rowCount; colIdx++) {
-                            const tsp = region.assignments.get(rowIdx, colIdx);
+                    for (let rowIdx = 0; rowIdx < region.colCount; rowIdx++) {
+                        for (let colIdx = 0; colIdx < region.rowCount; colIdx++) {
+                            const tsp = region.get(rowIdx, colIdx);
 
                             for (let x = tsp.xSheetCoordinate; x < tsp.xSheetCoordinate + tileSize; x++) {
                                 for (let y = tsp.ySheetCoordinate; y < tsp.ySheetCoordinate + tileSize; y++) {

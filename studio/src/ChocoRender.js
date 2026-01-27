@@ -41,7 +41,7 @@ class ChocoWorkspaceRenderer {
             const tileSheet = this.#workspace.tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
             if (!tileSheet) { console.error(`No tile sheet with ID ${tileSetDefinition.tileSheetId}.`); return; }
 
-            if (!this.#readerFactory) { console.error('No reader factory was provided.'); debugger; return; }
+            if (!this.#readerFactory) { console.error('No reader factory was provided.'); return; }
 
             const chocoWindow = new ChocoWinWindow({
                 winTileSet: tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
@@ -92,7 +92,7 @@ class ChocoWorkspaceRenderer {
     generateLayoutImageBlob = (layoutId) => {
         return new Promise((resolve) => {
             this.#generateCanvas(layoutId).then((blob) => {
-                debugger; resolve(blob)
+                resolve(blob)
             });
         })
     }

@@ -108,7 +108,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
             for (let rowIndex = 0; rowIndex < region.rowCount; rowIndex++) {
                 for (let colIndex = 0; colIndex < region.colCount; colIndex++) {
-                    const tp = region.assignments.get(rowIndex, colIndex);
+                    const tp = region.get(rowIndex, colIndex);
 
                     if (tp) {
                         const tileBlobKey = computeTileBlobKey(regionIdentifier, colIndex, rowIndex);
@@ -213,10 +213,10 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
             replaceRule(styleSheet, selectorText, ruleText);
 
-            const assignments = tileSetDefinition.regions[regionIdentifier].assignments;
-            if (!assignments[selectedTile.y]) { assignments[selectedTile.y] = []; }
+            const region = tileSetDefinition.regions[regionIdentifier];
+            if (!region[selectedTile.y]) { region[selectedTile.y] = []; }
 
-            assignments.set(selectedTile.x, selectedTile.y, new ChocoStudioWindowRegionTileAssignment({
+            region.set(selectedTile.x, selectedTile.y, new ChocoStudioWindowRegionTileAssignment({
                 xSheetCoordinate: activeTileSheetAssignment.x,
                 ySheetCoordinate: activeTileSheetAssignment.y,
                 geometricTransformation: activeTileSheetAssignment.geometricTransformation,
@@ -245,7 +245,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         setTileAssignments(
             Array.from(tileSetDefinition.regions[identifier].colCount).map((_, x) => {
                 return Array.from(tileSetDefinition.regions[identifier].rowCount).map((_, y) => {
-                    const oldAssignment = tileSetDefinition.regions[identifier].assignments.get(x, y);
+                    const oldAssignment = tileSetDefinition.regions[identifier].get(x, y);
                     const assignment = {
                         x: oldAssignment?.x ?? 0,
                         y: oldAssignment?.y ?? 0,
@@ -261,13 +261,13 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
     /**
      * 
-     * @param {ChocoStudioWindowRegionTileAssignmentArray} assignments 
+     * @param {ChocoStudioWindowRegionTileAssignmentArray} region 
      * @param {*} height 
      * @param {*} width 
      */
-    const resizeAssignments = (assignments, height, width) => {
-        assignments.colCount = width;
-        assignments.rowCount = height;
+    const resizeRegion = (region, height, width) => {
+        region.colCount = width;
+        region.rowCount = height;
     }
 
     /**
@@ -279,7 +279,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (width == e.target.value && width > 0) {
             setRegionWidth(width);
             tileSetDefinition.regions[regionIdentifier].colCount = width;
-            resizeAssignments(tileSetDefinition.regions[regionIdentifier].assignments, regionHeight, width);
+            resizeRegion(tileSetDefinition.regions[regionIdentifier], regionHeight, width);
         }
     }
 
@@ -292,7 +292,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (height == e.target.value && height > 0) {
             setRegionHeight(height);
             tileSetDefinition.regions[regionIdentifier].rowCount = height;
-            resizeAssignments(tileSetDefinition.regions[regionIdentifier].assignments, height, regionWidth);
+            resizeRegion(tileSetDefinition.regions[regionIdentifier], height, regionWidth);
         }
     }
 
@@ -318,7 +318,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (!onTileAssignmentRetrieved) return;
 
         const regionTileAssignment =
-            tileSetDefinition.regions[regionIdentifier].assignments.get(selectedTile.y, selectedTile.x);
+            tileSetDefinition.regions[regionIdentifier].get(selectedTile.y, selectedTile.x);
 
         const /** @type {TileAssignment} */ outboundTileAssignment = {
             x: regionTileAssignment.x,
