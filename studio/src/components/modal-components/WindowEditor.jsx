@@ -41,7 +41,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     }
 
     const onGeometryXChange = (e) => {
-        const value = e.target.value;
+        const value = Number(e.target.value);
         setGeometryX(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.x = value;
@@ -49,7 +49,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     }
 
     const onGeometryYChange = (e) => {
-        const value = e.target.value;
+        const value = Number(e.target.value);
         setGeometryY(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.y = value;
@@ -57,7 +57,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     }
 
     const onGeometryWChange = (e) => {
-        const value = e.target.value;
+        const value = Number(e.target.value);
         setGeometryW(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.w = value;
@@ -65,7 +65,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     }
 
     const onGeometryHChange = (e) => {
-        const value = e.target.value;
+        const value = Number(e.target.value);
         setGeometryH(value);
         const newWindow = new ChocoStudioWindow(window);
         newWindow.h = value;

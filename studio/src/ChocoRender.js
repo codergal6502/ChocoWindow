@@ -70,19 +70,6 @@ class ChocoWorkspaceRenderer {
                     })
                 );
         return result;
-
-        // const bigPromise = Promise.all(wins.map((w) => w.isReady()));
-
-        // return new Promise((resolve) => {
-        //     bigPromise.then(() => {
-
-        //         const writer =
-        //             this.#writerFactory.build(this.#workspace.width, this.#workspace.height);
-
-        //         writer.isReady().then(() => wins.forEach((w) => w.drawTo(writer)));
-        //         resolve(writer.makeBlob());
-        //     });
-        // });
     }
 
     /**

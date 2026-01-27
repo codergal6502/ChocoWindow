@@ -203,19 +203,15 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                 readerFactory: readerFactory,
                 w: studioWindow.w,
                 h: studioWindow.h,
-                x: studioWindow.x,
-                y: studioWindow.y,
+                x: 0,
+                y: 0,
                 tileScale: preset.tileScale,
                 winTileSet: tileSet
             });
 
             return new Promise(resolve => {
                 renderWindow.isReady().then(() => {
-                    // also rename window to ChocoWindowRenderer, since it's not a window
-                    // const canvas = document.createElement("canvas");
-                    // const ctx = canvas.getContext("2d", { willReadFrequently: true });
-                    // canvas.width = studioWindow.w;
-                    // canvas.height = studioWindow.h;
+                    // todo: also rename window to ChocoWindowRenderer, since it's not a window
                     const writer = new ChocoWinPngJsPixelWriter(studioWindow.w, studioWindow.h);
 
                     const styleSheet = styleRef.current.sheet;
@@ -406,42 +402,6 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                                 studioWindow: studioWindow,
                                 tileSet: tileSet,
                             });
-
-                            // // this will cause an error! Wheeeee! So this now takes a reader factory. there's probably more optimization that can be done, but here's where at least that change needs to happen
-                            // // const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
-                            // const renderWindow = new ChocoWinWindow({
-                            //     colorSubstitutions: preset.colorSubstitutions,
-                            //     readerFactory: readerFactory,
-                            //     w: studioWindow.w,
-                            //     h: studioWindow.h,
-                            //     x: studioWindow.x,
-                            //     y: studioWindow.y,
-                            //     tileScale: preset.tileScale,
-                            //     winTileSet: tileSet
-                            // });
-                            // renderWindow.isReady().then(() => {
-                            //     // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
-                            //     // that way, the logic for drawing into the divs can be isoalted and reused
-                            //     // also rename window to ChocoWindowRenderer, since it's not a window
-                            //     const canvas = document.createElement("canvas");
-                            //     const ctx = canvas.getContext("2d", { willReadFrequently: true });
-                            //     canvas.width = studioWindow.w;
-                            //     canvas.height = studioWindow.h;
-
-                            //     const styleSheet = styleRef.current.sheet;
-                            //     renderWindow.drawTo(ctx);
-                            //     const imageData = canvas.toDataURL();
-                            //     const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
-
-                            //         /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
-                            //     const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
-
-                            //     if (oldRuleInx >= 0) {
-                            //         styleSheet.deleteRule(oldRuleInx);
-                            //     }
-
-                            //     styleSheet.insertRule(newRule);
-                            // });
                         },
                     }
                 })
@@ -534,29 +494,6 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                         }).then(() => {
                             makeDraggable(boundingBoxDiv);
                         });
-
-                        // const renderWindow = new ChocoWinWindow(tileSetDefinition, preset.tileScale, 0, 0, studioWindow.w, studioWindow.h, preset.substituteColors);
-                        // renderWindow.isReady().then(() => {
-                        //     // creating these windows should be moved to ouside this area and they should be pre-filled with a loading thing
-                        //     // that way, the logic for drawing into the divs can be isoalted and reused
-                        //     // also rename window to ChocoWindowRenderer, since it's not a window
-
-                        //     const styleSheet = styleRef.current.sheet;
-                        //     renderWindow.drawTo(ctx);
-                        //     const imageData = canvas.toDataURL();
-                        //     const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
-
-                        //         /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
-                        //     const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
-
-                        //     if (oldRuleInx >= 0) {
-                        //         styleSheet.deleteRule(oldRuleInx);
-                        //     }
-
-                        //     styleSheet.insertRule(newRule);
-
-                        //     makeDraggable(boundingBoxDiv);
-                        // });
                     }
                 })
             }

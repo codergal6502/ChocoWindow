@@ -171,6 +171,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         if (tileSheetReader) {
             // Uncertain what the circumstances are under which there would be
             // no tile sheet reader.
+            // todo: assess that comment
             const baseReader = new ChocoWinRegionPixelReader(
                 tileSheetReader,
                 {
@@ -262,7 +263,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
 
 
-
+    // todo: reorganize this
 
 
 

@@ -126,8 +126,8 @@ class ChocoStudioWindowRegionDefinition {
     constructor(arg1) {
         if (arg1) {
             this.id = arg1.id
-            this.#colCount = arg1.colCount;
-            this.#rowCount = arg1.rowCount;
+            this.#colCount = Number(arg1.colCount);
+            this.#rowCount = Number(arg1.rowCount);
             this.internalArray = arg1.internalArray.map(row => row.map(a => new ChocoStudioWindowRegionTileAssignment(a)))
             this.#resizeArray();
         }
@@ -338,7 +338,7 @@ class ChocoStudioPreset {
             this.name = arg1.name;
             this.id = arg1.id;
             this.tileSetDefinitionId = arg1.tileSetDefinitionId
-            this.tileScale = arg1.tileScale
+            this.tileScale = Number(arg1.tileScale)
             this.substituteColors = arg1?.substituteColors?.map((c) => c ? new ChocoWinColor(c) : null) || [];
         }
     }
@@ -389,10 +389,10 @@ class ChocoStudioWindow {
             /** @type { String } */ this.name = arg1.name;
             /** @type { String } */ this.id = arg1.id;
             /** @type { String } */ this.presetId = arg1.presetId;
-            /** @type { Number } */ this.x = arg1.x;
-            /** @type { Number } */ this.y = arg1.y;
-            /** @type { Number } */ this.w = arg1.w;
-            /** @type { Number } */ this.h = arg1.h;
+            /** @type { Number } */ this.x = Number(arg1.x);
+            /** @type { Number } */ this.y = Number(arg1.y);
+            /** @type { Number } */ this.w = Number(arg1.w);
+            /** @type { Number } */ this.h = Number(arg1.h);
             /** @type { ChocoStudioPreset } */ this.singularPreset = arg1.singularPreset && new ChocoStudioPreset(arg1.singularPreset)
         }
     }
@@ -444,8 +444,8 @@ class ChocoStudioWorkspace {
         else {
             this.workspaceName = arg1.workspaceName;
             this.id = arg1.id;
-            this.width = arg1.width;
-            this.height = arg1.height;
+            this.width = Number(arg1.width);
+            this.height = Number(arg1.height);
             this.tileSheets = arg1.tileSheets.map((ts) => new ChocoStudioTileSheet(ts));
             this.tileSetDefinitions = arg1.tileSetDefinitions.map((tsd) => new ChocoStudioTileSetDefinition(tsd));
             this.tileSets = arg1.tileSets.map((ts) => new ChocoWinTileSet(ts));
@@ -458,22 +458,5 @@ class ChocoStudioWorkspace {
 }
 
 
-// Not exported intentionally
-class FileUpgrader {
-    doUpgrade(parsedJson) {
-        return new ChocoStudioWorkspace(this.#doUpgrade__1_0_1(parsedJson));
-    }
-
-    #doUpgrade__1_0_1(parsedJson) {
-        if (!parsedJson.version) {
-            parsedJson = this.#doUpgrade__1_0_0(parsedJson);
-        }
-    }
-
-    #doUpgrade__1_0_0(parsedJson) {
-        parsedJson.version = "1.0.0";
-        return parsedJson;
-    }
-}
 
 export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment, ChocoStudioWindowRegionDefinition as ChocoStudioWindowRegionTileAssignmentArray };

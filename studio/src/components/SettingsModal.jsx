@@ -186,7 +186,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
         }
 
         doSetWorkspace(modifiedWorkspace);
-        // setActivelayout(null);
+        // todo: why was this commented out? // setActivelayout(null);
     }
 
     const onWindowChange = (/** @type {ChocoStudioWindow} */ modifiedWindow) => {

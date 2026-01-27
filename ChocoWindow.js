@@ -295,7 +295,7 @@ export class ChocoWinWindow {
 
                 for (let offsetX = 0; offsetX < this.#tileScale; offsetX++) {
                     for (let offsetY = 0; offsetY < this.#tileScale; offsetY++) {
-                        writer.writePixel({ x: destX + sourceX * this.#tileScale + offsetX, y: destY + sourceY * this.#tileScale + offsetY }, pixelColor);
+                        writer.writePixel({ x: this.#x + destX + sourceX * this.#tileScale + offsetX, y: this.#y + destY + sourceY * this.#tileScale + offsetY }, pixelColor);
                     }
                 }
             }

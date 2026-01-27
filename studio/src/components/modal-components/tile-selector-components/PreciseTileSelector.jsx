@@ -31,7 +31,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
     const tileSheetImgRef = useRef(null);
 
-    // // utility for developers only during strict mode; "pretends" the selected tile location just got selected
+    // utility for developers only during strict mode; "pretends" the selected tile location just got selected
     useEffect(() => {
         if (selectedTileLocation) {
             onSelectionMade && onSelectionMade(selectedTileLocation);
