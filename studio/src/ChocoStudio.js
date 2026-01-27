@@ -1,4 +1,4 @@
-import { ChocoWinColor, ChocoWinSettings, ChocoWinTileSet, pngBase64DataUrlToBlob } from './ChocoWindow.js';
+import { ChocoWinColor, ChocoWinCoordinates, ChocoWinSettings, ChocoWinTileSet, pngBase64DataUrlToBlob, TileTransformationTypes } from './ChocoWindow.js';
 
 /**
  * Provides 
@@ -86,6 +86,135 @@ const CHOCO_WINDOW_REGIONS = Object.freeze({
     BOTTOM_RIGHT: "BOTTOM_RIGHT"
 });
 
+class ChocoStudioWindowRegionTileAssignment {
+    /**
+     * Default constructor
+     */
+    /**
+     * Copy constructor; useful for loading JSON.
+     * @param {ChocoStudioWindowRegionTileAssignment} arg1 
+     */
+    constructor(arg1) {
+        if (!arg1) {
+            this.id = crypto.randomUUID();
+            this.xSheetCoordinate = 0;
+            this.ySheetCoordinate = 0;
+            this.geometricTransformation = TileTransformationTypes.BASE;
+            /** @type {ChocoWinCoordinates[]} */ this.transparencyOverrides = [];
+        }
+        else {
+            this.id = arg1.id;
+            this.xSheetCoordinate = arg1.xSheetCoordinate;
+            this.ySheetCoordinate = arg1.ySheetCoordinate;
+            this.geometricTransformation = arg1.geometricTransformation;
+            this.transparencyOverrides = arg1?.transparencyOverrides?.map(c => ({ x: c.x, y: c.y }));
+        }
+    }
+}
+
+class ChocoStudioWindowRegionTileAssignmentArray {
+    /** @type {number} */ #colCount;
+    /** @type {number} */ #rowCount;
+
+    /**
+     * Default constructor
+     */
+    /**
+     * Copy constructor; useful for loading JSON.
+     * @param {ChocoStudioWindowRegionTileAssignmentArray} arg1 
+     */
+    constructor(arg1) {
+        if (arg1) {
+            this.id = arg1.id
+            this.#colCount = arg1.colCount;
+            this.#rowCount = arg1.rowCount;
+            this.internalArray = arg1.internalArray.map(row => row.map(a => new ChocoStudioWindowRegionTileAssignment(a)))
+            this.#resizeArray();
+        }
+        else {
+            this.id = crypto.randomUUID();
+            this.#colCount = 1;
+            this.#rowCount = 1;
+            this.internalArray = [[new ChocoStudioWindowRegionTileAssignment()]];
+        }
+    }
+
+    /** @param {number} w */
+    set colCount(w) {
+        this.#colCount = w;
+        this.#resizeArray();
+    }
+
+    get colCount() { return this.#colCount; }
+
+    /** @param {number} h */
+    set rowCount(h) {
+        this.#rowCount = h;
+        this.#resizeArray();
+    }
+
+    get rowCount() { return this.#rowCount; }
+
+    #resizeArray() {
+        this.internalArray.splice(this.#rowCount);
+        while (this.internalArray.length < this.#rowCount) {
+            this.internalArray[this.internalArray.length] = [];
+        }
+
+        this.internalArray.forEach(row => {
+            row.splice(this.#colCount);
+            while (row.length < this.#colCount) {
+                row[row.length] = null;
+            }
+        })
+    }
+
+    /**
+     * @param {number} rowIndex 
+     * @param {number} colIndex 
+     * @param {ChocoStudioWindowRegionTileAssignment} assigment 
+     */
+    set(rowIndex, colIndex, assigment) {
+        if (0 <= rowIndex && rowIndex < this.#rowCount) {
+            if (0 <= colIndex && colIndex < this.#colCount) {
+                this.internalArray[rowIndex][colIndex] = assigment;
+            }
+        }
+    }
+
+    /**
+     * @param {number} rowIndex 
+     * @param {number} colIndex 
+     * @returns 
+     */
+    get(rowIndex, colIndex) {
+        return this.internalArray[rowIndex][colIndex];
+    }
+
+    /**
+     * @param {number} rowIndex 
+     */
+    getRow(rowIndex) {
+        return this.internalArray[rowIndex].slice();
+    }
+
+    /**
+     * @param {number} colIndex 
+     */
+    getColumn(colIndex) {
+        return this.internalArray.map(row => row[colIndex]);
+    }
+
+    toJSON() {
+        // See https://stackoverflow.com/a/42107611/1102726
+        return {
+            rowCount: this.#rowCount,
+            colCount: this.#colCount,
+            internalArray: this.internalArray
+        }
+    }
+}
+
 class ChocoStudioWindowRegionDefinition {
     /**
      * Default constructor
@@ -96,18 +225,14 @@ class ChocoStudioWindowRegionDefinition {
      */
     constructor(arg1) {
         if (!arg1) {
-            /** @type {Number} */ this.width = 1;
-            /** @type {Number} */ this.height = 1;
-            /** @type {{ x: Number, y: Number, geometricTransformation: String, transparencyOverrides: {x: number, y:number}[] }[][]} */ this.tileSheetPositions = [[{ x: null, y: null }]]
+            this.colCount = 1;
+            this.rowCount = 1;
+            this.assignments = new ChocoStudioWindowRegionTileAssignmentArray()
         }
         else {
-            this.width = arg1.width;
-            this.height = arg1.height;
-            this.tileSheetPositions = arg1.tileSheetPositions.map((col) =>
-                // pos could be null if passed in from a not-yet-assignd value in the GUI.
-                // ?? will coalesce undefined but not zero. JavaScript is weird.
-                !col ? null : col.map((pos) => ({ x: pos?.x ?? null, y: pos?.y ?? null, geometricTransformation: pos?.geometricTransformation }))
-            )
+            this.colCount = arg1.colCount;
+            this.rowCount = arg1.rowCount;
+            this.assignments = new ChocoStudioWindowRegionTileAssignmentArray(arg1.assignments);
         }
     }
 }
@@ -169,55 +294,45 @@ class ChocoStudioTileSetDefinition {
             "tileSize": this.tileSize,
             "corners": {
                 "TL": {
-                    "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].y,
-                    "t": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].tileSheetPositions[0][0].geometricTransformation,
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].assignments.get(0, 0).xSheetCoordinate,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].assignments.get(0, 0).ySheetCoordinate,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].assignments.get(0, 0).geometricTransformation,
                 },
                 "TR": {
-                    "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].y,
-                    "t": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].tileSheetPositions[0][0].geometricTransformation,
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].assignments.get(0, 0).xSheetCoordinate,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].assignments.get(0, 0).ySheetCoordinate,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].assignments.get(0, 0).geometricTransformation,
                 },
                 "BL": {
-                    "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].y,
-                    "t": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].tileSheetPositions[0][0].geometricTransformation,
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].assignments.get(0, 0).xSheetCoordinate,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].assignments.get(0, 0).ySheetCoordinate,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].assignments.get(0, 0).geometricTransformation,
                 },
                 "BR": {
-                    "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].x,
-                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].y,
-                    "t": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].tileSheetPositions[0][0].geometricTransformation
+                    "x": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].assignments.get(0, 0).xSheetCoordinate,
+                    "y": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].assignments.get(0, 0).ySheetCoordinate,
+                    "t": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].assignments.get(0, 0).geometricTransformation
                 }
             },
             "edges": {
-                "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].tileSheetPositions[0].filter(
-                    (_, colIdx) => colIdx < this.regions[CHOCO_WINDOW_REGIONS.TOP].width
-                ).map(
-                    column => !column ? { x: 0, y: 0, "t": null } : { "x": column.x, "y": column.y, t: column.geometricTransformation }
+                "T": this.regions[CHOCO_WINDOW_REGIONS.TOP].assignments.getRow(0).map(
+                    a => !a ? { x: 0, y: 0, "t": null } : { "x": a.xSheetCoordinate, "y": a.ySheetCoordinate, t: a.geometricTransformation }
                 ),
-                "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].tileSheetPositions[0].filter(
-                    (_, colIdx) => colIdx < this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].width
-                ).map(
-                    column => !column ? { x: 0, y: 0, "t": null } : { "x": column.x, "y": column.y, t: column.geometricTransformation }
+                "B": this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].assignments.getRow(0).map(
+                    a => !a ? { x: 0, y: 0, "t": null } : { "x": a.xSheetCoordinate, "y": a.ySheetCoordinate, t: a.geometricTransformation }
                 ),
-                "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].tileSheetPositions.filter(
-                    (_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.LEFT].height
-                ).map(
-                    row => !(row?.[0]) ? ({ x: 0, y: 0, "t": null }) : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
+                "L": this.regions[CHOCO_WINDOW_REGIONS.LEFT].assignments.getColumn(0).map(
+                    a => !a ? { x: 0, y: 0, "t": null } : { "x": a.xSheetCoordinate, "y": a.ySheetCoordinate, t: a.geometricTransformation }
                 ),
-                "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].tileSheetPositions.filter(
-                    (_, rn) => rn < this.regions[CHOCO_WINDOW_REGIONS.RIGHT].height
-                ).map(
-                    row => !(row?.[0]) ? ({ x: 0, y: 0, "t": null }) : ({ "x": row[0].x, "y": row[0].y, t: row[0].geometricTransformation })
+                "R": this.regions[CHOCO_WINDOW_REGIONS.RIGHT].assignments.getColumn(0).map(
+                    a => !a ? { x: 0, y: 0, "t": null } : { "x": a.xSheetCoordinate, "y": a.ySheetCoordinate, t: a.geometricTransformation }
                 ),
             },
             "centerRows":
-                new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].width)).fill().map((_, rowIdx) =>
-                    this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions[rowIdx] ?
-                        new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height)).fill().map((_, colIdx) =>
-                            this.regions[CHOCO_WINDOW_REGIONS.CENTER].tileSheetPositions[rowIdx][colIdx] ?? { x: 0, y: 0, t: null }
-                        ) :
-                        new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].height)).fill().map(() => ({ x: 0, y: 0, t: null }))
+                new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].colCount)).fill().map((_, rowIdx) =>
+                    new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].rowCount)).fill().map((_, colIdx) =>
+                        this.regions[CHOCO_WINDOW_REGIONS.CENTER].assignments.get(rowIdx, colIdx)
+                    )
                 ),
             "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? []
         });
@@ -382,4 +497,4 @@ class FileUpgrader {
     }
 }
 
-export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager };
+export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment, ChocoStudioWindowRegionTileAssignmentArray };

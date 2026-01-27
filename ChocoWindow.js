@@ -1,7 +1,7 @@
 export class ChocoWinSettings {
     static ignoreScaleMisalignmentErrors = false;
     static suggestedMaximumTileSheetColorCount = 8;
-    static get CURRENT_VERSION() { return ("1.0.1") };
+    static get CURRENT_VERSION() { return ("1.1.0") };
 }
 
 export class ChocoWinColor {
@@ -229,12 +229,6 @@ export class ChocoWinWindow {
     isReady() {
         return new Promise((resolve) => {
             this.#tileSheetReader.isReady().then(read => resolve());
-            // this.#reader.onload = () => {
-            //     resolve();
-            // }
-            // if (this.#reader.complete) {
-            //     resolve();
-            // }
         });
     }
 

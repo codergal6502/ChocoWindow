@@ -11,6 +11,8 @@ import LayoutRenderResult from './components/LayoutRenderResult';
 import { ChocoStudioWorkspace } from './ChocoStudio';
 import { ChocoWinSettings } from './ChocoWindow';
 import { ChocoWorkspaceRenderer } from './ChocoRender';
+import { ChocoStudioUpgrader } from './ChocoStudioUpgrader';
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJSPixelWriterFactory } from './ChocoWinPngJsReaderWriter';
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
@@ -24,19 +26,41 @@ const App = () => {
   const [editorWorkspace, setEditorWorkspace] = useState(null);
   const [editorIgnoreKeyInputs, setEditorIgnoreKeyInputs] = useState(false);
 
-  const [hasRenderResult, setHasRenderResult] = useState(false);
   const [renderResultDataUrl, setRenderResultDataUrl] = useState(null);
   const [renderDownloadName, setRenderDownloadName] = useState(null);
 
   const [lastResizeTimestamp, setLastResizeTimestamp] = useState(null);
-  
+
   const initialWorkspace = () => {
     try {
       const b64 = window.localStorage.getItem(WORKSPACE_COOKIE_NAME);
       if (b64) {
         const json = window.atob(b64);
-        const obj = JSON.parse(json)
+        let obj = JSON.parse(json)
+
+        if (obj.version != ChocoWinSettings.CURRENT_VERSION) {
+          const upgraded = ChocoStudioUpgrader.AttemptUpgrade(obj);
+          if (!upgraded) {
+            alert("Could not upgrade the previous workspace. Please download your previous workspace, after which an empty workspace will be used.");
+
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = `${obj?.workspaceName ?? "workspace"}.choco.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            throw "Not continuing.";
+          }
+          obj = upgraded;
+        }
+
         const ws = new ChocoStudioWorkspace(obj)
+
         return ws;
       }
       else {
@@ -107,18 +131,23 @@ const App = () => {
   }
 
   const onDownloadPngClick = () => {
-    const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(editorWorkspace);
+    const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(editorWorkspace, new ChocoWinPngJSPixelWriterFactory(), new ChocoWinPngJsPixelReaderFactory());
     const layoutId = editorLayoutId || editorWorkspace.layouts[0].id;
     const downloadName = (editorWorkspace.layouts.find((l) => l.id == layoutId)?.name || "window") + ".png";
     setRenderDownloadName(downloadName);
-    renderer.generateLayoutImageDataUrl(layoutId).then(dataUrl => {
-      setRenderResultDataUrl(dataUrl);
-      setHasRenderResult(true);
+    renderer.generateLayoutImageBlob(layoutId).then(blob => {
+      if (renderResultDataUrl) {
+        URL.revokeObjectURL(renderResultDataUrl);
+      }
+      const url = URL.createObjectURL(blob);
+      setRenderResultDataUrl(url);
     });
   }
 
   const onRenderResultReturn = () => {
-    setHasRenderResult(false);
+    if (renderResultDataUrl) {
+      URL.revokeObjectURL(renderResultDataUrl);
+    }
     setRenderResultDataUrl(null);
     setRenderDownloadName("");
   }
@@ -142,9 +171,9 @@ const App = () => {
   return (
     modalWorkspace && editorWorkspace && <div id="app-div">
       <SettingsFloater onGearClick={openModalOnClick} onSelectLayoutClick={onSelectLayoutClick} onDownloadPngClick={onDownloadPngClick} />
-      {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} lastResizeTimestamp={lastResizeTimestamp}  />}
+      {isConfigModalHidden || <SettingsModal isModalHidden={isConfigModalHidden} onReturnToEditor={onModalReturn} onWorkspaceChange={onModalWorkspaceChange} workspace={modalWorkspace} lastResizeTimestamp={lastResizeTimestamp} />}
       {isLayoutPickerModalHidden || <LayoutPickerModal workspace={editorWorkspace} currentLayoutId={editorLayoutId} isModalHidden={isLayoutPickerModalHidden} onReturnToEditor={onLayoutPickerReturn} />}
-      {hasRenderResult && <LayoutRenderResult isModalHidden={!hasRenderResult} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToEditor={onRenderResultReturn} />}
+      {renderResultDataUrl && <LayoutRenderResult isModalHidden={!renderResultDataUrl} dataUrl={renderResultDataUrl} downloadName={renderDownloadName} onReturnToEditor={onRenderResultReturn} />}
       <GraphicalEditor ignoreKeyInputs={editorIgnoreKeyInputs} workspace={editorWorkspace} onWorkspaceChange={onEditorWorkspaceChange} editorLayoutId={editorLayoutId} lastResizeTimestamp={lastResizeTimestamp} />
     </div>
   );

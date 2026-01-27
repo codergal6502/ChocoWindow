@@ -391,10 +391,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
                     const /** @type {ChocoStudioWindowRegionDefinition} */ region = tileSetDefinition.regions[whichRegion];
 
-                    region.tileSheetPositions.filter((_, cn) => cn < region.width).forEach((tspRow) => {
-                        tspRow.filter((_, rn) => rn < region.height).forEach((tsp) => {
-                            for (let x = tsp.x; x < tsp.x + tileSize; x++) {
-                                for (let y = tsp.y; y < tsp.y + tileSize; y++) {
+                    for (let rowIdx = 0; rowIdx < region.assignments.colCount; rowIdx++) {
+                        for (let colIdx = 0; colIdx < region.assignments.rowCount; colIdx++) {
+                            const tsp = region.assignments.get(rowIdx, colIdx);
+
+                            for (let x = tsp.xSheetCoordinate; x < tsp.xSheetCoordinate + tileSize; x++) {
+                                for (let y = tsp.ySheetCoordinate; y < tsp.ySheetCoordinate + tileSize; y++) {
                                     const idx = (png.width * y + x) << 2;
 
                                     const r = png.data[idx];
@@ -409,8 +411,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                                     }
                                 }
                             }
-                        })
-                    })
+                        }
+                    }
                 })
 
                 setTooManyColors(colors.length > MAX_COLOR_COUNT);

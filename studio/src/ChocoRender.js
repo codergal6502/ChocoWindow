@@ -1,17 +1,20 @@
 import { ChocoStudioWorkspace } from "./ChocoStudio"
-import { ChocoWinAbstractPixelReader, ChocoWinAbstractPixelWriterFactory, ChocoWinWindow, ChocoWinAbstractPixelWriter } from "./ChocoWindow";
+import { ChocoWinAbstractPixelReader, ChocoWinAbstractPixelWriterFactory, ChocoWinWindow, ChocoWinAbstractPixelWriter, ChocoWinAbstractPixelReaderFactory } from "./ChocoWindow";
 
 class ChocoWorkspaceRenderer {
     /** @type {ChocoWinAbstractPixelWriterFactory} */ #writerFactory;
+    /** @type {ChocoWinAbstractPixelReaderFactory} */ #readerFactory;
     /** @type {ChocoStudioWorkspace} */ #workspace;
     /**
      * Copy constructor.
      * @param {ChocoStudioWorkspace} workspace
      * @param {ChocoWinAbstractPixelWriterFactory} writerFactory
+     * @param {ChocoWinAbstractPixelReaderFactory} readerFactory
      */
-    constructor(workspace, writerFactory) {
-        this.workspace = new ChocoStudioWorkspace(workspace);
+    constructor(workspace, writerFactory, readerFactory) {
+        this.#workspace = new ChocoStudioWorkspace(workspace);
         this.#writerFactory = writerFactory;
+        this.#readerFactory = readerFactory;
     }
 
     /**
@@ -38,31 +41,48 @@ class ChocoWorkspaceRenderer {
             const tileSheet = this.#workspace.tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
             if (!tileSheet) { console.error(`No tile sheet with ID ${tileSetDefinition.tileSheetId}.`); return; }
 
-            const chocoWindow = new ChocoWinWindow(
-                tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
-                studioPreset.tileScale,
-                studioWindow.x,
-                studioWindow.y,
-                studioWindow.w,
-                studioWindow.h,
-                studioPreset.substituteColors
-            );
+            if (!this.#readerFactory) { console.error('No reader factory was provided.'); debugger; return; }
+
+            const chocoWindow = new ChocoWinWindow({
+                winTileSet: tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
+                tileScale: studioPreset.tileScale,
+                x: studioWindow.x,
+                y: studioWindow.y,
+                w: studioWindow.w,
+                h: studioWindow.h,
+                readerFactory: this.#readerFactory,
+                colorSubstitutions: studioPreset.substituteColors,
+            });
 
             return chocoWindow;
         });
 
-        const bigPromise = Promise.all(wins.map((w) => w.isReady()));
+        const result =
+            Promise
+                .all(wins.map((w) => w.isReady()))
+                .then(() => 
+                    this.#writerFactory.build(this.#workspace.width, this.#workspace.height).isReady()
+                )
+                .then(writer => 
+                    new Promise(resolve => {
+                        wins.forEach(w => w.drawTo(writer));
+                        resolve(writer.makeBlob());
+                    })
+                );
+        return result;
 
-        return new Promise((resolve) => {
-            bigPromise.then(() => {
+        // const bigPromise = Promise.all(wins.map((w) => w.isReady()));
 
-                const writer =
-                    this.#writerFactory.build(this.#workspace.width, this.#workspace.height);
+        // return new Promise((resolve) => {
+        //     bigPromise.then(() => {
 
-                writer.isReady().then(() => wins.forEach((w) => w.drawTo(writer)));
-                resolve(writer.makeBlob());
-            });
-        });
+        //         const writer =
+        //             this.#writerFactory.build(this.#workspace.width, this.#workspace.height);
+
+        //         writer.isReady().then(() => wins.forEach((w) => w.drawTo(writer)));
+        //         resolve(writer.makeBlob());
+        //     });
+        // });
     }
 
     /**
@@ -71,22 +91,11 @@ class ChocoWorkspaceRenderer {
      */
     generateLayoutImageBlob = (layoutId) => {
         return new Promise((resolve) => {
-            this.#generateCanvas(layoutId).then((blob) => { resolve(blob) });
+            this.#generateCanvas(layoutId).then((blob) => {
+                debugger; resolve(blob)
+            });
         })
     }
-
-    /**
-     * @param {String} layoutId The UUID of the layout to render.
-     * @return {Promise<String>} Promise to yield a data URL containing a PNG rendering of the layout.
-     */
-    generateLayoutImageDataUrl = (layoutId) => {
-        return new Promise((resolve) => {
-            this.#generateCanvas(layoutId).then((canvas) => {
-                const dataUrl = canvas.toDataURL("image/png", 10);
-                resolve(dataUrl);
-            })
-        })
-    };
 }
 
 export { ChocoWorkspaceRenderer };

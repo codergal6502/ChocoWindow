@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioTileSheetBlobUrlManager } from "../../../ChocoStudio";
+import { CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment, ChocoStudioWindowRegionTileAssignmentArray } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from '../../SettingsModal';
 import './WindowRegionDefinition.css'
@@ -106,9 +106,9 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
             const region = tileSetDefinition.regions[regionIdentifier];
 
-            for (let rowIndex = 0; rowIndex < region.height; rowIndex++) {
-                for (let colIndex = 0; colIndex < region.width; colIndex++) {
-                    const tp = region.tileSheetPositions[rowIndex]?.[colIndex];
+            for (let rowIndex = 0; rowIndex < region.rowCount; rowIndex++) {
+                for (let colIndex = 0; colIndex < region.colCount; colIndex++) {
+                    const tp = region.assignments.get(rowIndex, colIndex);
 
                     if (tp) {
                         const tileBlobKey = computeTileBlobKey(regionIdentifier, colIndex, rowIndex);
@@ -213,15 +213,15 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
             replaceRule(styleSheet, selectorText, ruleText);
 
-            const tileSheetPositions = tileSetDefinition.regions[regionIdentifier].tileSheetPositions;
-            if (!tileSheetPositions[selectedTile.y]) { tileSheetPositions[selectedTile.y] = []; }
+            const assignments = tileSetDefinition.regions[regionIdentifier].assignments;
+            if (!assignments[selectedTile.y]) { assignments[selectedTile.y] = []; }
 
-            tileSheetPositions[selectedTile.y][selectedTile.x] = {
-                x: activeTileSheetAssignment.x,
-                y: activeTileSheetAssignment.y,
+            assignments.set(selectedTile.x, selectedTile.y, new ChocoStudioWindowRegionTileAssignment({
+                xSheetCoordinate: activeTileSheetAssignment.x,
+                ySheetCoordinate: activeTileSheetAssignment.y,
                 geometricTransformation: activeTileSheetAssignment.geometricTransformation,
                 transparencyOverrides: activeTileSheetAssignment.transparencyOverrides,
-            };
+            }));
 
             onChangeMade(tileSetDefinition);
         }
@@ -239,13 +239,13 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
     const onWindowRegionIdentifierChange = (e) => {
         const identifier = e.target.value
         setRegionIdentifier(identifier);
-        setRegionWidth(tileSetDefinition.regions[identifier].width);
-        setRegionHeight(tileSetDefinition.regions[identifier].height);
+        setRegionWidth(tileSetDefinition.regions[identifier].colCount);
+        setRegionHeight(tileSetDefinition.regions[identifier].rowCount);
         // TODO!!! rename TileSetDefinition....tileSheet~~Position~~ to assigments, and x/y to tileSheetPixelX, tileSheetPixelY
         setTileAssignments(
-            Array.from(tileSetDefinition.regions[identifier].width).map((_, x) => {
-                return Array.from(tileSetDefinition.regions[identifier].height).map((_, y) => {
-                    const oldAssignment = tileSetDefinition.regions[identifier].tileSheetPositions[x]?.[y];
+            Array.from(tileSetDefinition.regions[identifier].colCount).map((_, x) => {
+                return Array.from(tileSetDefinition.regions[identifier].rowCount).map((_, y) => {
+                    const oldAssignment = tileSetDefinition.regions[identifier].assignments.get(x, y);
                     const assignment = {
                         x: oldAssignment?.x ?? 0,
                         y: oldAssignment?.y ?? 0,
@@ -261,24 +261,13 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
     /**
      * 
-     * @param {{x: number, y: number, geometricTransformation: string, transparencyOverrides: []}[][]} tileSheetPositions 
+     * @param {ChocoStudioWindowRegionTileAssignmentArray} assignments 
      * @param {*} height 
      * @param {*} width 
      */
-    const resizeTileSheetPositions = (tileSheetPositions, height, width) => {
-        tileSheetPositions.splice(height);
-        Array.from(Array(height)).forEach((_, rowIndex) => {
-            let row = tileSheetPositions[rowIndex];
-            if (!row) {
-                row = [];
-                tileSheetPositions[rowIndex] = row;
-            }
-            row.splice(width);
-
-            if (row.length < width) {
-                row = row.concat(Array(width - row.length).map(() => { }))
-            }
-        })
+    const resizeAssignments = (assignments, height, width) => {
+        assignments.colCount = width;
+        assignments.rowCount = height;
     }
 
     /**
@@ -289,8 +278,8 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         const width = Number(e.target.value);
         if (width == e.target.value && width > 0) {
             setRegionWidth(width);
-            tileSetDefinition.regions[regionIdentifier].width = width;
-            resizeTileSheetPositions(tileSetDefinition.regions[regionIdentifier].tileSheetPositions, regionHeight, width);
+            tileSetDefinition.regions[regionIdentifier].colCount = width;
+            resizeAssignments(tileSetDefinition.regions[regionIdentifier].assignments, regionHeight, width);
         }
     }
 
@@ -302,8 +291,8 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         const height = Number(e.target.value);
         if (height == e.target.value && height > 0) {
             setRegionHeight(height);
-            tileSetDefinition.regions[regionIdentifier].height = height;
-            resizeTileSheetPositions(tileSetDefinition.regions[regionIdentifier].tileSheetPositions, height, regionWidth);
+            tileSetDefinition.regions[regionIdentifier].rowCount = height;
+            resizeAssignments(tileSetDefinition.regions[regionIdentifier].assignments, height, regionWidth);
         }
     }
 
@@ -329,13 +318,13 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (!onTileAssignmentRetrieved) return;
 
         const regionTileAssignment =
-            tileSetDefinition.regions[regionIdentifier].tileSheetPositions[selectedTile.y][selectedTile.x];
+            tileSetDefinition.regions[regionIdentifier].assignments.get(selectedTile.y, selectedTile.x);
 
         const /** @type {TileAssignment} */ outboundTileAssignment = {
             x: regionTileAssignment.x,
             y: regionTileAssignment.y,
             geometricTransformation: regionTileAssignment.geometricTransformation,
-            transparencyOverrides: regionTileAssignment?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? [ ]
+            transparencyOverrides: regionTileAssignment?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? []
         }
 
         onTileAssignmentRetrieved(outboundTileAssignment);
