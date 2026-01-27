@@ -160,8 +160,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     // // // // // // // // // // // // // // 
 
     /** */
-    const onRegionDefinitionChange = () => {
-        setLastRegionDefinitionChangeTime(Date.now());
+    const onRegionDefinitionChange = (newTileSetDefinition) => {
+        onTileSetDefinitionChange(new ChocoStudioTileSetDefinition(newTileSetDefinition));
     };
 
     /**

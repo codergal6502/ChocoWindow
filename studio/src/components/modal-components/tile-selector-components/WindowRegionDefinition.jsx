@@ -105,6 +105,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (tileSetDefinition && tileSheetReader && tileSheetReaderIsReady && regionIdentifier && tileBlobUrlMap?.current) {
 
             const region = tileSetDefinition.regions[regionIdentifier];
+            const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
 
             for (let rowIndex = 0; rowIndex < region.rowCount; rowIndex++) {
                 for (let colIndex = 0; colIndex < region.colCount; colIndex++) {
@@ -113,10 +114,16 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
                     if (tp) {
                         const tileBlobKey = computeTileBlobKey(regionIdentifier, colIndex, rowIndex);
 
-                        let reader = new ChocoWinRegionPixelReader(tileSheetReader, new ChocoWinRectangle({ x: tp.x, y: tp.y, width: tileSize, height: tileSize }));
+                        let reader = new ChocoWinRegionPixelReader(tileSheetReader, new ChocoWinRectangle({
+                            x: tp.xSheetCoordinate,
+                            y: tp.ySheetCoordinate,
+                            width: tileSize,
+                            height: tileSize
+                        }));
                         reader = WrapReaderForTileTransformation(reader, tp.geometricTransformation);
 
                         reader.isReady().then(r => {
+                            if (!styleRef.current) debugger;
                             const writer = writerFactory.build(reader.width, reader.height);
                             writer.writeAll(reader);
 
@@ -126,8 +133,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
                             const tileUrl = URL.createObjectURL(writer.makeBlob());
                             tileBlobUrlMap.current.set(tileBlobKey, tileUrl);
-
-                            const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
 
                             const selectorText = `label.region-tile-radio.${tileBlobKey}`;
                             const ruleText = `${selectorText} { background-image: url(${tileUrl}); }`;
@@ -145,6 +150,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (styleRef?.current && tileBlobUrlMap?.current && activeTileSheetAssignment?.transformedReader?.isReady) {
             setIsAssignThisReady(false);
             activeTileSheetAssignment.transformedReader.isReady().then(/** @param {ChocoWinAbstractPixelReader} r */ r => {
+                if (!styleRef.current) return;
                 const tileBlobKey = SELECTED_TILE_BLOB_KEY;
                 const writer = writerFactory.build(r.width, r.height);
                 writer.writeAll(r);
@@ -260,17 +266,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
     }
 
     /**
-     * 
-     * @param {ChocoStudioWindowRegionTileAssignmentArray} region 
-     * @param {*} height 
-     * @param {*} width 
-     */
-    const resizeRegion = (region, height, width) => {
-        region.colCount = width;
-        region.rowCount = height;
-    }
-
-    /**
      * @param {Object} e 
      * @param {HTMLInputElement} e.target
      */
@@ -279,7 +274,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (width == e.target.value && width > 0) {
             setRegionWidth(width);
             tileSetDefinition.regions[regionIdentifier].colCount = width;
-            resizeRegion(tileSetDefinition.regions[regionIdentifier], regionHeight, width);
+            onChangeMade(tileSetDefinition);
         }
     }
 
@@ -292,7 +287,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (height == e.target.value && height > 0) {
             setRegionHeight(height);
             tileSetDefinition.regions[regionIdentifier].rowCount = height;
-            resizeRegion(tileSetDefinition.regions[regionIdentifier], height, regionWidth);
+            onChangeMade(tileSetDefinition);
         }
     }
 
@@ -321,8 +316,8 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
             tileSetDefinition.regions[regionIdentifier].get(selectedTile.y, selectedTile.x);
 
         const /** @type {TileAssignment} */ outboundTileAssignment = {
-            x: regionTileAssignment.x,
-            y: regionTileAssignment.y,
+            x: regionTileAssignment.xSheetCoordinate,
+            y: regionTileAssignment.ySheetCoordinate,
             geometricTransformation: regionTileAssignment.geometricTransformation,
             transparencyOverrides: regionTileAssignment?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? []
         }

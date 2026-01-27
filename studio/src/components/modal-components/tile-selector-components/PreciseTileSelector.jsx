@@ -24,6 +24,8 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
 
     const [helpVisibile, setHelpVisible] = useState(defaultHelpVisible ?? true);
     const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
+    /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
+    const [selectedTileLocation, setSelectedTileLocation] = useState(null);
 
     // Approximate Tile Selection
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -39,7 +41,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     }, []);
 
     useEffect(() => {
-        if (activeTileSheetAssignment) {
+        if (activeTileSheetAssignment && selectedTileLocation) {
             if (activeTileSheetAssignment.x != selectedTileLocation.x && activeTileSheetAssignment.y != selectedTileLocation.y) {
                 setSelectedTileLocation({
                     x: activeTileSheetAssignment.x,
@@ -49,7 +51,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                 showTileSheetTileInSheetTileSelection({ sheetNaturalX: activeTileSheetAssignment.x, sheetNaturalY: activeTileSheetAssignment.y, overrideSnap: true })
             }
         }
-    }, [activeTileSheetAssignment])
+    }, [activeTileSheetAssignment, selectedTileLocation])
 
     const toggleHelp = () => setHelpVisible(!helpVisibile);
 
@@ -91,8 +93,6 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
 
     const [preciseTileSelectionScale, setPreciseTileSelectionScale] = useState(DEFAULT_PTS_SCALE);
 
-    /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
-    const [selectedTileLocation, setSelectedTileLocation] = useState(null);
 
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
     const [displayPreciseTileLocation, setDisplayPreciseTileLocation] = useState(null);
@@ -227,12 +227,18 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         showTileSheetTileInSheetTileSelection({ sheetNaturalX: selectedTileLocation.x, sheetNaturalY: selectedTileLocation.y, overrideSnap: true });
     }
 
+    const tockRef = useRef({tock: Date.now()});
+
     /**
      * @param {MouseEvent} e 
      */
     const onSheetMouseMove = (e) => {
         if (!sheetTileSelectionSemiLocked) {
-            showTileSheetTileInSheetTileSelection({ mouseEvent: e });
+            const timeDelta = Date.now() - tockRef.current.tock;
+            if (timeDelta > 50) {
+                // showTileSheetTileInSheetTileSelection({ mouseEvent: e });
+                tockRef.current.tock = Date.now();
+            }
         }
     }
 
@@ -319,6 +325,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
      * @param {MouseEvent} e 
      */
     const onPreciseTileSelectionClick = (e) => {
+        return;
         /** @type {DOMRect} */ const rect = e.target.getBoundingClientRect();
 
         const /** @type {Number} */ x = e.clientX - rect.left + 1;
@@ -351,9 +358,10 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
      */
     const onSheetXManualInputChange = (e) => {
         const x = Number(e.target.value);
+        if (x != e.target.value) return;
         if (x < 0) return;
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: x, sheetNaturalY: displayPreciseTileLocation.y, overrideSnap: true });
-        setSelectedTileLocation({ x: x, y: selectedTileLocation.y })
+        showTileSheetTileInSheetTileSelection({ sheetNaturalX: x, sheetNaturalY: displayPreciseTileLocation?.y ?? 0, overrideSnap: true });
+        setSelectedTileLocation({ x: x, y: selectedTileLocation?.y ?? 0 })
     }
 
     /**
@@ -361,9 +369,10 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
      */
     const onSheetYManualInputChange = (e) => {
         const y = Number(e.target.value);
+        if (y != e.target.value) return;
         if (y < 0) return;
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: displayPreciseTileLocation.x, sheetNaturalY: y, overrideSnap: true });
-        setSelectedTileLocation({ x: selectedTileLocation.x, y: y })
+        showTileSheetTileInSheetTileSelection({ sheetNaturalX: displayPreciseTileLocation?.x ?? 0, sheetNaturalY: y, overrideSnap: true });
+        setSelectedTileLocation({ x: selectedTileLocation?.x ?? 0, y: y })
     }
 
 
