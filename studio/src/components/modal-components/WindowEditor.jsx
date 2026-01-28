@@ -16,8 +16,11 @@ import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../..
  * @param {function():void} props.onReturnToEditor
  */
 const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindowChange, onWindowDelete, onReturnToEditor }) => {
-    const readerFactory = new ChocoWinPngJsPixelReaderFactory();
-    const imageRef = useRef(null);
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                          STATE AND REF HOOKS                         //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    const readerFactoryRef = useRef(new ChocoWinPngJsPixelReaderFactory());
 
     const [name, setName] = useState(window.name)
     const [geometryX, setGeometryX] = useState(window.x);
@@ -25,119 +28,181 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     const [geometryW, setGeometryW] = useState(window.w);
     const [geometryH, setGeometryH] = useState(window.h);
     const [presetId, setPresetId] = useState(window.presetId);
+    /** @type {ReturnType<typeof useState<ChocoStudioPreset>>} */
+    const [singularPreset, setSingularPreset] = useState(window.singularPreset);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [lastWindowChangeTimeout, setLastWindowChangeTimeout] = useState(null);
 
-    const doOnWindowChange = (newWindow) => {
-        if (onWindowChange && typeof onWindowChange == 'function') {
-            onWindowChange(newWindow);
-        }
-    }
+    /** @type {ReturnType<typeof useState<String>>} */
+    const [previewImageUrl, setPreviewImageUrl] = useState(null);
+    const previewState = useRef({ url: "" });
 
-    const onNameChange = (e) => {
-        const value = e.target.value;
-        setName(value);
-        const newWindow = new ChocoStudioWindow(window);
-        newWindow.name = value;
-        doOnWindowChange(newWindow);
-    }
-
-    const onGeometryXChange = (e) => {
-        const value = Number(e.target.value);
-        setGeometryX(value);
-        const newWindow = new ChocoStudioWindow(window);
-        newWindow.x = value;
-        doOnWindowChange(newWindow);
-    }
-
-    const onGeometryYChange = (e) => {
-        const value = Number(e.target.value);
-        setGeometryY(value);
-        const newWindow = new ChocoStudioWindow(window);
-        newWindow.y = value;
-        doOnWindowChange(newWindow);
-    }
-
-    const onGeometryWChange = (e) => {
-        const value = Number(e.target.value);
-        setGeometryW(value);
-        const newWindow = new ChocoStudioWindow(window);
-        newWindow.w = value;
-        doOnWindowChange(newWindow);
-    }
-
-    const onGeometryHChange = (e) => {
-        const value = Number(e.target.value);
-        setGeometryH(value);
-        const newWindow = new ChocoStudioWindow(window);
-        newWindow.h = value;
-        doOnWindowChange(newWindow);
-    }
-
-    const onPresetIdChange = (e) => {
-        const value = e.target.value;
-        setPresetId(value);
-        const newWindow = new ChocoStudioWindow(window);
-        newWindow.singularPreset = null;
-        newWindow.presetId = value;
-        doOnWindowChange(newWindow);
-    }
-
-    const onSingularPresetChange = (singularPreset) => {
-        const modifiedPreset = new ChocoStudioPreset(singularPreset);
-        // No "setting" necessary since the React state is in the sub-component.
-        const newWindow = new ChocoStudioWindow(window);
-        newWindow.singularPreset = modifiedPreset;
-        doOnWindowChange(newWindow)
-    }
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                               EFFECTS                                //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
 
     useEffect(() => {
-        if (!imageRef.current) { return; }
-        if (!presetId) { return; }
+        if (previewState && readerFactoryRef && window && presets && tileSheets && tileSetDefinitions) {
+            updatePreviewImageBlob();
+        }
+    }, [previewState, readerFactoryRef, window, presets, tileSheets, tileSetDefinitions])
 
-        let preset = presets.find((p) => p.id == presetId);
+    // revoke the preview blob URL
+    useEffect(() => {
+        return () => {
+            if (previewState?.current) {
+                URL.revokeObjectURL(previewState.current.url);
+            }
+        }
+    }, [previewState])
+
+    // debounce text input; for simplicity, all changes are routed through here
+    useEffect(() => {
+        if (hasChanges) {
+            // Why not use lodash's _.debounce?
+            // See https://www.developerway.com/posts/debouncing-in-react
+            // See https://stackoverflow.com/questions/36294134/lodash-debounce-with-react-input#comment124623824_67941248
+            // See https://stackoverflow.com/a/59184678
+            clearTimeout(lastWindowChangeTimeout);
+            const timeout = setTimeout(() => uponWindowChange(), 500);
+            setLastWindowChangeTimeout(timeout);
+        }
+    }, [name, geometryX, geometryY, geometryW, geometryH, presetId, hasChanges])
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                          UTILITY FUNCTIONS                           //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    /**
+     * 
+     */
+    const uponWindowChange = () => {
+        const newWindow = new ChocoStudioWindow(window);
+        newWindow.name = name;
+        newWindow.x = geometryX;
+        newWindow.y = geometryY;
+        newWindow.w = geometryW;
+        newWindow.h = geometryH;
+        newWindow.presetId = presetId;
+        newWindow.singularPreset = new ChocoStudioPreset(singularPreset);
+        updatePreviewImageBlob();
+        onWindowChange(newWindow);
+    }
+
+    const updatePreviewImageBlob = () => {
+        if (!previewState?.current) { return; }
+        if (!readerFactoryRef?.current) { return; }
+        const preset = presetId ? presets.find((p) => p.id == presetId) : singularPreset;
         if (!preset) { return; }
+        if (!readerFactoryRef?.current) { return; }
 
-        let tileSetDefinition = tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId);
+        const tileSetDefinition = tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId);
         if (!tileSetDefinition) { return; }
 
-        let tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
+        const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
         if (!tileSheet) { return; }
 
         const tileSet = tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl);
+        if (!tileSet) { return; }
 
         let chocoWin = new ChocoWinWindow({
             x: 0,
             y: 0,
-            w: 450,
-            h: 180,
+            w: geometryW,
+            h: geometryH,
             tileScale: preset.tileScale,
             winTileSet: tileSet,
-            readerFactory: readerFactory,
+            readerFactory: readerFactoryRef.current,
             colorSubstitutions: preset.substituteColors,
         });
 
         chocoWin.isReady().then(() => {
-            if (!imageRef?.current) {
-                console.warn("imageRef.current falsy after it was truthy");
+            if (!previewState?.current) {
+                console.warn("previewState.current falsy after it was truthy");
                 return;
             }
 
-            const writer = new ChocoWinPngJsPixelWriter(450, 180);
+            const writer = new ChocoWinPngJsPixelWriter(geometryW, geometryH);
             chocoWin.drawTo(writer);
 
-            // let dataUrl = writer.makeDataUrl();
             const blob = writer.makeBlob();
-            imageRef.current.src = URL.createObjectURL(blob); // temporary
+            const newUrl = URL.createObjectURL(blob);
+            previewState.current.url = newUrl;
+            setPreviewImageUrl(newUrl);
         });
-    }, [presetId, imageRef, geometryW, geometryH])
+    };
 
-    const doDeleteWindowOnClick = () => {
-        if (onWindowDelete && typeof onWindowDelete == 'function') {
-            onWindowDelete(window.id);
-        }
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                            EVENT HANDLERS                            //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onNameChange = (inputEvent) => {
+        setName(inputEvent.target.value);
+        setHasChanges(true);
     }
 
-    const deleteWindowOnClick = () => {
-        doDeleteWindowOnClick(window.id);
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onGeometryXChange = (inputEvent) => {
+        setGeometryX(Number(inputEvent.target.value));
+        setHasChanges(true);
+    }
+
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onGeometryYChange = (inputEvent) => {
+        setGeometryY(Number(inputEvent.target.value));
+        setHasChanges(true);
+    }
+
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onGeometryHChange = (inputEvent) => {
+        setGeometryH(Number(inputEvent.target.value));
+        setHasChanges(true);
+    }
+
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onGeometryWChange = (inputEvent) => {
+        setGeometryW(Number(inputEvent.target.value));
+        setHasChanges(true);
+    }
+
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onPresetIdChange = (inputEvent) => {
+        const uuidReg = (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+        const maybeUuid = inputEvent.target.value;
+        if (uuidReg.test(maybeUuid)) {
+            setPresetId(maybeUuid);
+        }
+        else {
+            setPresetId(null);
+        }
+        setHasChanges(true);
+    }
+
+    /**
+     * @param {ChocoStudioPreset} singularPreset 
+     */
+    const onSingularPresetChange = (singularPreset) => {
+        setSingularPreset(singularPreset);
+        setHasChanges(true);
     }
 
     return <>
@@ -179,12 +244,12 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
         </div>
 
         {(!presetId) && <PresetEditor isSubordinate={true} preset={window.singularPreset || new ChocoStudioPreset()} tileSheets={tileSheets} tileSetDefinitions={tileSetDefinitions} onPresetChange={onSingularPresetChange} />}
-        {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img className="max-w-full" alt="Window Preview" src={null} ref={imageRef} /></div></>}
+        {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img className="max-w-full" alt="Window Preview" src={previewImageUrl} /></div></>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
             <button onClick={onReturnToEditor} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
-            <button onClick={deleteWindowOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Window</button>
+            <button onClick={() => onWindowDelete(window.id)} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Window</button>
         </div>
     </>
 }

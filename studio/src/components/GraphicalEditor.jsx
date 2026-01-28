@@ -474,7 +474,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                     boundingBoxDiv.onclick = makeChocoWinBoundingBoxActive;
 
                     if (studioWindow) {
-                        const preset = studioWindow.singularPreset || ws.presets.find((ps) => ps.id == studioWindow.presetId);
+                        const preset = studioWindow.presetId ? ws.presets.find((ps) => ps.id == studioWindow.presetId) : studioWindow.singularPreset;
                         if (!preset) return;
 
                         const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);

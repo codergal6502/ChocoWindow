@@ -140,10 +140,8 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
             const newUrl = URL.createObjectURL(blob);
             previewState.current.url = newUrl;
             setPreviewImageUrl(newUrl);
-            console.log(`2 update blob ${new Date().toLocaleTimeString()}`)
         });
     }
-
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
@@ -247,7 +245,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                 <div className="flex justify-between">
                     <button onClick={onReturnToEditor} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
-                    <button onClick={onPresetDelete} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button>
+                    <button onClick={() => onPresetDelete(preset.id)} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Preset</button>
                 </div>
             </>
         }
