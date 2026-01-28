@@ -1,30 +1,79 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChocoStudioLayout } from "../../ChocoStudio"
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp, faCircleMinus } from "@fortawesome/free-solid-svg-icons";
 
-const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { Array<ChocoStudioWindow> } */ windows, onLayoutChange, onLayoutDelete, onReturnToEditor, onEditThisLayout }) => {
+/**
+ * 
+ * @param {Object} props
+ * @param {ChocoStudioLayout} props.layout,
+ * @param {Array<ChocoStudioWindow>} props.windows
+ * @param {function(ChocoStudioLayout)} props.onLayoutChange
+ * @param {function(string)} props.onLayoutDelete
+ * @param {function(ChocoStudioLayout)} props.onReturnToEditor
+ * @param {function()} props.onEditThisLayout
+ */
+const LayoutEditor = ({ layout, windows, onLayoutChange, onLayoutDelete, onReturnToEditor, onEditThisLayout }) => {
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                          STATE AND REF HOOKS                         //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
     const windowSelectRef = useRef();
 
     const [name, setName] = useState(layout.name || "")
     const [windowIds, setWindowIds] = useState(layout.windowIds || []);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [lastLayoutChangeTimeout, setLastLayoutChangeTimeout] = useState(null);
 
-    const onNameChange = (e) => {
-        const value = e.target.value;
-        setName(value);
-        const newLayout = new ChocoStudioLayout(layout);
-        newLayout.name = value;
-        doOnLayoutChange(newLayout);
-    }
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                               EFFECTS                                //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    const doOnLayoutChange = (newLayout) => {
-        if (onLayoutChange && typeof onLayoutChange == 'function') {
-            onLayoutChange(newLayout)
+    // debounce text input; for simplicity, all changes are routed through here
+    useEffect(() => {
+        if (hasChanges) {
+            // Why not use lodash's _.debounce?
+            // See https://www.developerway.com/posts/debouncing-in-react
+            // See https://stackoverflow.com/questions/36294134/lodash-debounce-with-react-input#comment124623824_67941248
+            // See https://stackoverflow.com/a/59184678
+            clearTimeout(lastLayoutChangeTimeout);
+            const timeout = setTimeout(() => uponLayoutChange(), 500);
+            setLastLayoutChangeTimeout(timeout);
         }
+    }, [name, windowIds, hasChanges])
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                          UTILITY FUNCTIONS                           //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    
+    /**
+     * 
+     */
+    const uponLayoutChange = () => {
+        const newLayout = new ChocoStudioLayout(layout);
+        newLayout.name = name;
+        newLayout.windowIds = windowIds.slice();
+        onLayoutChange(newLayout);
     }
 
-    const addWindowOnClick = () => {
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                            EVENT HANDLERS                            //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+
+    /**
+     * @param {object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onNameChange = (inputEvent) => {
+        setName(inputEvent.target.value);
+        setHasChanges(true);
+    };
+
+    /**
+     * 
+     */
+    const onAddWindowClick = () => {
         if (windowSelectRef.current) {
             const value = windowSelectRef.current.value;
             const window = windows.find((w) => value == w.id);
@@ -33,15 +82,16 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
                 /** @type {Array<String>} */ let newWindowIds = windowIds.slice();
                 newWindowIds.push(value);
                 setWindowIds(newWindowIds);
-
-                const newLayout = new ChocoStudioLayout(layout);
-                newLayout.windowIds = newWindowIds.slice();
-                doOnLayoutChange(newLayout);
+                // todo: maybe use useMemo? See https://react.wiki/performance/avoid-unnecessary-rerenders/#usememo-memoizing-expensive-computations
+                setHasChanges(true); 
             }
         }
     }
 
-    const moveWindowUpClicked = (windowId) => {
+    /**
+     * @param {String} windowId 
+     */
+    const onMoveWindowUpClick = (windowId) => {
         const idx = windowIds.indexOf(windowId);
 
         if (idx == 0) return;
@@ -50,12 +100,12 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         newWindowIds[idx] = newWindowIds[idx - 1];
         newWindowIds[idx - 1] = windowId;
         setWindowIds(newWindowIds);
-
-        const newLayout = new ChocoStudioLayout(layout);
-        newLayout.windowIds = newWindowIds.slice();
-        doOnLayoutChange(newLayout);
+        setHasChanges(true);
     }
 
+    /**
+     * @param {String} windowId 
+     */
     const moveWindowDownClicked = (windowId) => {
         const idx = windowIds.indexOf(windowId);
 
@@ -65,13 +115,13 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         newWindowIds[idx] = newWindowIds[idx + 1];
         newWindowIds[idx + 1] = windowId;
         setWindowIds(newWindowIds);
-
-        const newLayout = new ChocoStudioLayout(layout);
-        newLayout.windowIds = newWindowIds.slice();
-        doOnLayoutChange(newLayout);
+        setHasChanges(true);
     }
 
-    const removeWindowClicked = (windowId) => {
+    /**
+     * @param {String} windowId 
+     */
+    const onRemoveWindowClick = (windowId) => {
         const idx = windowIds.indexOf(windowId);
 
         if (idx < 0) return;
@@ -79,20 +129,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         let newWindowIds = windowIds.slice();
         newWindowIds.splice(idx, 1);
         setWindowIds(newWindowIds);
-
-        const newLayout = new ChocoStudioLayout(layout);
-        newLayout.windowIds = newWindowIds.slice();
-        doOnLayoutChange(newLayout);
-    }
-
-    const doDeleteLayoutOnClick = () => {
-        if (onLayoutDelete && typeof onLayoutDelete == 'function') {
-            onLayoutDelete(layout.id);
-        }
-    }
-
-    const deleteLayoutOnClick = () => {
-        doDeleteLayoutOnClick(layout.id);
+        setHasChanges(true);
     }
 
     return (<>
@@ -120,12 +157,12 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
                         return (
                             <tr key={windowId} className="even:bg-gray-200 odd:bg-gray-300 dark:even:bg-gray-600 dark:odd:bg-gray-700">
                                 <td className="p-1">
-                                    <button className="hover:text-yellow-400" key={`u-${window.id}`} onClick={() => moveWindowUpClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowUp} /></button>
+                                    <button className="hover:text-yellow-400" key={`u-${window.id}`} onClick={() => onMoveWindowUpClick(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowUp} /></button>
                                     <button className="hover:text-yellow-400" key={`d-${window.id}`} onClick={() => moveWindowDownClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowDown} /></button>
                                 </td>
                                 <td className="p-1">{window.name}</td>
                                 <td className="p-1">
-                                    <button className="hover:text-red-200" key={`r-${window.id}`} onClick={() => removeWindowClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faCircleMinus} /></button>
+                                    <button className="hover:text-red-200" key={`r-${window.id}`} onClick={() => onRemoveWindowClick(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faCircleMinus} /></button>
                                 </td>
                             </tr>
                         );
@@ -148,7 +185,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
                             <option key={w.id} value={w.id}>{w.name}</option>
                         )}
                     </select>
-                    <button onClick={addWindowOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-gray-700 dark:hover:bg-gray-500">Add</button>
+                    <button onClick={onAddWindowClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-gray-700 dark:hover:bg-gray-500">Add</button>
                 </div>
             </div>
         </div>
@@ -157,7 +194,7 @@ const LayoutEditor = ({ /** @type { ChocoStudioLayout } */ layout, /** @type { A
         <div className="flex justify-between">
             <button onClick={onReturnToEditor} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
             <button onClick={() => onEditThisLayout(layout.id)} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Edit this Layout</button>
-            <button onClick={deleteLayoutOnClick} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Layout</button>
+            <button onClick={() => onLayoutDelete(layout.id)} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Layout</button>
         </div>
     </>)
 }
