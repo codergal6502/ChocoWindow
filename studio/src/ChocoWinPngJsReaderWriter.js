@@ -75,7 +75,7 @@ export class ChocoWinPngJsPixelWriter extends ChocoWinAbstractPixelWriter {
         this.#png.data[i + 0] = color?.r ?? 0;
         this.#png.data[i + 1] = color?.g ?? 0;
         this.#png.data[i + 2] = color?.b ?? 0;
-        this.#png.data[i + 3] = color?.a ?? 0;
+        this.#png.data[i + 3] = color?.a ?? 255;
     }
 
     makeDataUrl() {
