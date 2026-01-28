@@ -4,22 +4,23 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from '../../SettingsModal';
 import './WindowRegionDefinition.css'
 import { ChocoWinAbstractPixelReader, ChocoWinRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJSPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
+import { ChocoWinPngJSPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
-import { TileAssignment } from "../TileSetDefinitionEditor";
+import { AssignableTileInfo } from "../TileSetDefinitionEditor";
 
 /**
  * Directly modifies the provided tile set definition.
  * @param {object} props 
  * @param {number} props.tileSize
- * @param {ChocoStudioTileSheet} props.tileSheet
+ * @param {ChocoWinAbstractPixelReader} props.tileSheetReader
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
- * @param {TileAssignment} props.activeTileSheetAssignment
- * @param {function(ChocoStudioTileSetDefinition)} props.onChangeMade
- * @param {function(TileAssignment)} props.onTileAssignmentRetrieved
+ * @param {AssignableTileInfo} props.assignableTileInfo
+ * @param {function({regionIdentifier: String, colCount: number, rowCount: number})} props.onRegionResized
+ * @param {function({regionIdentifier: String, colIndex: number, rowIndex: number, info: AssignableTileInfo})} props.onAssignmentMade
+ * @param {function(AssignableTileInfo)} props.onTileAssignmentRetrieved
  */
-const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, activeTileSheetAssignment, onChangeMade, onTileAssignmentRetrieved }) => {
+const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, assignableTileInfo, onRegionResized, onAssignmentMade, onTileAssignmentRetrieved }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                        CONSTANTS & GLOBALS                           //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -27,7 +28,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
     const BIGGEST_ZOOM_FACTOR = 6;
     const SELECTED_TILE_BLOB_KEY = "SELECTED_TILE_BLOB_KEY";
     const writerFactory = new ChocoWinPngJSPixelWriterFactory();
-    const readerFactory = new ChocoWinPngJsPixelReaderFactory();
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                    STATE, REF & CONTEXT HOOKS                        //
@@ -40,24 +40,23 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
     const [helpVisibile, setHelpVisible] = useState(true);
     const [regionIdentifier, setRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
-    const [regionWidth, setRegionWidth] = useState(1);
-    const [regionHeight, setRegionHeight] = useState(1);
+    const [regionColCount, setRegionColCount] = useState(1);
+    const [regionRowCount, setRegionRowCount] = useState(1);
     const [assignmentTileScale, setAssignmentTileScale] = useState(DEFAULT_TA_SCALE);
     const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
-    const [selectedTile, setSelectedTile] = useState({ x: 0, y: 0 });
+    const [selectedTile, setSelectedTile] = useState({ colIndex: 0, rowIndex: 0 });
     const [tileAssignments, setTileAssignments] = useState([]);
     const [isAssignThisReady, setIsAssignThisReady] = useState(false);
-    const [lastAssignThisButtonClickTime, setLastAssignThisButtonClickTime] = useState(null);
-
-    /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
-    const [tileSheetReader, setTileSheetReader] = useState(null)
-    const [tileSheetReaderIsReady, setTileSheetReaderIsReady] = useState(false)
 
     /** @type {ReturnType<typeof useRef<Map<String, String>>>} */
     const tileBlobUrlMap = useRef(new Map());
 
     /** @type {ReturnType<typeof useContext<ChocoStudioTileSheetBlobUrlManager>>} */
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
+
+
+    const [assignThisTileBackground, setAssignThisTileBackground] = useState("")
+
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          UTILITY FUNCTIONS                           //
@@ -90,19 +89,9 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
     //                             EFFECT HOOKS                             //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    // reader for entire tile sheet
-    useEffect(() => {
-        if (tileSheet) {
-            const tileSheetReader = readerFactory.build({ dataUrl: tileSheet.imageDataUrl });
-            setTileSheetReader(tileSheetReader);
-            setTileSheetReaderIsReady(false);
-            tileSheetReader.isReady().then(() => setTileSheetReaderIsReady(true));
-        }
-    }, [tileSheet])
-
     // initialize the tiles background images
     useEffect(() => {
-        if (tileSetDefinition && tileSheetReader && tileSheetReaderIsReady && regionIdentifier && tileBlobUrlMap?.current) {
+        if (tileSetDefinition && tileSheetReader && regionIdentifier && tileBlobUrlMap?.current) {
 
             const region = tileSetDefinition.regions[regionIdentifier];
             const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
@@ -123,7 +112,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
                         reader = WrapReaderForTileTransformation(reader, tp.geometricTransformation);
 
                         reader.isReady().then(r => {
-                            if (!styleRef.current) debugger;
                             const writer = writerFactory.build(reader.width, reader.height);
                             writer.writeAll(reader);
 
@@ -143,13 +131,13 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
                 }
             }
         }
-    }, [tileSetDefinition, tileSheetReader, tileSheetReaderIsReady, regionIdentifier, tileBlobUrlMap])
+    }, [tileSetDefinition, tileSheetReader, regionIdentifier, tileBlobUrlMap])
 
-    // read the selected tile
+    // set the URL for the 
     useEffect(() => {
-        if (styleRef?.current && tileBlobUrlMap?.current && activeTileSheetAssignment?.transformedReader?.isReady) {
+        if (styleRef?.current && tileBlobUrlMap?.current && assignableTileInfo?.transformedReader?.isReady) {
             setIsAssignThisReady(false);
-            activeTileSheetAssignment.transformedReader.isReady().then(/** @param {ChocoWinAbstractPixelReader} r */ r => {
+            assignableTileInfo.transformedReader.isReady().then(/** @param {ChocoWinAbstractPixelReader} r */ r => {
                 if (!styleRef.current) return;
                 const tileBlobKey = SELECTED_TILE_BLOB_KEY;
                 const writer = writerFactory.build(r.width, r.height);
@@ -170,14 +158,14 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
                 setIsAssignThisReady(true);
             })
         }
-    }, [tileBlobUrlMap, styleRef, activeTileSheetAssignment])
+    }, [tileBlobUrlMap, styleRef, assignableTileInfo])
 
     // resize the tile assignment container
     useEffect(() => {
-        if (!tileAssignmentContainerRef && regionWidth) return;
+        if (!tileAssignmentContainerRef && regionColCount) return;
         // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
 
-        const possibleScale = Math.floor(tileAssignmentContainerRef.current.offsetWidth / regionWidth / tileSize);
+        const possibleScale = Math.floor(tileAssignmentContainerRef.current.offsetWidth / regionColCount / tileSize);
         const assignmentTileScale = Math.min(BIGGEST_ZOOM_FACTOR, possibleScale);
         setAssignmentTileScale(assignmentTileScale);
     }, [tileAssignmentContainerRef, lastResizeTimestamp])
@@ -199,39 +187,40 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
 
     // assign the selected tile to the region position
     useEffect(() => {
-        if (lastAssignThisButtonClickTime && isAssignThisReady && styleRef?.current && tileBlobUrlMap?.current) {
-            const tileBlobKey = computeTileBlobKey(regionIdentifier, selectedTile.x, selectedTile.y);
-            /** @type {ChocoWinAbstractPixelReader} */ const reader = activeTileSheetAssignment.transformedReader;
-            const writer = writerFactory.build(reader.width, reader.height);
-            writer.writeAll(reader);
+        return;
+        // if (lastAssignThisButtonClickTime && isAssignThisReady && styleRef?.current && tileBlobUrlMap?.current) {
+        //     const tileBlobKey = computeTileBlobKey(regionIdentifier, selectedTile.colIndex, selectedTile.rowIndex);
+        //     /** @type {ChocoWinAbstractPixelReader} */ const reader = editorTileAssignment.transformedReader;
+        //     const writer = writerFactory.build(reader.width, reader.height);
+        //     writer.writeAll(reader);
 
-            if (tileBlobUrlMap.current.has(tileBlobKey)) {
-                URL.revokeObjectURL(tileBlobUrlMap.current.get(tileBlobKey));
-            }
+        //     if (tileBlobUrlMap.current.has(tileBlobKey)) {
+        //         URL.revokeObjectURL(tileBlobUrlMap.current.get(tileBlobKey));
+        //     }
 
-            const tileUrl = URL.createObjectURL(writer.makeBlob());
-            tileBlobUrlMap.current.set(tileBlobKey, tileUrl);
+        //     const tileUrl = URL.createObjectURL(writer.makeBlob());
+        //     tileBlobUrlMap.current.set(tileBlobKey, tileUrl);
 
-            const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
+        //     const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
 
-            const selectorText = `label.region-tile-radio.${tileBlobKey}`;
-            const ruleText = `${selectorText} { background-image: url(${tileUrl}); }`;
+        //     const selectorText = `label.region-tile-radio.${tileBlobKey}`;
+        //     const ruleText = `${selectorText} { background-image: url(${tileUrl}); }`;
 
-            replaceRule(styleSheet, selectorText, ruleText);
+        //     replaceRule(styleSheet, selectorText, ruleText);
 
-            const region = tileSetDefinition.regions[regionIdentifier];
-            if (!region[selectedTile.y]) { region[selectedTile.y] = []; }
+        //     const region = tileSetDefinition.regions[regionIdentifier];
+        //     if (!region[selectedTile.rowIndex]) { region[selectedTile.rowIndex] = []; }
 
-            region.set(selectedTile.x, selectedTile.y, new ChocoStudioWindowRegionTileAssignment({
-                xSheetCoordinate: activeTileSheetAssignment.x,
-                ySheetCoordinate: activeTileSheetAssignment.y,
-                geometricTransformation: activeTileSheetAssignment.geometricTransformation,
-                transparencyOverrides: activeTileSheetAssignment.transparencyOverrides,
-            }));
+        //     region.set(selectedTile.colIndex, selectedTile.rowIndex, new ChocoStudioWindowRegionTileAssignment({
+        //         xSheetCoordinate: editorTileAssignment.x,
+        //         ySheetCoordinate: editorTileAssignment.y,
+        //         geometricTransformation: editorTileAssignment.geometricTransformation,
+        //         transparencyOverrides: editorTileAssignment.transparencyOverrides,
+        //     }));
 
-            onChangeMade(tileSetDefinition);
-        }
-    }, [isAssignThisReady, lastAssignThisButtonClickTime, styleRef, tileBlobUrlMap])
+        //     onChangeMade(tileSetDefinition);
+        // }
+    }, [isAssignThisReady, styleRef, tileBlobUrlMap])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
@@ -245,8 +234,8 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
     const onWindowRegionIdentifierChange = (e) => {
         const identifier = e.target.value
         setRegionIdentifier(identifier);
-        setRegionWidth(tileSetDefinition.regions[identifier].colCount);
-        setRegionHeight(tileSetDefinition.regions[identifier].rowCount);
+        setRegionColCount(tileSetDefinition.regions[identifier].colCount);
+        setRegionRowCount(tileSetDefinition.regions[identifier].rowCount);
         // TODO!!! rename TileSetDefinition....tileSheet~~Position~~ to assigments, and x/y to tileSheetPixelX, tileSheetPixelY
         setTileAssignments(
             Array.from(tileSetDefinition.regions[identifier].colCount).map((_, x) => {
@@ -269,12 +258,16 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
      * @param {Object} e 
      * @param {HTMLInputElement} e.target
      */
-    const onRegionWidthChange = (e) => {
-        const width = Number(e.target.value);
-        if (width == e.target.value && width > 0) {
-            setRegionWidth(width);
-            tileSetDefinition.regions[regionIdentifier].colCount = width;
-            onChangeMade(tileSetDefinition);
+    const onRegionColCountChange = (e) => {
+        const colCount = Number(e.target.value);
+        if (colCount == e.target.value && colCount > 0) {
+            setRegionColCount(colCount);
+            tileSetDefinition.regions[regionIdentifier].colCount = colCount;
+            onRegionResized({
+                regionIdentifier,
+                rowCount: tileSetDefinition.regions[regionIdentifier].rowCount,
+                colCount: colCount,
+            });
         }
     }
 
@@ -282,12 +275,16 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
      * @param {Object} e 
      * @param {HTMLInputElement} e.target
      */
-    const onRegionHeightChange = (e) => {
-        const height = Number(e.target.value);
-        if (height == e.target.value && height > 0) {
-            setRegionHeight(height);
-            tileSetDefinition.regions[regionIdentifier].rowCount = height;
-            onChangeMade(tileSetDefinition);
+    const onRegionRowCountChange = (e) => {
+        const rowCount = Number(e.target.value);
+        if (rowCount == e.target.value && rowCount > 0) {
+            setRegionRowCount(rowCount);
+            tileSetDefinition.regions[regionIdentifier].rowCount = rowCount;
+            onRegionResized({
+                regionIdentifier,
+                rowCount: rowCount,
+                colCount: tileSetDefinition.regions[regionIdentifier].colCount,
+            });
         }
     }
 
@@ -302,7 +299,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         otherLabels.forEach(l => l.classList.remove("region-tile-selected"));
         label.classList.add("region-tile-selected");
 
-        setSelectedTile({ x: Number(e.target.dataset.x), y: Number(e.target.dataset.y) });
+        setSelectedTile({ colIndex: Number(e.target.dataset.colIndex), rowIndex: Number(e.target.dataset.rowIndex) });
     }
 
     /**
@@ -313,9 +310,9 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
         if (!onTileAssignmentRetrieved) return;
 
         const regionTileAssignment =
-            tileSetDefinition.regions[regionIdentifier].get(selectedTile.y, selectedTile.x);
+            tileSetDefinition.regions[regionIdentifier].get(selectedTile.rowIndex, selectedTile.colIndex);
 
-        const /** @type {TileAssignment} */ outboundTileAssignment = {
+        const /** @type {EditorTileAssignment} */ outboundTileAssignment = {
             x: regionTileAssignment.xSheetCoordinate,
             y: regionTileAssignment.ySheetCoordinate,
             geometricTransformation: regionTileAssignment.geometricTransformation,
@@ -330,10 +327,11 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
      * @param {HTMLButtonElement} e.target
      */
     const onAssignTileButtonClick = (e) => {
-        // It's conceivable that this button might get clicked between the
-        // reader for the tile getting set and the tile getting read, so
-        // this timestamp trick is used to assign the the tile.
-        setLastAssignThisButtonClickTime(Date.now());
+        onAssignmentMade({
+            regionIdentifier: regionIdentifier,
+            colIndex: selectedTile.colIndex,
+            rowIndex: selectedTile.rowIndex,
+        })
     }
 
     return (<>
@@ -360,12 +358,12 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
             </div>
             <div className="w-full col-span-2">
                 <label htmlFor="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961">Width (tiles)</label>
-                {(regionIdentifier == CHOCO_WINDOW_REGIONS.TOP || regionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM || regionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regionWidth} onChange={onRegionWidthChange} />}
+                {(regionIdentifier == CHOCO_WINDOW_REGIONS.TOP || regionIdentifier == CHOCO_WINDOW_REGIONS.BOTTOM || regionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regionColCount} onChange={onRegionColCountChange} />}
                 {(regionIdentifier != CHOCO_WINDOW_REGIONS.TOP && regionIdentifier != CHOCO_WINDOW_REGIONS.BOTTOM && regionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
             </div>
             <div className="w-full col-span-2">
                 <label htmlFor="7ae42bae-9eeb-4491-be31-00161a3af632">Height (tiles)</label>
-                {(regionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || regionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT || regionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regionHeight} onChange={onRegionHeightChange} />}
+                {(regionIdentifier == CHOCO_WINDOW_REGIONS.LEFT || regionIdentifier == CHOCO_WINDOW_REGIONS.RIGHT || regionIdentifier == CHOCO_WINDOW_REGIONS.CENTER) && <input placeholder="Tile Size" type="Number" autoComplete="off" id="4f4a4b0c-5b7b-4ef1-8355-c10c9c76c961" className={TAILWIND_INPUT_CLASS_NAME} value={regionRowCount} onChange={onRegionRowCountChange} />}
                 {(regionIdentifier != CHOCO_WINDOW_REGIONS.LEFT && regionIdentifier != CHOCO_WINDOW_REGIONS.RIGHT && regionIdentifier != CHOCO_WINDOW_REGIONS.CENTER) && <div className="w-full block rounded-lg border py-[9px] px-3 text-sm">1</div>}
             </div>
             <div className="col-span-10 -mt-4">
@@ -379,8 +377,8 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
             ref={tileAssignmentContainerRef}
             className="mb-4 w-full"
             style={{
-                '--region-width': regionWidth,
-                '--region-height': regionHeight,
+                '--region-width': regionColCount,
+                '--region-height': regionRowCount,
                 '--tile-size': `${tileSetDefinition.tileSize}px`,
                 '--tile-sheet-scale': assignmentTileScale,
             }}
@@ -403,22 +401,22 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheet, tileSize, active
                 </div>
                 <div className="region-tile-container col-span-4 self-center">
                     {
-                        Array.from({ length: regionHeight || 1 }).map((_, y) =>
-                            Array.from({ length: regionWidth || 1 }).map((_, x) =>
+                        Array.from({ length: regionRowCount || 1 }).map((_, rowIndex) =>
+                            Array.from({ length: regionColCount || 1 }).map((_, colIndex) =>
                                 <label
-                                    className={`${computeTileBlobKey(regionIdentifier, x, y)} region-tile-radio ${(selectedTile.x == x && selectedTile.y == y) ? "region-tile-selected" : ""}`}
+                                    className={`${computeTileBlobKey(regionIdentifier, colIndex, rowIndex)} region-tile-radio ${(selectedTile.colIndex == colIndex && selectedTile.rowIndex == rowIndex) ? "region-tile-selected" : ""}`}
                                     style={{
-                                        "--tile-sheet-top-pixel-x": `${tileAssignments?.[x]?.[y]?.x ?? 0}px`,
-                                        "--tile-sheet-top-pixel-y": `${tileAssignments?.[x]?.[y]?.y ?? 0}px`,
+                                        "--tile-sheet-top-pixel-x": `${tileAssignments?.[colIndex]?.[rowIndex]?.x ?? 0}px`,
+                                        "--tile-sheet-top-pixel-y": `${tileAssignments?.[colIndex]?.[rowIndex]?.y ?? 0}px`,
                                     }}
-                                    key={`transparency-pixel-${x}-${y}`}
+                                    key={`transparency-pixel-${colIndex}-${rowIndex}`}
                                 >
                                     <input
                                         name="selected-region-tile"
                                         className='sr-only'
                                         type="radio"
-                                        onChange={regionTileRadioOnChange} data-x={x} data-y={y}
-                                        checked={selectedTile.x == x && selectedTile.y == y}
+                                        onChange={regionTileRadioOnChange} data-col-index={colIndex} data-row-index={rowIndex}
+                                        checked={selectedTile.colIndex == colIndex && selectedTile.rowIndex == rowIndex}
                                     />
                                 </label>
                             ))

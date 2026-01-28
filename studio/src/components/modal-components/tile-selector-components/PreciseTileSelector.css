@@ -1,0 +1,29 @@
+div.precise-tile-selection-container {
+    --display-width: calc(3 * 1px * var(--scale) * var(--tile-size));
+    --display-height: calc(3 * 1px * var(--scale) * var(--tile-size));
+    --tile-sheet-height: calc(1px * var(--tile-sheet-height-unitless));
+    --tile-sheet-width: calc(1px * var(--tile-sheet-width-unitless));
+    --max-x-coordinate-unitless: calc(var(--tile-sheet-width-unitless) - var(--tile-size));
+    --max-y-coordinate-unitless: calc(var(--tile-sheet-height-unitless) - var(--tile-size));
+    width: var(--display-width);
+    height: var(--display-height);
+    overflow: hidden;
+    background-image: url("./tile-background-1.png");
+}
+
+div.precise-tile-selection-tilesheet {
+    background-image: var(--url);
+    position: relative;
+    width: calc(var(--scale) * var(--tile-sheet-width));
+    height: calc(var(--scale) * var(--tile-sheet-height));
+    background-size: calc(var(--scale) * var(--tile-sheet-width)) calc(var(--scale) * var(--tile-sheet-height));
+    image-rendering: pixelated;
+    background-position-x: calc(1px * var(--scale) * var(--tile-size) - 1px * var(--scale) * min(var(--max-x-coordinate-unitless), max(0, var(--selected-x-unitless))));
+    background-position-y: calc(1px * var(--scale) * var(--tile-size) - 1px * var(--scale) * min(var(--max-y-coordinate-unitless), max(0, var(--selected-y-unitless))));
+    background-repeat: no-repeat;
+}
+
+svg.precise-tile-selection-grid {
+    width: var(--display-width);
+    height: var(--display-height);
+}

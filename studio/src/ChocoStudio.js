@@ -1,12 +1,21 @@
-import { ChocoWinColor, ChocoWinCoordinates, ChocoWinSettings, ChocoWinTileSet, pngBase64DataUrlToBlob, TileTransformationTypes } from './ChocoWindow.js';
+import { ChocoWinAbstractPixelReaderFactory, ChocoWinColor, ChocoWinCoordinates, ChocoWinSettings, ChocoWinTileSet, pngBase64DataUrlToBlob, TileTransformationTypes } from './ChocoWindow.js';
 
 /**
  * Provides 
  */
 class ChocoStudioTileSheetBlobUrlManager {
-    /** @type {Map<String, String} */ #map;
-    constructor() {
+    /** @typedef {{url: String, width: number, height: number, blob: Blob}} TileSheetData */
+
+    /** @type {Map<String, TileSheetData>} */ #map;
+    /** @type {ChocoWinAbstractPixelReaderFactory} */ #readerFactory;
+
+    /**
+     * 
+     * @param {ChocoWinAbstractPixelReaderFactory} readerFactory 
+     */
+    constructor(readerFactory) {
         this.#map = new Map();
+        this.#readerFactory = readerFactory;
     }
 
     /**
@@ -19,7 +28,7 @@ class ChocoStudioTileSheetBlobUrlManager {
 
     /**
      * @param {String} tileSheetId 
-     * @returns {String} The blob URL for the PNG referenced by the tile sheet or null if it hasn't been set.
+     * @returns {TileSheetData} The blob URL for the PNG referenced by the tile sheet or null if it hasn't been set.
      */
     get(tileSheetId) {
         return this.#map.get(String(tileSheetId)) ?? null;
@@ -31,7 +40,24 @@ class ChocoStudioTileSheetBlobUrlManager {
      */
     setBlob(tileSheetId, blob) {
         const newBlobUrl = URL.createObjectURL(blob);
-        this.#map.set(tileSheetId, newBlobUrl);
+
+        /** @type {TileSheetData} */
+        const newObject = {
+            url: newBlobUrl,
+            width: null,
+            height: null,
+            blob: blob,
+        }
+        this.#map.set(tileSheetId, newObject);
+
+        return this.#readerFactory.
+            build({blob: blob}).
+            isReady().
+            then(r => {
+                newObject.width = r.width;
+                newObject.height = r.height;
+                return newObject;
+            });
     }
 
     /**
@@ -39,14 +65,13 @@ class ChocoStudioTileSheetBlobUrlManager {
      * @param {String} dataUrl 
      */
     setDataUrl(tileSheetId, dataUrl) {
-        const oldBlobUrl = this.get(tileSheetId);
-        if (oldBlobUrl) {
-            URL.revokeObjectURL(oldBlobUrl);
+        const oldData = this.get(tileSheetId);
+        if (oldData?.url) {
+            URL.revokeObjectURL(oldData?.url);
         }
 
         const blob = pngBase64DataUrlToBlob(dataUrl);
-        const newBlobUrl = URL.createObjectURL(blob);
-        this.#map.set(tileSheetId, newBlobUrl);
+        return this.setBlob(tileSheetId, blob);
     }
 }
 
@@ -177,7 +202,7 @@ class ChocoStudioWindowRegionDefinition {
     set(rowIndex, colIndex, assigment) {
         if (0 <= rowIndex && rowIndex < this.#rowCount) {
             if (0 <= colIndex && colIndex < this.#colCount) {
-                this.internalArray[rowIndex][colIndex] = assigment;
+                this.internalArray[rowIndex][colIndex] = new ChocoStudioWindowRegionTileAssignment(assigment);
             }
         }
     }
@@ -188,7 +213,7 @@ class ChocoStudioWindowRegionDefinition {
      * @returns {ChocoStudioWindowRegionTileAssignment}
      */
     get(rowIndex, colIndex) {
-        return this.internalArray[rowIndex][colIndex];
+        return this.internalArray?.[rowIndex]?.[colIndex];
     }
 
     /**

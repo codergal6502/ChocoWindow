@@ -130,7 +130,6 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
                 return;
             }
 
-            console.log(`1 update blob ${new Date().toLocaleTimeString()}`)
             const writer = new ChocoWinPngJsPixelWriter(450, 180);
             chocoWin.drawTo(writer);
 
@@ -167,6 +166,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
         setTileSetDefinitionId(newTileSetDefinitionId);
         setTileSetDefinition(selectedTileSetDefinition);
         setSubstituteColors([]);
+        setHasChanges(true);
     };
 
     /**

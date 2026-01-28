@@ -3,14 +3,14 @@ import { ChocoWinAbstractPixelReader, ChocoWinReflectionPixelReader, ChocoWinRef
 import { ChocoWinPngJsPixelWriter } from '../../../ChocoWinPngJsReaderWriter';
 import "./TileTransformationSelector.css"
 import { ERR_LOCAL_FILE_HEADER_NOT_FOUND } from '@zip.js/zip.js';
-import { TileAssignment } from '../TileSetDefinitionEditor';
+import { EditorTileAssignment } from '../TileSetDefinitionEditor';
 
 /**
  * @param {Object} props
- * @param {TileAssignment} props.activeTileSheetAssignment
+ * @param {EditorTileAssignment} props.assignableTileInfo
  * @param {function({transformationType: string, reader: ChocoWinAbstractPixelReader, blobUrl: String})} props.onSelectionMade
  */
-const TileTransformationSelector = ({ activeTileSheetAssignment, onSelectionMade }) => {
+const TileTransformationSelector = ({ assignableTileInfo: activeTileSheetAssignment, onSelectionMade }) => {
     const unique = useRef(crypto.randomUUID());
     const styleRef = useRef(null);
     const tileBlobUrlMap = useRef(new Map());

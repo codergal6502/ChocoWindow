@@ -1,31 +1,58 @@
-import { use, useContext, useEffect, useRef, useState } from "react";
-import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../../ChocoStudio";
+import { useContext, useEffect, useRef, useState } from "react";
+import { ChocoStudioTileSetDefinition } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from "../../SettingsModal";
-import { Canvas, Polyline, Rect } from "fabric";
-import { TileAssignment } from "../TileSetDefinitionEditor";
+import { EditorTileAssignment } from "../TileSetDefinitionEditor";
+import './PreciseTileSelector.css'
 
 /**
  * @param {object} props 
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
  * @param {number} props.tileSize
- * @param {TileAssignment} props.activeTileSheetAssignment
+ * @param {EditorTileAssignment} props.assignableTileInfo
  * @param {boolean} props.defaultHelpVisible
  * @param {function({x: number, y: number})} props.onSelectionMade
  * @returns 
  */
-const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, activeTileSheetAssignment, onSelectionMade }) => {
-    const TILES_IN_PTS = 3;
+const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, assignableTileInfo: activeTileSheetAssignment, onSelectionMade }) => {
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                               CONSTANTS                              //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
     const DEFAULT_PTS_SCALE = 3;
-    const BIGGEST_ZOOM_FACTOR = 6;
+    const MAX_PTS_SCALE = 5;
 
-    // Component-Wide
+    /** @typedef {String} SnapModeOptions */
+    /** @enum {SnapModeOptions} */
+    const SNAP_MODE_OPTIONS = Object.freeze({
+        TILE_SIZE: "TILE_SIZE",
+        OTHER: "OTHER",
+        NONE: "NONE"
+    })
+
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                          STATE AND REF HOOKS                         //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     const [helpVisibile, setHelpVisible] = useState(defaultHelpVisible ?? true);
     const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
+
+    /** @type {ReturnType<typeof useState<SnapModeOptions>>} */
+    const [snapMode, setSnapMode] = useState(SNAP_MODE_OPTIONS.TILE_SIZE);
+    const [sheetSnapOtherSize, setSheetSnapOtherSize] = useState(tileSize);
+    const [precisionSnapOtherSize, setPrecisionSnapOtherSize] = useState(tileSize);
+
+        /** @type {ReturnType<typeof useRef<HTMLStyleElement>>} */
+    const precisionTileSelectionStyleRef = useRef(null);
+    /** @type {ReturnType<typeof useRef<HTMLStyleElement>>} */
+    const preciseSelectorContainerRef = useRef(null);
+
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
-    const [selectedTileLocation, setSelectedTileLocation] = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState({ x: 0, y: 0 });
+    /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
+    const [displayLocation, setDisplayLocation] = useState({ x: 0, y: 0 });
+
+    const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
+    const [preciseSelectorScale, setPreciseSelectorScale] = useState(DEFAULT_PTS_SCALE);
 
     // Approximate Tile Selection
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -33,29 +60,11 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
     const tileSheetImgRef = useRef(null);
 
-    // utility for developers only during strict mode; "pretends" the selected tile location just got selected
-    useEffect(() => {
-        if (selectedTileLocation) {
-            onSelectionMade && onSelectionMade(selectedTileLocation);
-        }
-    }, []);
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                               EFFECTS                                //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    useEffect(() => {
-        if (activeTileSheetAssignment && selectedTileLocation) {
-            if (activeTileSheetAssignment.x != selectedTileLocation.x && activeTileSheetAssignment.y != selectedTileLocation.y) {
-                setSelectedTileLocation({
-                    x: activeTileSheetAssignment.x,
-                    y: activeTileSheetAssignment.y,
-                })
-                
-                showTileSheetTileInSheetTileSelection({ sheetNaturalX: activeTileSheetAssignment.x, sheetNaturalY: activeTileSheetAssignment.y, overrideSnap: true })
-            }
-        }
-    }, [activeTileSheetAssignment, selectedTileLocation])
-
-    const toggleHelp = () => setHelpVisible(!helpVisibile);
-
-    // Resize event handler
+    // browser resize wrapper
     useEffect(() => {
         // See https://www.geeksforgeeks.org/reactjs/react-onresize-event/
         // See https://react.dev/reference/react/useEffect#parameters
@@ -70,132 +79,31 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         };
     }, [])
 
-    /** @typedef {String} SnapModeOptions */
-
-    /** @enum {SnapModeOptions} */
-    const SNAP_MODE_OPTIONS = Object.freeze({
-        TILE_SIZE: "TILE_SIZE",
-        OTHER: "OTHER",
-        NONE: "NONE"
-    })
-
-    /** @type {ReturnType<typeof useState<SnapModeOptions>>} */
-    const [snapMode, setSnapMode] = useState(SNAP_MODE_OPTIONS.TILE_SIZE);
-    const [snapOtherSize, setSnapOtherSize] = useState(tileSize);
-
-
-
-
-
-
-    const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
-
-
-    const [preciseTileSelectionScale, setPreciseTileSelectionScale] = useState(DEFAULT_PTS_SCALE);
-
-
-    /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
-    const [displayPreciseTileLocation, setDisplayPreciseTileLocation] = useState(null);
-
-    const [preciseSelectionBackgroundPosition, setPreciseSelectionBackgroundPosition] = useState(null);
-    const [preciseTileSelectionSize, setPreciseTileSelectionSize] = useState(tileSetDefinition.tileSize * TILES_IN_PTS * DEFAULT_PTS_SCALE ?? 72);
-
-
-    const preciseSelectionContainerRef = useRef(null);
-    const preciseSelectionZoomedRef = useRef(null);
-    const preciseSelectionGridRef = useRef(null);
-
-
-
-
-
-
-    // set the precise tile selection scale and size
+    // change the precise selector size
     useEffect(() => {
-        // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
-        if (!preciseSelectionContainerRef.current) {
-            setPreciseTileSelectionSize(TILES_IN_PTS * tileSize);
+        if (preciseSelectorContainerRef?.current) {
+            const maxWidth = .75 * preciseSelectorContainerRef.current.clientWidth;
+            setPreciseSelectorScale(
+                Math.max(1,
+                    Math.min(MAX_PTS_SCALE,
+                        Math.round(maxWidth / tileSize / 3)
+                    )
+                )
+            );
         }
-        else {
-            // Similar to the region tile selection width, but this is always three tiles square.
-            const possibleScale = Math.floor((preciseSelectionContainerRef.current.parentElement.offsetWidth / TILES_IN_PTS) / tileSize);
-            const actualScale = Math.min(BIGGEST_ZOOM_FACTOR, possibleScale);
-            setPreciseTileSelectionScale(actualScale);
-            setPreciseTileSelectionSize(TILES_IN_PTS * tileSize * actualScale);
-        }
-    }, [tileSize, preciseSelectionContainerRef, lastResizeTimestamp])
+    }, [lastResizeTimestamp, preciseSelectorContainerRef])
+    
+    // when a selection is made, call the parent component's callback
+    useEffect(() => onSelectionMade && onSelectionMade(selectedLocation), [selectedLocation]);
 
-    // draw grid over precise tile selection
-    useEffect(() => {
-        if (preciseSelectionGridRef && preciseSelectionGridRef.current) {
-            const canvas = new Canvas('canvasId');
-            canvas.width = preciseTileSelectionSize;
-            canvas.height = preciseTileSelectionSize;
-            const lineWidth = 1;
-            const gridTileLength = preciseTileSelectionSize / TILES_IN_PTS;
-            const translucentYellow = 'rgba(128, 128, 00, 0.5)';
-            const clear = 'rgba(00, 0, 00, 0)';
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                            EVENT HANDLERS                            //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
 
-            const drawNonCenterTileHaze = (x, y, color) => {
-                const rectangle = new Rect({
-                    left: x - 1,
-                    top: y - 1,
-                    fill: color,
-                    width: gridTileLength - 1,
-                    height: gridTileLength - 1,
-                    objectCaching: false,
-                    originX: 'left',
-                    originY: 'top'
-                })
-                canvas.add(rectangle);
-            }
-
-            const drawPolyline = (points) => {
-                const polyline = new Polyline(points, {
-                    stroke: 'black',
-                    strokeWidth: lineWidth,
-                    fill: 'transparent'
-                });
-                canvas.add(polyline);
-            }
-
-            drawPolyline([
-                { x: gridTileLength, y: 0 },
-                { x: gridTileLength, y: preciseTileSelectionSize }
-            ], true);
-
-            drawPolyline([
-                { x: gridTileLength * 2, y: 0 },
-                { x: gridTileLength * 2, y: preciseTileSelectionSize }
-            ]);
-
-            drawPolyline([
-                { x: 0, y: gridTileLength },
-                { x: preciseTileSelectionSize, y: gridTileLength }
-            ]);
-
-            drawPolyline([
-                { x: 0, y: gridTileLength * 2 },
-                { x: preciseTileSelectionSize, y: gridTileLength * 2 }
-            ]);
-
-            drawNonCenterTileHaze(0, 0, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength, 0, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength * 2, 0, translucentYellow);
-
-            drawNonCenterTileHaze(0, gridTileLength, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength, gridTileLength, clear);
-            drawNonCenterTileHaze(gridTileLength * 2, gridTileLength, translucentYellow);
-
-            drawNonCenterTileHaze(0, gridTileLength * 2, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength, gridTileLength * 2, translucentYellow);
-            drawNonCenterTileHaze(gridTileLength * 2, gridTileLength * 2, translucentYellow);
-
-            canvas.renderAll();
-            const imageSrc = canvas.toDataURL();
-            preciseSelectionGridRef.current.style.backgroundImage = `url(${imageSrc})`;
-        }
-    }, [preciseSelectionGridRef, preciseTileSelectionScale, preciseTileSelectionSize, lastResizeTimestamp])
+    /**
+     * 
+     */
+    const toggleHelp = () => setHelpVisible(!helpVisibile);
 
     /**
      * @param {InputEvent} e 
@@ -205,12 +113,18 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     }
 
     /**
-     * @param {InputEvent} e 
+     * @param {InputEvent} e
      */
-    const onSnapOtherChange = (e) => {
-        setSnapOtherSize(e.target.value);
+    const onSheetSnapOtherSizeChange = (e) => {
+        setSheetSnapOtherSize(Number(e.target.value));
     }
 
+    /**
+     * @param {InputEvent} e
+     */
+    const onPrecisionSnapOtherSizeChange = (e) => {
+        setPrecisionSnapOtherSize(Number(e.target.value));
+    }
 
     /**
      * @param {MouseEvent}
@@ -220,26 +134,47 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     }
 
     /**
+     * @param {MouseEvent} mouseEvent
+     * @param {HTMLIFrameElement} mouseEvent.target
+     */
+    const onSheetMouseMove = (mouseEvent) => {
+        if (!sheetTileSelectionSemiLocked) {
+            const xTileSheetCoordScaled = mouseEvent.clientX - mouseEvent.target.x;
+            const yTileSheetCoordScaled = mouseEvent.clientY - mouseEvent.target.y;
+            const sheetWidth = mouseEvent.target.naturalWidth;
+            const sheetHeight = mouseEvent.target.naturalHeight;
+
+            const scale = 1.0 * sheetWidth / mouseEvent.target.width;
+
+            let xTileSheetCoordUnscaled = Math.max(0, Math.min(sheetWidth, Math.round(scale * xTileSheetCoordScaled)));
+            let yTileSheetCoordUnscaled = Math.max(0, Math.min(sheetHeight, Math.round(scale * yTileSheetCoordScaled)));
+
+            switch (snapMode) {
+                case SNAP_MODE_OPTIONS.TILE_SIZE: {
+                    xTileSheetCoordUnscaled = tileSize * Math.floor(xTileSheetCoordUnscaled / tileSize);
+                    yTileSheetCoordUnscaled = tileSize * Math.floor(yTileSheetCoordUnscaled / tileSize);
+                    break;
+                }
+                case SNAP_MODE_OPTIONS.OTHER: {
+                    const snapSize = sheetSnapOtherSize == Number(sheetSnapOtherSize) ? sheetSnapOtherSize : tileSize ?? tileSize;
+                    xTileSheetCoordUnscaled = snapSize * Math.floor(xTileSheetCoordUnscaled / snapSize);
+                    yTileSheetCoordUnscaled = snapSize * Math.floor(yTileSheetCoordUnscaled / snapSize);
+                    break;
+                }
+            }
+
+            setDisplayLocation({
+                x: xTileSheetCoordUnscaled,
+                y: yTileSheetCoordUnscaled,
+            })
+        }
+    }
+
+    /**
      * @param {MouseEvent}
      */
     const onSheetMouseLeave = (e) => {
-        if (!selectedTileLocation) return;
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: selectedTileLocation.x, sheetNaturalY: selectedTileLocation.y, overrideSnap: true });
-    }
-
-    const tockRef = useRef({tock: Date.now()});
-
-    /**
-     * @param {MouseEvent} e 
-     */
-    const onSheetMouseMove = (e) => {
-        if (!sheetTileSelectionSemiLocked) {
-            const timeDelta = Date.now() - tockRef.current.tock;
-            if (timeDelta > 50) {
-                // showTileSheetTileInSheetTileSelection({ mouseEvent: e });
-                tockRef.current.tock = Date.now();
-            }
-        }
+        setDisplayLocation(selectedLocation);
     }
 
     /**
@@ -248,135 +183,76 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     const onSheetMouseClick = (e) => {
         if (sheetTileSelectionSemiLocked) {
             setSheetTileSelectionSemiLocked(false);
-            showTileSheetTileInSheetTileSelection({ mouseEvent: e });
         }
         else {
             setSheetTileSelectionSemiLocked(true);
-            showTileSheetTileInSheetTileSelection({ mouseEvent: e });
-            setSelectedTileLocation(displayPreciseTileLocation);
+            setSelectedLocation(displayLocation);
         }
     }
 
-    const calculateSnapSnize = () =>
-        snapMode == SNAP_MODE_OPTIONS.TILE_SIZE ? tileSize :
-            snapMode == SNAP_MODE_OPTIONS.OTHER ? snapOtherSize :
-                null;
-
     /**
-     * @param {{x: Number, y: Number}} naturalSheetCoordinates 
-     * @returns 
+     * @param {MouseEvent} mouseEvent 
+     * @param {HTMLElement} mouseEvent.target
      */
-    const calculatePreciseTilePosition = (naturalSheetCoordinates) => ({
-        x: preciseTileSelectionScale * (tileSize - naturalSheetCoordinates.x),
-        y: preciseTileSelectionScale * (tileSize - naturalSheetCoordinates.y),
-    });
+    const onPreciseTileSelectionClick = (mouseEvent) => {
+        const x = mouseEvent.clientX - mouseEvent.currentTarget.getBoundingClientRect().x;
+        const y = mouseEvent.clientY - mouseEvent.currentTarget.getBoundingClientRect().y;
 
-    /**
-     * @param {Object} args
-     * @param {MouseEvent} args.mouseEvent The mouse event if triggered by a mouse event
-     * @param {Number} naturalX The "natural" X coordinate to use; will be overriden by mouse event.
-     * @param {Number} naturalY The "natural" Y coordinate to use; will be overriden by mouse event.
-     * @param {Booealn} overrideSnap Whether or not to ignore the snap-to-grid settings.
-     * @return {{x: Number, y: Number}}
-     */
-    const calculateTileSheetSelectionCoordinates = ({ mouseEvent, naturalX, naturalY, overrideSnap = false }) => {
-        if (!tileSheetImgRef || !tileSheetImgRef.current) return;
+        const width = mouseEvent.target.clientWidth;
+        const height = mouseEvent.target.clientHeight;
 
-        const imageWidth = tileSheetImgRef.current.naturalWidth;
-        const imageHeight = tileSheetImgRef.current.naturalHeight;
+        const xPercent = 1.0 * x / width;
+        const yPercent = 1.0 * y / height;
 
-        if (mouseEvent) {
-            /** @type {DOMRect} */ const rect = tileSheetImgRef.current.getBoundingClientRect();
-            const ratio = imageWidth / rect.width;
+        const newSelectedLocation = { ...selectedLocation };
 
-            naturalX = Math.max(0, Math.min(Math.floor(ratio * (mouseEvent.clientX - rect.left)), imageWidth));
-            naturalY = Math.max(0, Math.min(Math.floor(ratio * (mouseEvent.clientY - rect.top)), imageHeight));
+        const thisSnapSize =
+            snapMode == SNAP_MODE_OPTIONS.OTHER
+                ? precisionSnapOtherSize
+                : tileSize;
+
+        if (xPercent <= 0.3333) {
+            newSelectedLocation.x -= thisSnapSize;
+        }
+        else if (xPercent >= 0.6667) {
+            newSelectedLocation.x += thisSnapSize;
         }
 
-        const snapSize = calculateSnapSnize();
-
-        if (!overrideSnap && snapSize) {
-            naturalX = snapSize * Math.floor(naturalX / snapSize);
-            naturalY = snapSize * Math.floor(naturalY / snapSize);
+        if (yPercent <= 0.3333) {
+            newSelectedLocation.y -= thisSnapSize;
+        }
+        else if (yPercent >= 0.6667) {
+            newSelectedLocation.y += thisSnapSize;
         }
 
-        return { x: naturalX, y: naturalY };
+        setDisplayLocation(newSelectedLocation);
+        setSelectedLocation(newSelectedLocation);
     }
 
     /**
-     * Updates state refrenced by the precise tile selection CSS.
-     * @param {object} args
-     * @param {MouseEvent} args.mouseEvent The mouse event if triggered by a mouse event
-     * @param {number} args.naturalX The "natural" X coordinate to use; will be overriden by mouse event.
-     * @param {number} args.naturalY The "natural" Y coordinate to use; will be overriden by mouse event.
-     * @param {boolean} args.overrideSnap Whether or not to ignore the snap-to-grid settings.
-     */
-    const showTileSheetTileInSheetTileSelection = ({ mouseEvent, sheetNaturalX, sheetNaturalY, overrideSnap = false }) => {
-        const naturalSheetCoordinates = calculateTileSheetSelectionCoordinates({ mouseEvent, naturalX: sheetNaturalX, naturalY: sheetNaturalY, overrideSnap });
-        if (!naturalSheetCoordinates) return;
-
-        const preciseTilePosition = calculatePreciseTilePosition(naturalSheetCoordinates);
-
-        setDisplayPreciseTileLocation({ x: naturalSheetCoordinates.x, y: naturalSheetCoordinates.y });
-        setPreciseSelectionBackgroundPosition(preciseTilePosition);
-    }
-
-    /**
-     * @param {MouseEvent} e 
-     */
-    const onPreciseTileSelectionClick = (e) => {
-        return;
-        /** @type {DOMRect} */ const rect = e.target.getBoundingClientRect();
-
-        const /** @type {Number} */ x = e.clientX - rect.left + 1;
-        const /** @type {Number} */ y = e.clientY - rect.top + 1;
-
-        let deltaSheetX = 0;
-        let deltaSheetY = 0;
-
-        if (x / preciseTileSelectionScale < tileSize) {
-            deltaSheetX = -tileSize;
-        }
-        else if (x / preciseTileSelectionScale > 2 * tileSize) {
-            deltaSheetX = tileSize;
-        }
-
-        if (y / preciseTileSelectionScale < tileSize) {
-            deltaSheetY = -tileSize;
-        }
-        else if (y / preciseTileSelectionScale > 2 * tileSize) {
-            deltaSheetY = tileSize;
-        }
-
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: deltaSheetX + displayPreciseTileLocation.x, sheetNaturalY: deltaSheetY + displayPreciseTileLocation.y, overrideSnap: true });
-        setSelectedTileLocation({ x: deltaSheetX + displayPreciseTileLocation.x, y: deltaSheetY + displayPreciseTileLocation.y })
-    }
-
-    /**
-     * @param {object} e 
-     * @param {HTMLInputElement} e.target 
+     * @param {object} tileSheetMouseCoordinates 
+     * @param {HTMLInputElement} tileSheetMouseCoordinates.target 
      */
     const onSheetXManualInputChange = (e) => {
         const x = Number(e.target.value);
         if (x != e.target.value) return;
         if (x < 0) return;
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: x, sheetNaturalY: displayPreciseTileLocation?.y ?? 0, overrideSnap: true });
-        setSelectedTileLocation({ x: x, y: selectedTileLocation?.y ?? 0 })
+        const newLocation = { x: x, y: selectedLocation.y };
+        setDisplayLocation(newLocation);
+        setSelectedLocation(newLocation);
     }
 
     /**
      * @param {InputEvent} e 
-     */
+    */
     const onSheetYManualInputChange = (e) => {
         const y = Number(e.target.value);
         if (y != e.target.value) return;
         if (y < 0) return;
-        showTileSheetTileInSheetTileSelection({ sheetNaturalX: displayPreciseTileLocation?.x ?? 0, sheetNaturalY: y, overrideSnap: true });
-        setSelectedTileLocation({ x: selectedTileLocation?.x ?? 0, y: y })
+        const newLocation = { x: selectedLocation.x, y: y };
+        setDisplayLocation(newLocation);
+        setSelectedLocation(newLocation);
     }
-
-
-    useEffect(() => onSelectionMade && onSelectionMade(selectedTileLocation), [selectedTileLocation]);
 
     return (
         <>
@@ -386,52 +262,68 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                 &nbsp;<a href="#" onClick={toggleHelp} className="text-xs text-blue-900 dark:text-blue-100 py-1 hover:underline italic">hide help</a>
             </p>}
 
-            <div className={`grid grid-cols-5 gap-4 mb-2`}>
+            <div className={`grid grid-cols-4 gap-4 mb-2`}>
                 <div className="w-full col-span-2">
                     <label htmlFor="bdbf3176-cdef-4081-9cf1-e45615677954">Sheet Snap Mode</label>
                     <select className={TAILWIND_INPUT_CLASS_NAME} id="bdbf3176-cdef-4081-9cf1-e45615677954" value={snapMode} onChange={onSnapModeChange}>
                         <option value={SNAP_MODE_OPTIONS.TILE_SIZE}>Tile Size ({tileSize}px)</option>
-                        {/* <option value={SNAP_MODE_OPTIONS.OTHER}>Other (Choose)</option> */} {/* Disable this option since it needs refinement. */}
+                        <option value={SNAP_MODE_OPTIONS.OTHER}>Other (Choose)</option> {/* Disable this option since it needs refinement. */}
                         <option value={SNAP_MODE_OPTIONS.NONE}>Do Not Snap</option>
                     </select>
                 </div>
                 {(snapMode == SNAP_MODE_OPTIONS.OTHER) && <div className="w-full col-span-1">
-                    <label htmlFor="e25b0001-957a-4343-a98f-5a560b7e6af6">Sheet Snap Size</label>
-                    <input type="number" className={TAILWIND_INPUT_CLASS_NAME} id="e25b0001-957a-4343-a98f-5a560b7e6af6" value={snapOtherSize} onChange={onSnapOtherChange} />
+                    <label htmlFor="e25b0001-957a-4343-a98f-5a560b7e6af6">Approx. Sel. Snap</label>
+                    <input type="number" className={TAILWIND_INPUT_CLASS_NAME} id="e25b0001-957a-4343-a98f-5a560b7e6af6" value={sheetSnapOtherSize} onChange={onSheetSnapOtherSizeChange} />
+                </div>}
+                {(snapMode == SNAP_MODE_OPTIONS.OTHER) && <div className="w-full col-span-1">
+                    <label htmlFor="ae73a344-0c94-40d1-b7f9-56516099c813">Precise Sel. Snap</label>
+                    <input type="number" className={TAILWIND_INPUT_CLASS_NAME} id="ae73a344-0c94-40d1-b7f9-56516099c813" value={precisionSnapOtherSize} onChange={onPrecisionSnapOtherSizeChange} />
                 </div>}
             </div>
 
             <div className={`grid grid-cols-4 gap-4`}>
                 <div className="mb-4 w-full col-span-2">
-                    <h4 className="mb-1 font-bold">Approximate Tile Selection</h4>
-                    <img onMouseLeave={onSheetMouseLeave} onMouseEnter={onSheetMouseEnter} onMouseMove={onSheetMouseMove} onClick={onSheetMouseClick} alt="Tile Selection" src={tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)} ref={tileSheetImgRef} />
+                    <h4 className="mb-1 font-bold">Approximate Selector</h4>
+                    <img onMouseLeave={onSheetMouseLeave} onMouseEnter={onSheetMouseEnter} onMouseMove={onSheetMouseMove} onClick={onSheetMouseClick} alt="Tile Selection" src={tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)?.url} ref={tileSheetImgRef} />
                 </div>
-                <div className="mb-4 w-full col-span-2">
-                    <h4 className="mb-1 font-bold">Precise Tile Selection</h4>
-                    <div ref={preciseSelectionContainerRef} style={{ '--tile-sel-size': `${preciseTileSelectionSize}px` }} className="mb-3 mx-auto tile-sheet-position-selector h-[var(--tile-sel-size)] w-[var(--tile-sel-size)]">
-                        <div
-                            ref={preciseSelectionZoomedRef}
-                            className="w-full h-full sheet-tile-selection-mid-ground"
-                            style={{
-                                backgroundImage: `url(${tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)})`,
-                                imageRendering: 'pixelated',
-                                backgroundSize: `${tileSheetImgRef?.current?.naturalWidth * preciseTileSelectionScale}px ${tileSheetImgRef?.current?.naturalHeight * preciseTileSelectionScale}px`,
-                                backgroundPositionX: preciseSelectionBackgroundPosition?.x || 0,
-                                backgroundPositionY: preciseSelectionBackgroundPosition?.y || 0,
-                            }}
-                            onClick={onPreciseTileSelectionClick}
-                        >
-                            <div ref={preciseSelectionGridRef} className="w-full h-full"></div>
+                <div className="mb-4 w-full col-span-2" ref={preciseSelectorContainerRef}>
+                    <h4 className="mb-1 font-bold">Precise Selector</h4>
+
+                    <style ref={precisionTileSelectionStyleRef}>
+                    </style>
+                    <div
+                        className="precise-tile-selection-container"
+                        style={{
+                            "--scale": preciseSelectorScale,
+                            "--tile-size": tileSize,
+                            "--tile-sheet-height-unitless": tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)?.height,
+                            "--tile-sheet-width-unitless": tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)?.width,
+                            "--tile-sheet-height": "434px",
+                            "--tile-sheet-width": "1248px",
+                            "--selected-x-unitless": displayLocation.x,
+                            "--selected-y-unitless": displayLocation.y,
+                            "--url": `url("${tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)?.url}")`
+                        }}
+                    >
+                        <div className="precise-tile-selection-tilesheet" onClick={onPreciseTileSelectionClick}>
+                            <svg className="precise-tile-selection-grid" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="33.33%" y1="0" x2="33.33%" y2="100%" stroke="white" strokeWidth="1" />
+                                <line x1="66.67%" y1="0" x2="66.67%" y2="100%" stroke="white" strokeWidth="1" />
+                                <line x1="0" y1="33.33%" x2="100%" y2="33.33%" stroke="white" strokeWidth="1" />
+                                <line x1="0" y1="66.67%" x2="100%" y2="66.67%" stroke="white" strokeWidth="1" />
+                            </svg>
                         </div>
                     </div>
+
+
                     <div className="grid grid-cols-2">
-                        <div className="mr-2 mb-2">
+                        <div className="mr-2 my-2">
                             <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X</label>
-                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetXManualInputChange} value={displayPreciseTileLocation?.x ?? 0} />
+                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetXManualInputChange} value={selectedLocation?.x ?? 0} />
                         </div>
-                        <div className="ml-2 mb-2">
+                        <div className="ml-2 my-2">
                             <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
-                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={displayPreciseTileLocation?.y ?? 0} />
+                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={selectedLocation?.y ?? 0} />
                         </div>
                     </div>
                 </div>

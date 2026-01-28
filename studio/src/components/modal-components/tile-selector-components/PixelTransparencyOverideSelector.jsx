@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChocoWinAbstractPixelReader, ChocoWinColor } from '../../../ChocoWindow'
 import "./PixelTransparencyOverideSelector.css"
-import { TileAssignment } from '../TileSetDefinitionEditor';
+import { EditorTileAssignment } from '../TileSetDefinitionEditor';
 
 /**
  * @param {object} props
- * @param {TileAssignment} props.activeTileSheetAssignment
+ * @param {EditorTileAssignment} props.assignableTileInfo
  * @param {function({x: number, y: number}[])} props.onSelectionMade
  */
-const PixelTransparencyOverideSelector = ({ activeTileSheetAssignment, onSelectionMade }) => {
+const PixelTransparencyOverideSelector = ({ assignableTileInfo: activeTileSheetAssignment, onSelectionMade }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                         STATE AND REF HOOKS                          //
     // // // // // // // // // // // // // // // // // // // // // // // // //
