@@ -384,7 +384,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
                             if (onWorkspaceChange) onWorkspaceChange(workspace);
 
-                            const preset = studioWindow.singularPreset || workspace.presets.find((ps) => ps.id == studioWindow.presetId);
+                            const preset = workspace.presets.find((ps) => ps.id == studioWindow.presetId) ?? studioWindow.singularPreset;
                             if (!preset) return;
 
                             const tileSetDefintiion = workspace.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);

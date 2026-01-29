@@ -67,7 +67,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
             const timeout = setTimeout(() => uponWindowChange(), 500);
             setLastWindowChangeTimeout(timeout);
         }
-    }, [name, geometryX, geometryY, geometryW, geometryH, presetId, hasChanges])
+    }, [name, geometryX, geometryY, geometryW, geometryH, presetId, singularPreset, hasChanges])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          UTILITY FUNCTIONS                           //

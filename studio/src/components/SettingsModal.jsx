@@ -431,7 +431,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                             return <HowToUseThisTool workspace={workspace} onCloseClick={onReturnToEditor} />
                                         case FormStates.SETTINGS:
                                         default:
-                                            return <WorkspaceSettings workspace={workspace} onWorkspaceChange={onWorkspaceChange} />
+                                            return <WorkspaceSettings workspace={workspace} onWorkspaceChange={onWorkspaceChange} onCloseClick={() => onReturnToEditor(workspace) } />
                                         case FormStates.TILE_SHEET:
                                             return (!activeTileSheet) ? "" : (
                                                 <TileSheetEditor key={activeTileSheet.id} tileSheet={activeTileSheet} onTileSheetChange={onTileSheetChange} onTileSheetDelete={onTileSheetDelete} onReturnToEditor={() => onReturnToEditor(workspace)} />

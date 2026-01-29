@@ -32,7 +32,7 @@ class ChocoWorkspaceRenderer {
             const studioWindow = this.#workspace.windows.find((w) => wId == w.id);
             if (!studioWindow) { console.error(`No window with ID ${wId}.`); return; };
 
-            const studioPreset = studioWindow.singularPreset || this.#workspace.presets.find((ps) => ps.id == studioWindow.presetId);
+            const studioPreset = this.#workspace.presets.find((ps) => ps.id == studioWindow.presetId) || studioWindow.singularPreset;
             if (!studioPreset) { console.error(`No singular preset or preset with ID ${studioWindow.presetId}.`); return; }
 
             const tileSetDefinition = this.#workspace.tileSetDefinitions.find((tsd) => tsd.id == studioPreset.tileSetDefinitionId);
@@ -55,7 +55,7 @@ class ChocoWorkspaceRenderer {
             });
 
             return chocoWindow;
-        });
+        }).filter(win => win);
 
         const result =
             Promise

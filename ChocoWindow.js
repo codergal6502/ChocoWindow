@@ -279,8 +279,8 @@ export class ChocoWinWindow {
         /** @type {Boolean} */ allowOverrunX,
         /** @type {Boolean} */ allowOverrunY
     ) {
-        const areColorsExactMatch = (/** @type {ChocoWinColor} */ oldColor, /** @type {ChocoWinColor} */ newColor) => {
-            return oldColor.r == newColor.r && oldColor.g == newColor.g && oldColor.b == newColor.b;
+        const areColorsExactMatch = (/** @type {ChocoWinColor} */ color1, /** @type {ChocoWinColor} */ color2) => {
+            return color1.r == color2.r && color1.g == color2.g && color1.b == color2.b && color1.a == color2.a;
         }
 
         for (let sourceX = 0; sourceX < reader.width; sourceX++) {
