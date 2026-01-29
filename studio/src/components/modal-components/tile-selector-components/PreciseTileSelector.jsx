@@ -41,11 +41,12 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     const [sheetSnapOtherSize, setSheetSnapOtherSize] = useState(tileSize);
     const [precisionSnapOtherSize, setPrecisionSnapOtherSize] = useState(tileSize);
 
-        /** @type {ReturnType<typeof useRef<HTMLStyleElement>>} */
+    /** @type {ReturnType<typeof useRef<HTMLStyleElement>>} */
     const precisionTileSelectionStyleRef = useRef(null);
     /** @type {ReturnType<typeof useRef<HTMLStyleElement>>} */
     const preciseSelectorContainerRef = useRef(null);
 
+    const [doNotInvokeCallback, setDoNotInvokeCallback] = useState(false);
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
     const [selectedLocation, setSelectedLocation] = useState({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
@@ -92,9 +93,21 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
             );
         }
     }, [lastResizeTimestamp, preciseSelectorContainerRef])
-    
+
     // when a selection is made, call the parent component's callback
-    useEffect(() => onSelectionMade && onSelectionMade(selectedLocation), [selectedLocation]);
+    useEffect(() => {
+        if (!doNotInvokeCallback) {
+            onSelectionMade(selectedLocation)
+        }
+        setDoNotInvokeCallback(false);
+    }, [selectedLocation]);
+
+    // update the selected and display locations when a new assignable tile info comes in
+    useEffect(() => {
+        setDoNotInvokeCallback(true);
+        setSelectedLocation({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
+        setDisplayLocation({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
+    }, [assignableTileInfo])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
@@ -298,8 +311,6 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                             "--tile-size": tileSize,
                             "--tile-sheet-height-unitless": tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)?.height,
                             "--tile-sheet-width-unitless": tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)?.width,
-                            "--tile-sheet-height": "434px",
-                            "--tile-sheet-width": "1248px",
                             "--selected-x-unitless": displayLocation.x,
                             "--selected-y-unitless": displayLocation.y,
                             "--url": `url("${tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)?.url}")`

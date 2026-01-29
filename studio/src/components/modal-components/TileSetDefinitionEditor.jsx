@@ -29,7 +29,7 @@ export class AssignableTileInfo {
  * @param {ChocoWinColor[]} colors 
  * @returns {ChocoWinColor[]}
  */
-const cloneColors = (colors) => colors.map(c => new ChocoWinColor(c));
+const cloneColors = (colors) => colors?.map(c => new ChocoWinColor(c));
 
 /**
  * @param {Object<string, ChocoStudioWindowRegionDefinition>} region 
@@ -350,7 +350,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
 
     /**
-     * @param {EditorTileAssignment} retrievedAssignment 
+     * @param {AssignableTileInfo} retrievedAssignment 
      */
     const onTileAssignmentRetrieved = (retrievedAssignment) => {
         if (tileSheetReader) {
@@ -360,8 +360,8 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             const baseReader = new ChocoWinRegionPixelReader(
                 tileSheetReader,
                 {
-                    x: retrievedAssignment.x,
-                    y: retrievedAssignment.y,
+                    x: retrievedAssignment.xSheetCoordinate,
+                    y: retrievedAssignment.ySheetCoordinate,
                     height: tileSize,
                     width: tileSize,
                 }

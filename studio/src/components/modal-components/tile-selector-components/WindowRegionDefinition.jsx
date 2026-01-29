@@ -36,7 +36,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
     const tileAssignmentContainerRef = useRef(null);
     /** @type {ReturnType<typeof useRef<HTMLStyleElement>>} */
     const styleRef = useRef(null);
-    /** @type {ReturnType<typeof useContext<ChocoStudioTileSheetBlobUrlManager>>} */
 
     const [helpVisibile, setHelpVisible] = useState(true);
     const [regionIdentifier, setRegionIdentifier] = useState(CHOCO_WINDOW_REGIONS.TOP_LEFT);
@@ -53,9 +52,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
 
     /** @type {ReturnType<typeof useContext<ChocoStudioTileSheetBlobUrlManager>>} */
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
-
-
-    const [assignThisTileBackground, setAssignThisTileBackground] = useState("")
 
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -133,7 +129,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
         }
     }, [tileSetDefinition, tileSheetReader, regionIdentifier, tileBlobUrlMap])
 
-    // set the URL for the 
+    // set the URL for the "assign this" tile
     useEffect(() => {
         if (styleRef?.current && tileBlobUrlMap?.current && assignableTileInfo?.transformedReader?.isReady) {
             setIsAssignThisReady(false);
@@ -309,17 +305,17 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
     const onRetrieveTileButtonClick = (e) => {
         if (!onTileAssignmentRetrieved) return;
 
-        const regionTileAssignment =
-            tileSetDefinition.regions[regionIdentifier].get(selectedTile.rowIndex, selectedTile.colIndex);
+        const rta = tileSetDefinition.regions[regionIdentifier].get(selectedTile.rowIndex, selectedTile.colIndex);
 
         const /** @type {EditorTileAssignment} */ outboundTileAssignment = {
-            xSheetCoordinate: regionTileAssignment.xSheetCoordinate,
-            ySheetCoordinate: regionTileAssignment.ySheetCoordinate,
-            geometricTransformation: regionTileAssignment.geometricTransformation,
-            transparencyOverrides: regionTileAssignment?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? []
+            xSheetCoordinate: rta.xSheetCoordinate,
+            ySheetCoordinate: rta.ySheetCoordinate,
+            geometricTransformation: rta.geometricTransformation,
+            transparencyOverrides: rta?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? [],
         }
 
         onTileAssignmentRetrieved(outboundTileAssignment);
+        console.log(tileSheetBlobUrlDictionary);
     }
 
     /**
