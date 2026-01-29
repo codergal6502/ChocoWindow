@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChocoWinAbstractPixelReader, ChocoWinColor } from '../../../ChocoWindow'
+import { ChocoWinAbstractPixelReader, ChocoWinColor, ChocoWinCoordinates } from '../../../ChocoWindow'
 import "./PixelTransparencyOverideSelector.css"
-import { EditorTileAssignment } from '../TileSetDefinitionEditor';
+import { AssignableTileInfo } from '../TileSetDefinitionEditor';
 
 /**
  * @param {object} props
- * @param {EditorTileAssignment} props.assignableTileInfo
+ * @param {AssignableTileInfo} props.assignableTileInfo
  * @param {function({x: number, y: number}[])} props.onSelectionMade
  */
-const PixelTransparencyOverideSelector = ({ assignableTileInfo: activeTileSheetAssignment, onSelectionMade }) => {
+const PixelTransparencyOverideSelector = ({ assignableTileInfo, onSelectionMade }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                         STATE AND REF HOOKS                          //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -17,8 +17,10 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo: activeTileSheetA
     const [readerIsReady, setReaderIsReady] = useState(false);
     const [pixelSize, setPixelSize] = useState(0);
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}[]>} */
-    const [transparentPixels, setTransparentPixels] = useState([])
+    const [transparentPixels, setTransparentPixels] = useState(assignableTileInfo.transparencyOverrides.map(c => new ChocoWinCoordinates(c)));
     const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
+    const [doNotInvokeCallback, setDoNotInvokeCallback] = useState(false);
+    const [clickTimeout, setClickTimeout] = useState(null);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                             EFFECT HOOKS                             //
@@ -26,21 +28,21 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo: activeTileSheetA
 
     // detect when the reader is ready
     useEffect(() => {
-        if (activeTileSheetAssignment?.transformedReader) {
-            activeTileSheetAssignment.transformedReader.isReady().then(() => setReaderIsReady(true));
+        if (assignableTileInfo?.transformedReader) {
+            assignableTileInfo.transformedReader.isReady().then(() => setReaderIsReady(true));
         }
-    }, [activeTileSheetAssignment]);
+    }, [assignableTileInfo]);
 
     // size the pixel grid
     useEffect(() => {
-        if (activeTileSheetAssignment?.transformedReader && gridDivRef && gridDivRef.current && activeTileSheetAssignment?.transformedReader) {
-            const reader = activeTileSheetAssignment.transformedReader;
+        if (assignableTileInfo?.transformedReader && gridDivRef && gridDivRef.current && assignableTileInfo?.transformedReader) {
+            const reader = assignableTileInfo.transformedReader;
             const smallestSize = .75 * Math.min(gridDivRef.current.offsetWidth, gridDivRef.current.offsetHeight);
             const tileSize = Math.max(reader.width, reader.height); // should always be identical
             const pixelSize = Math.floor(smallestSize / tileSize); // round to nearest tile size multiple
             setPixelSize(pixelSize);
         }
-    }, [gridDivRef, activeTileSheetAssignment, readerIsReady, lastResizeTimestamp])
+    }, [gridDivRef, assignableTileInfo, readerIsReady, lastResizeTimestamp])
 
 
     // resize event handler to force a pixel grid resize
@@ -58,6 +60,28 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo: activeTileSheetA
         };
     }, [])
 
+    // when a selection is made, call the parent component's callback
+    useEffect(() => {
+        if (!doNotInvokeCallback) {
+            if (clickTimeout) {
+                clearTimeout(clickTimeout)
+            };
+
+            setClickTimeout(
+                setTimeout(() => {
+                    onSelectionMade(transparentPixels)
+                }, 250)
+            )
+        }
+        setDoNotInvokeCallback(false);
+    }, [transparentPixels]);
+
+    // update the selected and display locations when a new assignable tile info comes in
+    useEffect(() => {
+        setDoNotInvokeCallback(true);
+        setTransparentPixels(assignableTileInfo.transparencyOverrides.map(c => new ChocoWinCoordinates(c)));
+    }, [assignableTileInfo])
+
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -68,29 +92,19 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo: activeTileSheetA
      */
     const checkboxOnChange = (e) => {
         const coordinates = { x: e.target.dataset.x, y: e.target.dataset.y }
-        const label = e.target.parentElement;
 
+        const newTransparentPixels = transparentPixels.map(c => new ChocoWinCoordinates(c));
         if (true == e.target.checked) {
-            label.classList.add("pixel-is-transparent");
-
-            const newTransparentPixels = transparentPixels.slice();
             newTransparentPixels[newTransparentPixels.length] = coordinates;
-            newTransparentPixels.sort((c1, c2) => c1.y < c2.y && c1.x < c2.x);
-            onSelectionMade(newTransparentPixels.slice());
         }
         else if (false == e.target.checked) {
-            label.classList.remove("pixel-is-transparent");
-
-            const newTransparentPixels = transparentPixels.slice();
             const idx = newTransparentPixels.findIndex(c => c.x == coordinates.x && c.y == coordinates.y)
             newTransparentPixels.splice(idx, 1);
-            setTransparentPixels(newTransparentPixels);
-            onSelectionMade(newTransparentPixels.slice());
         }
-        else {
-            console.warn("unexpected checkbox state", e.target.checked, JSON.stringify(coordinates));
-            label.classList.remove("pixel-is-transparent");
-        }
+
+        const maxY = 1 + Math.max(...newTransparentPixels.map(c => c.y));
+        newTransparentPixels.sort((c1, c2) => c1.x * maxY + c1.y - c2.x * maxY - c2.y);
+        setTransparentPixels(newTransparentPixels);
     }
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -105,15 +119,15 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo: activeTileSheetA
         return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a / 255.0})`
     }
 
-    return (activeTileSheetAssignment?.transformedReader && readerIsReady && <>
+    return (assignableTileInfo?.transformedReader && readerIsReady && <>
         <div className='w-full h-full' ref={gridDivRef} >
             <h4 className="my-3 font-bold">Pixel Transparency Override</h4>
-            <div className='transparency-container' style={{ '--tile-size': activeTileSheetAssignment.transformedReader.width }}>
+            <div className='transparency-container' style={{ '--tile-size': assignableTileInfo.transformedReader.width }}>
                 {
-                    Array.from(Array(activeTileSheetAssignment.transformedReader.height), (_, y) =>
-                        Array.from(Array(activeTileSheetAssignment.transformedReader.width), (_, x) =>
-                            <label className='pixel-transparency-checkbox' key={`transparency-pixel-${x}-${y}`} style={{ width: pixelSize, height: pixelSize, backgroundColor: chocoWinColorToRgba(activeTileSheetAssignment.transformedReader.getPixel({ x, y })) }}>
-                                <input className='sr-only' type="checkbox" onChange={checkboxOnChange} data-x={x} data-y={y} />
+                    Array.from(Array(assignableTileInfo.transformedReader.height), (_, y) =>
+                        Array.from(Array(assignableTileInfo.transformedReader.width), (_, x) =>
+                            <label className={`pixel-transparency-checkbox ${transparentPixels.find(c => c.x == x && c.y == y) ? "pixel-is-transparent" : ""}`} key={`transparency-pixel-${x}-${y}`} style={{ width: pixelSize, height: pixelSize, backgroundColor: chocoWinColorToRgba(assignableTileInfo.transformedReader.getPixel({ x, y })) }}>
+                                <input className='sr-only' type="checkbox" checked={transparentPixels.find(c => c.x == x && c.y == y) ? "pixel-is-transparent" : ""} onChange={checkboxOnChange} data-x={x} data-y={y} />
                             </label>
                         )
                     )

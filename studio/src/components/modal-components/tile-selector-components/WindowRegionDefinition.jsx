@@ -186,7 +186,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
         return;
         // if (lastAssignThisButtonClickTime && isAssignThisReady && styleRef?.current && tileBlobUrlMap?.current) {
         //     const tileBlobKey = computeTileBlobKey(regionIdentifier, selectedTile.colIndex, selectedTile.rowIndex);
-        //     /** @type {ChocoWinAbstractPixelReader} */ const reader = editorTileAssignment.transformedReader;
+        //     /** @type {ChocoWinAbstractPixelReader} */ const reader = AssignableTileInfo.transformedReader;
         //     const writer = writerFactory.build(reader.width, reader.height);
         //     writer.writeAll(reader);
 
@@ -208,10 +208,10 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
         //     if (!region[selectedTile.rowIndex]) { region[selectedTile.rowIndex] = []; }
 
         //     region.set(selectedTile.colIndex, selectedTile.rowIndex, new ChocoStudioWindowRegionTileAssignment({
-        //         xSheetCoordinate: editorTileAssignment.x,
-        //         ySheetCoordinate: editorTileAssignment.y,
-        //         geometricTransformation: editorTileAssignment.geometricTransformation,
-        //         transparencyOverrides: editorTileAssignment.transparencyOverrides,
+        //         xSheetCoordinate: AssignableTileInfo.x,
+        //         ySheetCoordinate: AssignableTileInfo.y,
+        //         geometricTransformation: AssignableTileInfo.geometricTransformation,
+        //         transparencyOverrides: AssignableTileInfo.transparencyOverrides,
         //     }));
 
         //     onChangeMade(tileSetDefinition);
@@ -307,7 +307,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
 
         const rta = tileSetDefinition.regions[regionIdentifier].get(selectedTile.rowIndex, selectedTile.colIndex);
 
-        const /** @type {EditorTileAssignment} */ outboundTileAssignment = {
+        const /** @type {AssignableTileInfo} */ outboundTileAssignment = {
             xSheetCoordinate: rta.xSheetCoordinate,
             ySheetCoordinate: rta.ySheetCoordinate,
             geometricTransformation: rta.geometricTransformation,
@@ -315,7 +315,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
         }
 
         onTileAssignmentRetrieved(outboundTileAssignment);
-        console.log(tileSheetBlobUrlDictionary);
     }
 
     /**

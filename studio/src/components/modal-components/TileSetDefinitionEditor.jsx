@@ -93,7 +93,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [previewTileScale, setPreviewTileScale] = useState(3);
     /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
     const [tileSheetReader, setTileSheetReader] = useState(null);
-    /** @type {ReturnType<typeof useState<EditorTileAssignment>>} */
+    /** @type {ReturnType<typeof useState<AssignableTileInfo>>} */
     const [assignableTileInfo, setAssignableTileInfo] = useState(null)
     const previewState = useRef({ url: "", drawInterval: null, stopTimeout: null });
     const [tileSheetReady, setTileSheetReady] = useState(false);
@@ -431,19 +431,18 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         setAssignableTileInfo({
             xSheetCoordinate: assignableTileInfo.xSheetCoordinate,
             ySheetCoordinate: assignableTileInfo.ySheetCoordinate,
-            geometricTransformation: assignableTileInfo.transformationType,
+            geometricTransformation: assignableTileInfo.geometricTransformation,
             baseReader: assignableTileInfo.baseReader,
             transformedReader: assignableTileInfo.transformedReader,
             transparencyOverrides: pixels,
         });
+        onTileSetDefinitionChange(tileSetDefinition);
     }
 
     /**
      * @param {ChocoStudioTileSetDefinition} newTileSetDefinition 
      */
     const updatePreviewImageBlob = () => {
-        console.log('update the preview');
-
         if (previewTileScale < 1) { return; }
         const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
         if (!tileSheet) return;

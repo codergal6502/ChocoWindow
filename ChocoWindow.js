@@ -59,12 +59,35 @@ export class ChocoWinCoordinates {
         if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y)) {
             this.x = arg1.x;
             this.y = arg1.y;
+        }
+        else {
+            /** @type {Number} */ this.x = 0;
+            /** @type {Number} */ this.y = 0;
+        }
+        this.id = arg1?.id ?? crypto.randomUUID();
+    }
+}
+
+export class ChocoWinTileDrawData {
+    /**
+     * Default consturctor
+     */
+    /**
+     * Copy constructor, useful for JSON objects.
+     * @param {ChocoWinCoordinates} arg1
+     */
+    constructor(arg1) {
+        if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y)) {
+            this.x = arg1.x;
+            this.y = arg1.y;
             this.t = arg1.t;
+            this.a = arg1.a?.map(c1 => new ChocoWinCoordinates(c1));
         }
         else {
             /** @type {Number} */ this.x = 0;
             /** @type {Number} */ this.y = 0;
             /** @type {TileTransformationTypes} */ this.t = TileTransformationTypes.BASE;
+            /** @type {ChocoWinCoordinates[]} */ this.a = [];
         }
         this.id = arg1?.id ?? crypto.randomUUID();
     }
@@ -105,16 +128,16 @@ export class ChocoWinTilesetCorners {
      */
     constructor(arg1) {
         if (arg1 && arg1.TL && arg1.TR && arg1.BL && arg1.BR) {
-            this.TL = new ChocoWinCoordinates(arg1.TL);
-            this.TR = new ChocoWinCoordinates(arg1.TR);
-            this.BL = new ChocoWinCoordinates(arg1.BL);
-            this.BR = new ChocoWinCoordinates(arg1.BR);
+            this.TL = new ChocoWinTileDrawData(arg1.TL);
+            this.TR = new ChocoWinTileDrawData(arg1.TR);
+            this.BL = new ChocoWinTileDrawData(arg1.BL);
+            this.BR = new ChocoWinTileDrawData(arg1.BR);
         }
         else {
-            /** @type {ChocoWinCoordinates} - The top-left corner tile coordinates. */     this.TL = { x: 0, y: 0 };
-            /** @type {ChocoWinCoordinates} - The top-right corner tile coordinates. */    this.TR = { x: 0, y: 0 };
-            /** @type {ChocoWinCoordinates} - The bottom-left corner tile coordinates. */  this.BL = { x: 0, y: 0 };
-            /** @type {ChocoWinCoordinates} - The bottom-right corner tile coordinates. */ this.BR = { x: 0, y: 0 };
+            /** @type {ChocoWinTileDrawData} - The top-left corner tile coordinates. */     this.TL = { x: 0, y: 0 };
+            /** @type {ChocoWinTileDrawData} - The top-right corner tile coordinates. */    this.TR = { x: 0, y: 0 };
+            /** @type {ChocoWinTileDrawData} - The bottom-left corner tile coordinates. */  this.BL = { x: 0, y: 0 };
+            /** @type {ChocoWinTileDrawData} - The bottom-right corner tile coordinates. */ this.BR = { x: 0, y: 0 };
         }
         this.id = arg1?.id ?? crypto.randomUUID();
     }
@@ -130,16 +153,16 @@ export class ChocoWinOptionEdges {
      */
     constructor(arg1) {
         if (arg1 && arg1.T && arg1.B && arg1.L && arg1.R) {
-            this.T = arg1.T.map((c) => new ChocoWinCoordinates(c));
-            this.B = arg1.B.map((c) => new ChocoWinCoordinates(c));
-            this.L = arg1.L.map((c) => new ChocoWinCoordinates(c));
-            this.R = arg1.R.map((c) => new ChocoWinCoordinates(c));
+            this.T = arg1.T.map((c) => new ChocoWinTileDrawData(c));
+            this.B = arg1.B.map((c) => new ChocoWinTileDrawData(c));
+            this.L = arg1.L.map((c) => new ChocoWinTileDrawData(c));
+            this.R = arg1.R.map((c) => new ChocoWinTileDrawData(c));
         }
         else {
-            /** @type {Array<ChocoWinCoordinates>} The top edge tile coordinate pairs. */   this.T = [{ x: 0, y: 0 }];
-            /** @type {Array<ChocoWinCoordinates>} The bottom edge tile coordinate paors */ this.B = [{ x: 0, y: 0 }];
-            /** @type {Array<ChocoWinCoordinates>} The left edge tile coordinate paors. */  this.L = [{ x: 0, y: 0 }];
-            /** @type {Array<ChocoWinCoordinates>} The right edge tile coordinate pairs. */ this.R = [{ x: 0, y: 0 }];
+            /** @type {Array<ChocoWinTileDrawData>} The top edge tile coordinate pairs. */   this.T = [{ x: 0, y: 0 }];
+            /** @type {Array<ChocoWinTileDrawData>} The bottom edge tile coordinate paors */ this.B = [{ x: 0, y: 0 }];
+            /** @type {Array<ChocoWinTileDrawData>} The left edge tile coordinate paors. */  this.L = [{ x: 0, y: 0 }];
+            /** @type {Array<ChocoWinTileDrawData>} The right edge tile coordinate pairs. */ this.R = [{ x: 0, y: 0 }];
         }
         this.id = arg1?.id ?? crypto.randomUUID();
     }
@@ -161,7 +184,7 @@ export class ChocoWinTileSet {
             this.tileSize = Number(arg1.tileSize);
             this.corners = new ChocoWinTilesetCorners(arg1.corners);
             this.edges = new ChocoWinOptionEdges(arg1.edges);
-            this.centerRows = arg1.centerRows.map((col) => col.map(coord => new ChocoWinCoordinates(coord)));
+            this.centerRows = arg1.centerRows.map((col) => col.map(coord => new ChocoWinTileDrawData(coord)));
             if (arg1.substitutableColors) {
                 this.substitutableColors = arg1.substitutableColors.map((color) => new ChocoWinColor(color));
             }
@@ -177,7 +200,7 @@ export class ChocoWinTileSet {
             this.corners = { TL: { y: 0, x: 0 }, TR: { y: 0, x: 0 }, BL: { y: 0, x: 0 }, BR: { y: 0, x: 0 } };
             /** @type {ChocoWinOptionEdges} */
             this.edges = { T: [{ y: 0, x: 0 }], L: [{ y: 0, x: 0 }], R: [{ y: 0, x: 0 }], B: [{ y: 0, x: 0, }] };
-            /** @type {Array<Array<ChocoWinCoordinates>>} */
+            /** @type {Array<Array<ChocoWinTileDrawData>>} */
             this.centerRows = [[{ y: 0, x: 0 }]];
             /** @type {Array<ChocoWinColor>} */
             this.substitutableColors = []
@@ -260,15 +283,6 @@ export class ChocoWinWindow {
             return oldColor.r == newColor.r && oldColor.g == newColor.g && oldColor.b == newColor.b;
         }
 
-        const areColorRmsClose = (/** @type {ChocoWinColor} */ oldColor, /** @type {ChocoWinColor} */ newColor) => {
-            const maxDistance = 2;
-            const dr = oldColor.r - newColor.r;
-            const dg = oldColor.g - newColor.g;
-            const db = oldColor.b - newColor.b;
-
-            return Math.sqrt(0.33 * dr * dr + 0.33 * dg * dg + 0.33 * db * db) < maxDistance
-        }
-
         for (let sourceX = 0; sourceX < reader.width; sourceX++) {
             for (let sourceY = 0; sourceY < reader.width; sourceY++) {
                 let pixelColor = reader.getPixel({ x: sourceX, y: sourceY });
@@ -321,16 +335,16 @@ export class ChocoWinWindow {
             console.error("tile size cannot be zero");
             return;
         }
-        const /** @type {Map<String, ChocoWinCoordinates>} */ cachedTileReaders = new Map();
-        const xyToCacheKey = ({/** @type { String } */ id, /** @type {Number} */ x, /* @type {Number} */ y }) => {
-            return id ?? String(this.#sillyMaxWidth / 2 * x + y);
+        const /** @type {Map<String, ChocoWinAbstractPixelReader>} */ cachedTileReaders = new Map();
+        const posToCacheKey = ({/** @type { String } */ id, /** @type {Number} */ x, /* @type {Number} */ y }) => {
+            return id;
         }
-        const getTileReader = (/** @type {ChocoWinCoordinates} */ tilePos) => {
-            let reader = cachedTileReaders.get(xyToCacheKey(tilePos));
+        const getTileReader = (/** @type {ChocoWinTileDrawData} */ drawData) => {
+            let reader = cachedTileReaders.get(posToCacheKey(drawData));
             if (!reader) {
-                reader = new ChocoWinRegionPixelReader(this.#tileSheetReader, new ChocoWinRectangle({ x: tilePos.x, y: tilePos.y, width: tileSize, height: tileSize }));
+                reader = new ChocoWinRegionPixelReader(this.#tileSheetReader, new ChocoWinRectangle({ x: drawData.x, y: drawData.y, width: tileSize, height: tileSize }));
 
-                switch (tilePos.t) {
+                switch (drawData.t) {
                     case TileTransformationTypes.BASE: default: {
                         // don't modify reader
                         break;
@@ -365,8 +379,11 @@ export class ChocoWinWindow {
                     }
                 }
 
-                // todo: when implementing transformations, iterate over and keep reassigning the reader.
-                cachedTileReaders.set(xyToCacheKey(tilePos), reader);
+                if (drawData.a?.length) {
+                    reader = new ChocoWinTransparencyOverrideReader(reader, drawData.a.map(c => new ChocoWinCoordinates(c)));
+                }
+                
+                cachedTileReaders.set(posToCacheKey(drawData), reader);
             }
             return reader;
         }
@@ -376,10 +393,10 @@ export class ChocoWinWindow {
             if (!row) continue;
 
             for (let dx = destSize, j = 0; dx < this.#w - destSize; dx += destSize, j = (j + 1) % wo.centerRows[i].length) {
-                let tilePos = row[j];
-                if (!tilePos) continue;
+                let drawData = row[j];
+                if (!drawData) continue;
 
-                const reader = getTileReader(tilePos);
+                const reader = getTileReader(drawData);
                 this.#doDrawTile(reader, writer, dx, dy);
             }
         }
@@ -645,6 +662,50 @@ export class ChocoWinRotatePixelReader extends ChocoWinAbstractTransformationPix
                 // {h, w} => { 0, h }
                 // {0, w} => { w, h }
                 return this._reader.getPixel({ x: this._reader.width - 1 - coordinate.y, y: coordinate.x });
+        }
+    }
+}
+
+/**
+ * Makes chosen pixels transparent.
+ */
+export class ChocoWinTransparencyOverrideReader extends ChocoWinAbstractTransformationPixelReader {
+    /** @param {ChocoWinCoordinates[]} */ #transparentPixels;
+
+    /**
+     * @param {ChocoWinAbstractPixelReader} reader
+     * @param {ChocoWinCoordinates[]} transparentPixels;
+     */
+    constructor(reader, transparentPixels) {
+        super(reader);
+        this._reader = reader;
+        this.#transparentPixels = transparentPixels.map(c => new ChocoWinCoordinates(c));
+    }
+
+    /**
+     * @return {Number}
+     */
+    get width() {
+        return this._reader.width;
+    }
+
+    /**
+     * @return {Number}
+     */
+    get height() {
+        this._reader.height;
+    }
+
+    /**
+     * @param {ChocoWinCoordinates} coordinate
+     * @return {ChocoWinColor}
+     */
+    getPixel(coordinate) {
+        if (this.#transparentPixels.find(c => c.x == coordinate.x && c.y == coordinate.y)) {
+            return new ChocoWinColor({ r: 0, g: 0, b: 0, a: 0});
+        }
+        else {
+            return this._reader.getPixel(coordinate);
         }
     }
 }
