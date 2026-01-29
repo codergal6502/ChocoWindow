@@ -157,12 +157,12 @@ const LayoutEditor = ({ layout, windows, onLayoutChange, onLayoutDelete, onRetur
                         return (
                             <tr key={windowId} className="even:bg-gray-200 odd:bg-gray-300 dark:even:bg-gray-600 dark:odd:bg-gray-700">
                                 <td className="p-1">
-                                    <button className="hover:text-yellow-400" key={`u-${window.id}`} onClick={() => onMoveWindowUpClick(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowUp} /></button>
-                                    <button className="hover:text-yellow-400" key={`d-${window.id}`} onClick={() => moveWindowDownClicked(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faArrowDown} /></button>
+                                    <button className="hover:text-yellow-400" key={`u-${windowId}`} onClick={() => onMoveWindowUpClick(windowId)} aria-label="Delete"><FontAwesomeIcon icon={faArrowUp} /></button>
+                                    <button className="hover:text-yellow-400" key={`d-${windowId}`} onClick={() => moveWindowDownClicked(windowId)} aria-label="Delete"><FontAwesomeIcon icon={faArrowDown} /></button>
                                 </td>
-                                <td className="p-1">{window.name}</td>
+                                <td className="p-1">{window ? window.name : `Missing Window ${windowId}`}</td>
                                 <td className="p-1">
-                                    <button className="hover:text-red-200" key={`r-${window.id}`} onClick={() => onRemoveWindowClick(window.id)} aria-label="Delete"><FontAwesomeIcon icon={faCircleMinus} /></button>
+                                    <button className="hover:text-red-200" key={`r-${windowId}`} onClick={() => onRemoveWindowClick(windowId)} aria-label="Delete"><FontAwesomeIcon icon={faCircleMinus} /></button>
                                 </td>
                             </tr>
                         );
