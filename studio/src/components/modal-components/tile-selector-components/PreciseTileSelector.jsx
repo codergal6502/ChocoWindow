@@ -2,19 +2,19 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { ChocoStudioTileSetDefinition } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from "../../SettingsModal";
-import { EditorTileAssignment } from "../TileSetDefinitionEditor";
+import { AssignableTileInfo } from "../TileSetDefinitionEditor";
 import './PreciseTileSelector.css'
 
 /**
  * @param {object} props 
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
  * @param {number} props.tileSize
- * @param {EditorTileAssignment} props.assignableTileInfo
+ * @param {AssignableTileInfo} props.assignableTileInfo
  * @param {boolean} props.defaultHelpVisible
  * @param {function({x: number, y: number})} props.onSelectionMade
  * @returns 
  */
-const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, assignableTileInfo: activeTileSheetAssignment, onSelectionMade }) => {
+const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, assignableTileInfo, onSelectionMade }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -47,9 +47,9 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     const preciseSelectorContainerRef = useRef(null);
 
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
-    const [selectedLocation, setSelectedLocation] = useState({ x: 0, y: 0 });
+    const [selectedLocation, setSelectedLocation] = useState({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
-    const [displayLocation, setDisplayLocation] = useState({ x: 0, y: 0 });
+    const [displayLocation, setDisplayLocation] = useState({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
 
     const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
     const [preciseSelectorScale, setPreciseSelectorScale] = useState(DEFAULT_PTS_SCALE);

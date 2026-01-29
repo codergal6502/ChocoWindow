@@ -313,8 +313,8 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
             tileSetDefinition.regions[regionIdentifier].get(selectedTile.rowIndex, selectedTile.colIndex);
 
         const /** @type {EditorTileAssignment} */ outboundTileAssignment = {
-            x: regionTileAssignment.xSheetCoordinate,
-            y: regionTileAssignment.ySheetCoordinate,
+            xSheetCoordinate: regionTileAssignment.xSheetCoordinate,
+            ySheetCoordinate: regionTileAssignment.ySheetCoordinate,
             geometricTransformation: regionTileAssignment.geometricTransformation,
             transparencyOverrides: regionTileAssignment?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? []
         }
