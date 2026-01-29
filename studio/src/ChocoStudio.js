@@ -418,6 +418,7 @@ class ChocoStudioWindow {
             this.y = 30;
             this.h = 480;
             this.w = 640;
+            this.backgroundColor = null;
             this.singularPreset = null;
         }
         else {
@@ -428,6 +429,7 @@ class ChocoStudioWindow {
             /** @type { Number } */ this.y = Number(arg1.y);
             /** @type { Number } */ this.w = Number(arg1.w);
             /** @type { Number } */ this.h = Number(arg1.h);
+            /** @type { ChocoWinColor } */ this.backgroundColor = arg1.backgroundColor ? new ChocoWinColor(arg1.backgroundColor) : null;
             /** @type { ChocoStudioPreset } */ this.singularPreset = arg1.singularPreset && new ChocoStudioPreset(arg1.singularPreset)
         }
     }

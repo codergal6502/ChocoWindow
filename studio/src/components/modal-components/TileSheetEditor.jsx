@@ -119,7 +119,7 @@ const TileSheetEditor = ({ tileSheet, onTileSheetChange, onTileSheetDelete, onRe
 
         <div className="mb-4 w-full">
             <label htmlFor="4d8736a5-51a6-4fd3-88a1-2a907b755718">Atrribution: </label>
-            <textarea placeholder="Attribution" type="text" autoComplete="off" id="4d8736a5-51a6-4fd3-88a1-2a907b755718" className={TAILWIND_INPUT_CLASS_NAME} value={attribution} onChange={onAttributionChange} />
+            <textarea placeholder="Attribution" type="text" autoComplete="off" id="4d8736a5-51a6-4fd3-88a1-2a907b755718" className={`h-24 ${TAILWIND_INPUT_CLASS_NAME}`} value={attribution} onChange={onAttributionChange} />
         </div>
 
         <div className="mb-4 w-full">

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindow } from "../../ChocoStudio"
-import { ChocoWinWindow } from "../../ChocoWindow";
+import { ChocoWinColor, ChocoWinWindow } from "../../ChocoWindow";
 import PresetEditor from "./PresetEditor";
 import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../../ChocoWinPngJsReaderWriter";
 
@@ -27,6 +27,9 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     const [geometryY, setGeometryY] = useState(window.y);
     const [geometryW, setGeometryW] = useState(window.w);
     const [geometryH, setGeometryH] = useState(window.h);
+    const [hasBackgroundColor, setHasBackgroundColor] = useState(!!window.backgroundColor);
+    /** @type {ReturnType<typeof useState<ChocoWinColor>>} */
+    const [backgroundColor, setBackgroundColor] = useState(window.backgroundColor);
     const [presetId, setPresetId] = useState(window.presetId);
     /** @type {ReturnType<typeof useState<ChocoStudioPreset>>} */
     const [singularPreset, setSingularPreset] = useState(window.singularPreset);
@@ -67,7 +70,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
             const timeout = setTimeout(() => uponWindowChange(), 500);
             setLastWindowChangeTimeout(timeout);
         }
-    }, [name, geometryX, geometryY, geometryW, geometryH, presetId, singularPreset, hasChanges])
+    }, [name, geometryX, geometryY, geometryW, geometryH, presetId, singularPreset, hasBackgroundColor, backgroundColor, hasChanges])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          UTILITY FUNCTIONS                           //
@@ -83,6 +86,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
         newWindow.y = geometryY;
         newWindow.w = geometryW;
         newWindow.h = geometryH;
+        newWindow.backgroundColor = hasBackgroundColor ? backgroundColor : null;
         newWindow.presetId = presetId;
         newWindow.singularPreset = new ChocoStudioPreset(singularPreset);
         updatePreviewImageBlob();
@@ -114,6 +118,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
             winTileSet: tileSet,
             readerFactory: readerFactoryRef.current,
             colorSubstitutions: preset.substituteColors,
+            backgroundColor: hasBackgroundColor ? backgroundColor : null
         });
 
         chocoWin.isReady().then(() => {
@@ -184,6 +189,24 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     /**
      * @param {Object} inputEvent
      * @param {HTMLInputElement} inputEvent.target
+    */
+    const onHasBackgroundColorChange = (inputEvent) => {
+        setHasBackgroundColor(String(true) == inputEvent.target.value);
+        setHasChanges(true)
+    }
+
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
+     */
+    const onBackgroundColorChange = (inputEvent) => {
+        setBackgroundColor(new ChocoWinColor(inputEvent.target.value));
+        setHasChanges(true);
+    }
+
+    /**
+     * @param {Object} inputEvent
+     * @param {HTMLInputElement} inputEvent.target
      */
     const onPresetIdChange = (inputEvent) => {
         const uuidReg = (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
@@ -210,29 +233,42 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
         <p className="mb-2 text-sm italic"></p>
         <div className="mb-4 w-full">
             <label htmlFor="c2c6dc82-1188-41ae-a8ba-24b3c3748b95">Name: </label>
-            <input placeholder="Preset Name" type="text" autoComplete="off" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
+            <input placeholder="Window Name" type="text" autoComplete="off" id="c2c6dc82-1188-41ae-a8ba-24b3c3748b95" className={TAILWIND_INPUT_CLASS_NAME} value={name} onChange={onNameChange} />
         </div>
 
-        <div className={`grid grid-cols-4 gap-4`}>
+        <div className={`grid grid-cols-6 gap-4`}>
             <div className="mb-4 w-full">
                 <label htmlFor="f6242f82-7376-4e18-9248-a7a6e874d6e4">X Position: </label>
-                <input placeholder="Preset Name" type="number" id="f6242f82-7376-4e18-9248-a7a6e874d6e4" className={TAILWIND_INPUT_CLASS_NAME} value={geometryX} onChange={onGeometryXChange} />
+                <input placeholder="X Position" type="number" id="f6242f82-7376-4e18-9248-a7a6e874d6e4" className={TAILWIND_INPUT_CLASS_NAME} value={geometryX} onChange={onGeometryXChange} />
             </div>
 
             <div className="mb-4 w-full">
                 <label htmlFor="3da2a38e-6c32-4e9d-8ff9-cac955c3b53e">Y Position: </label>
-                <input placeholder="Preset Name" type="number" id="3da2a38e-6c32-4e9d-8ff9-cac955c3b53e" className={TAILWIND_INPUT_CLASS_NAME} value={geometryY} onChange={onGeometryYChange} />
+                <input placeholder="Y Position" type="number" id="3da2a38e-6c32-4e9d-8ff9-cac955c3b53e" className={TAILWIND_INPUT_CLASS_NAME} value={geometryY} onChange={onGeometryYChange} />
             </div>
 
             <div className="mb-4 w-full">
                 <label htmlFor="4a855c80-d4e1-46b4-ba47-471488280ac7">Width: </label>
-                <input placeholder="Preset Name" type="number" id="4a855c80-d4e1-46b4-ba47-471488280ac7" className={TAILWIND_INPUT_CLASS_NAME} value={geometryW} onChange={onGeometryWChange} />
+                <input placeholder="Width" type="number" id="4a855c80-d4e1-46b4-ba47-471488280ac7" className={TAILWIND_INPUT_CLASS_NAME} value={geometryW} onChange={onGeometryWChange} />
             </div>
 
             <div className="mb-4 w-full">
                 <label htmlFor="df672390-f90b-4033-b0c3-ffbdcbd4139d">Height: </label>
-                <input placeholder="Preset Name" type="number" id="df672390-f90b-4033-b0c3-ffbdcbd4139d" className={TAILWIND_INPUT_CLASS_NAME} value={geometryH} onChange={onGeometryHChange} />
+                <input placeholder="Height" type="number" id="df672390-f90b-4033-b0c3-ffbdcbd4139d" className={TAILWIND_INPUT_CLASS_NAME} value={geometryH} onChange={onGeometryHChange} />
             </div>
+
+            <div className="mb-4 w-full">
+                <label htmlFor="d51437d3-75ea-42dc-9ab8-1f03d876cad6">Has Background Color: </label>
+                <select placeholder="Has Background Color" type="number" id="d51437d3-75ea-42dc-9ab8-1f03d876cad6" className={TAILWIND_INPUT_CLASS_NAME} value={hasBackgroundColor} onChange={onHasBackgroundColorChange}>
+                    <option value={true}>Yes</option>
+                    <option value={false}>No</option>
+                </select>
+            </div>
+
+            {hasBackgroundColor && <div className="mb-2 w-full">
+                <label htmlFor="e8c3f5b1-73e4-46fe-a096-0c12a3775d6f">Background Color: </label>
+                <input placeholder="Background Color" type="color" id="df672390-f90b-4033-b0c3-ffbdcbd4139d" className={TAILWIND_INPUT_CLASS_NAME} value={backgroundColor?.toHexString()} onChange={onBackgroundColorChange} />
+            </div>}
         </div>
 
         <div className="mb-4 w-full">
@@ -243,7 +279,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
             </select>
         </div>
 
-        {(!presetId) && <PresetEditor isSubordinate={true} preset={window.singularPreset || new ChocoStudioPreset()} tileSheets={tileSheets} tileSetDefinitions={tileSetDefinitions} onPresetChange={onSingularPresetChange} />}
+        {(!presetId) && <PresetEditor isSubordinate={true} backgroundColor={hasBackgroundColor ? backgroundColor : null} preset={window.singularPreset || new ChocoStudioPreset()} tileSheets={tileSheets} tileSetDefinitions={tileSetDefinitions} onPresetChange={onSingularPresetChange} />}
         {(presetId) && <><h3 className="mb-2 mt-4 text-xl">Preview</h3><div id="tileSetPreviewDiv" ><img className="max-w-full" alt="Window Preview" src={previewImageUrl} /></div></>}
 
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>

@@ -10,11 +10,13 @@ import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../..
  * @param {ChocoStudioPreset} props.preset
  * @param {Array<ChocoStudioTileSheet>} props.tileSheets
  * @param {Array<ChocoStudioTileSetDefinition>} props.tileSetDefinitions
+ * @param {Boolean} props.isSubordinate
+ * @param {ChocoWinColor} props.backgroundColor
  * @param {function(ChocoStudioPreset):void} props.onPresetChange
  * @param {function(String):void} props.onPresetDelete
  * @param {function():void} props.onReturnToEditor
  */
-const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = false, onPresetChange, onPresetDelete, onReturnToEditor }) => {
+const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = false, backgroundColor = null, onPresetChange, onPresetDelete, onReturnToEditor }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -121,6 +123,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
             tileScale: tileScale ?? 1,
             winTileSet: tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
             readerFactory: readerFactoryRef.current,
+            backgroundColor: backgroundColor,
             colorSubstitutions: substituteColors,
         });
 

@@ -205,6 +205,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                 h: studioWindow.h,
                 x: 0,
                 y: 0,
+                backgroundColor: studioWindow.backgroundColor,
                 tileScale: preset.tileScale,
                 winTileSet: tileSet
             });

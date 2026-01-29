@@ -20,6 +20,7 @@ export class ChocoWinColor {
                 /** @type {number} */ this.r = 0;
                 /** @type {number} */ this.g = 0;
                 /** @type {number} */ this.b = 0;
+                /** @type {number} */ this.a = 255;
             }
             else {
                 arg1 = arg1.replace(/^#/, '');
@@ -27,6 +28,7 @@ export class ChocoWinColor {
                 this.r = parseInt(arg1.slice(0, 2), 16);
                 this.g = parseInt(arg1.slice(2, 4), 16);
                 this.b = parseInt(arg1.slice(4, 6), 16);
+                this.a = 255;
             }
         }
         else if (arg1 && !isNaN(arg1.r) && !isNaN(arg1.g) && !isNaN(arg1.b)) {
@@ -217,7 +219,8 @@ export class ChocoWinWindow {
     /** @type {Number} */ #y;
     /** @type {Number} */ #w;
     /** @type {Number} */ #h;
-    /** @type {Array<Number, ChocoWinColor>} */ #colorSubstitutions;
+    /** @type {ChocoWinColor} */ #backgroundColor;
+    /** @type {ChocoWinColor[]} */ #colorSubstitutions;
 
     /**
      * @param {Object} args
@@ -228,9 +231,10 @@ export class ChocoWinWindow {
      * @param {Number} args.w 
      * @param {Number} args.h 
      * @param {ChocoWinAbstractPixelReaderFactory} args.readerFactory
-     * @param {Array<Number, ChocoWinColor>} args.colorSubstitutions
+     * @param {ChocoWinColor} args.backgroundColor
+     * @param {ChocoWinColor[]} args.colorSubstitutions
      */
-    constructor({ winTileSet, tileScale, x, y, w, h, readerFactory, colorSubstitutions }) {
+    constructor({ winTileSet, tileScale, x, y, w, h, readerFactory, backgroundColor = null, colorSubstitutions = [] }) {
         this.id = crypto.randomUUID();
         this.#tileSheetReader = readerFactory.build({
             dataUrl: winTileSet.sourceFileUrl,
@@ -242,6 +246,7 @@ export class ChocoWinWindow {
         this.#y = y;
         this.#w = w;
         this.#h = h;
+        this.#backgroundColor = backgroundColor;
         this.#colorSubstitutions = colorSubstitutions ?? [];
 
         if ((true != ChocoWinSettings.ignoreScaleMisalignmentErrors) && ((this.#w % this.#tileScale != 0) || (this.#h % this.#tileScale != 0))) {
@@ -286,8 +291,10 @@ export class ChocoWinWindow {
         for (let sourceX = 0; sourceX < reader.width; sourceX++) {
             for (let sourceY = 0; sourceY < reader.width; sourceY++) {
                 let pixelColor = reader.getPixel({ x: sourceX, y: sourceY });
-
-                if (this.hasColorSubstitutions() && this.#winTileSet.substitutableColors?.length) {
+                if (pixelColor.a === 0 && this.#backgroundColor) {
+                    pixelColor = this.#backgroundColor;
+                }
+                else if (this.hasColorSubstitutions() && this.#winTileSet.substitutableColors?.length) {
                     for (const keyValuePair of Object.entries(this.#colorSubstitutions)) {
                         /** @type {number} */ const index = keyValuePair[0];
                         /** @type {ChocoWinColor} */ const newColor = keyValuePair[1];
@@ -335,6 +342,7 @@ export class ChocoWinWindow {
             console.error("tile size cannot be zero");
             return;
         }
+
         const /** @type {Map<String, ChocoWinAbstractPixelReader>} */ cachedTileReaders = new Map();
         const posToCacheKey = ({/** @type { String } */ id, /** @type {Number} */ x, /* @type {Number} */ y }) => {
             return id;
@@ -382,7 +390,7 @@ export class ChocoWinWindow {
                 if (drawData.a?.length) {
                     reader = new ChocoWinTransparencyOverrideReader(reader, drawData.a.map(c => new ChocoWinCoordinates(c)));
                 }
-                
+
                 cachedTileReaders.set(posToCacheKey(drawData), reader);
             }
             return reader;
@@ -702,7 +710,7 @@ export class ChocoWinTransparencyOverrideReader extends ChocoWinAbstractTransfor
      */
     getPixel(coordinate) {
         if (this.#transparentPixels.find(c => c.x == coordinate.x && c.y == coordinate.y)) {
-            return new ChocoWinColor({ r: 0, g: 0, b: 0, a: 0});
+            return new ChocoWinColor({ r: 0, g: 0, b: 0, a: 0 });
         }
         else {
             return this._reader.getPixel(coordinate);

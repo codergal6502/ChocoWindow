@@ -51,6 +51,7 @@ class ChocoWorkspaceRenderer {
                 w: studioWindow.w,
                 h: studioWindow.h,
                 readerFactory: this.#readerFactory,
+                backgroundColor: studioWindow.backgroundColor,
                 colorSubstitutions: studioPreset.substituteColors,
             });
 

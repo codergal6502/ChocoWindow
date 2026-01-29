@@ -232,6 +232,10 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
         setRegionIdentifier(identifier);
         setRegionColCount(tileSetDefinition.regions[identifier].colCount);
         setRegionRowCount(tileSetDefinition.regions[identifier].rowCount);
+        setSelectedTile({
+            colIndex: Math.min(selectedTile.colIndex, tileSetDefinition.regions[identifier].colCount - 1),
+            rowIndex: Math.min(selectedTile.rowIndex, tileSetDefinition.regions[identifier].rowCount - 1),
+        })
         // TODO!!! rename TileSetDefinition....tileSheet~~Position~~ to assigments, and x/y to tileSheetPixelX, tileSheetPixelY
         setTileAssignments(
             Array.from(tileSetDefinition.regions[identifier].colCount).map((_, x) => {
