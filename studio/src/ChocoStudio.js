@@ -51,7 +51,7 @@ class ChocoStudioTileSheetBlobUrlManager {
         this.#map.set(tileSheetId, newObject);
 
         return this.#readerFactory.
-            build({blob: blob}).
+            build({ blob: blob }).
             isReady().
             then(r => {
                 newObject.width = r.width;
@@ -332,11 +332,12 @@ class ChocoStudioTileSetDefinition {
                 ),
             },
             "centerRows":
-                new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].colCount)).fill().map((_, rowIdx) =>
-                    new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].rowCount)).fill().map((_, colIdx) => {
+                new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].rowCount)).fill().map((_, rowIdx) =>
+                    new Array(Number(this.regions[CHOCO_WINDOW_REGIONS.CENTER].colCount)).fill().map((_, colIdx) => {
                         const assignment = this.regions[CHOCO_WINDOW_REGIONS.CENTER].get(rowIdx, colIdx);
                         return { x: assignment?.xSheetCoordinate ?? 0, y: assignment?.ySheetCoordinate ?? 0, t: assignment?.geometricTransformation ?? TileTransformationTypes.BASE }
-                    })
+                    }
+                    )
                 ),
             "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? []
         });

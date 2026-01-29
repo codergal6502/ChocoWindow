@@ -156,12 +156,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     //     if (state) {
     //         if (!state.drawInterval) {
     //             updatePreviewImageBlob();
-                
+
     //             state.drawInterval = setInterval(() => {
     //                 updatePreviewImageBlob();
     //             }, updatePeriod);
     //         }
-            
+
     //         clearTimeout(state.stopTimeout);
     //         state.stopTimeout = setTimeout(() => {
     //             clearInterval(state.drawInterval);
@@ -255,7 +255,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      * @param {number} args.colCount
      * @param {number} args.rowCount
      */
-    const onRegionResized = ({regionIdentifier, colCount, rowCount}) => {
+    const onRegionResized = ({ regionIdentifier, colCount, rowCount }) => {
         const newRegions = cloneRegions(regions);
         newRegions[regionIdentifier].colCount = colCount;
         newRegions[regionIdentifier].rowCount = rowCount;
@@ -269,7 +269,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      * @param {number} args.colIndex
      * @param {number} args.rowIndex
      */
-    const onAssignmentMade = ({regionIdentifier, colIndex, rowIndex}) => {
+    const onAssignmentMade = ({ regionIdentifier, colIndex, rowIndex }) => {
         const newRegions = cloneRegions(regions);
         newRegions[regionIdentifier].set(rowIndex, colIndex, assignableTileInfo);
         setRegions(newRegions);
@@ -286,54 +286,54 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
      * 
      */
     const onGenerateColorPaletteButtonClick = () => {
-        fetch(tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId)).then((response) => response.body).then((body) => {
-            const png = new PNG();
-            const reader = body.getReader();
-            reader
-                .read()
-                .then((v) => png.write(v.value))
-                .finally(() => { });
+        const png = new PNG();
 
-            png.on("parsed", () => {
-                const /** @type {Array<ChocoWinColor>} */ colors = [];
-                const /** @type {Set<String>} */ colorStrings = new Set();
 
-                Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
-                    const /** @type {ChocoStudioWindowRegionDefinition} */ region = tileSetDefinition.regions[whichRegion];
+        tileSheetBlobUrlDictionary.
+            get(tileSheetId).
+            blob.
+            arrayBuffer().
+            then(buffer => png.parse(buffer));
 
-                    for (let rowIdx = 0; rowIdx < region.colCount; rowIdx++) {
-                        for (let colIdx = 0; colIdx < region.rowCount; colIdx++) {
-                            const tsp = region.get(rowIdx, colIdx);
+        png.on("parsed", () => {
+            const /** @type {Array<ChocoWinColor>} */ colors = [];
+            const /** @type {Set<String>} */ colorStrings = new Set();
 
-                            for (let x = tsp.xSheetCoordinate; x < tsp.xSheetCoordinate + tileSize; x++) {
-                                for (let y = tsp.ySheetCoordinate; y < tsp.ySheetCoordinate + tileSize; y++) {
-                                    const idx = (png.width * y + x) << 2;
+            Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
+                const /** @type {ChocoStudioWindowRegionDefinition} */ region = tileSetDefinition.regions[whichRegion];
 
-                                    const r = png.data[idx];
-                                    const g = png.data[idx + 1];
-                                    const b = png.data[idx + 2];
-                                    const a = png.data[idx + 3];
+                for (let rowIdx = 0; rowIdx < region.colCount; rowIdx++) {
+                    for (let colIdx = 0; colIdx < region.rowCount; colIdx++) {
+                        const tsp = region.get(rowIdx, colIdx);
+                        if (!tsp) continue;
+                        for (let x = tsp.xSheetCoordinate; x < tsp.xSheetCoordinate + tileSize; x++) {
+                            for (let y = tsp.ySheetCoordinate; y < tsp.ySheetCoordinate + tileSize; y++) {
+                                const idx = (png.width * y + x) << 2;
 
-                                    const rgbaString = `(${r}, ${g}, ${b}, ${a})`;
-                                    if (!colorStrings.has(rgbaString)) {
-                                        colorStrings.add(rgbaString);
-                                        colors[colors.length] = new ChocoWinColor({ r, g, b, a });
-                                    }
+                                const r = png.data[idx];
+                                const g = png.data[idx + 1];
+                                const b = png.data[idx + 2];
+                                const a = png.data[idx + 3];
+
+                                const rgbaString = `(${r}, ${g}, ${b}, ${a})`;
+                                if (!colorStrings.has(rgbaString)) {
+                                    colorStrings.add(rgbaString);
+                                    colors[colors.length] = new ChocoWinColor({ r, g, b, a });
                                 }
                             }
                         }
                     }
-                })
-
-                setTooManyColors(colors.length > MAX_COLOR_COUNT);
-                setColorCount(colors.length);
-
-                if (colors.length <= MAX_COLOR_COUNT) {
-                    setDefaultColors(colors);
-                    setHasChanges(true);
                 }
             })
-        });
+
+            setTooManyColors(colors.length > MAX_COLOR_COUNT);
+            setColorCount(colors.length);
+
+            if (colors.length <= MAX_COLOR_COUNT) {
+                setDefaultColors(colors);
+                setHasChanges(true);
+            }
+        })
     }
 
 
