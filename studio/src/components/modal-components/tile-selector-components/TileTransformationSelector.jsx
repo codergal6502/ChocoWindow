@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChocoWinAbstractPixelReader, ChocoWinReflectionPixelReader, ChocoWinReflectionTypes, ChocoWinRotatePixelReader, TileTransformationTypes } from '../../../ChocoWindow'
-import { ChocoWinPngJsPixelWriter } from '../../../ChocoWinPngJsReaderWriter';
 import "./TileTransformationSelector.css"
-import { ERR_LOCAL_FILE_HEADER_NOT_FOUND } from '@zip.js/zip.js';
 import { AssignableTileInfo } from '../TileSetDefinitionEditor';
 import { WriterFactoryForStudio } from '../../../App';
 import { useContext } from 'react';

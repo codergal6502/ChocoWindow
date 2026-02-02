@@ -1,14 +1,12 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment, ChocoStudioWindowRegionTileAssignmentArray } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
-import { TileSheetBlobUrlDictionary } from '../../SettingsModal';
-import './WindowRegionDefinition.css'
 import { ChocoWinAbstractPixelReader, ChocoRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
-import { ChocoWinPngJsPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { AssignableTileInfo } from "../TileSetDefinitionEditor";
 import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../../App";
+import './WindowRegionDefinition.css'
 
 /**
  * Directly modifies the provided tile set definition.

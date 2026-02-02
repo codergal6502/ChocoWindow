@@ -1,15 +1,17 @@
 import { ChocoWorkspaceRenderer } from "./ChocoRender";
 import { ChocoStudioWorkspace } from "./ChocoStudio";
 import { BlobReader, BlobWriter, Data64URIReader, TextReader, ZipWriter } from "@zip.js/zip.js";
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from "./ChocoWinPngJsReaderWriter";
+import { ChocoWinAbstractPixelReaderFactory, ChocoWinAbstractPixelWriterFactory } from "./ChocoWindow";
 
 /**
  * @param {ChocoStudioWorkspace} workspace
+ * @param {ChocoWinAbstractPixelReaderFactory} readerFactory
+ * @param {ChocoWinAbstractPixelWriterFactory} writerFactory
  * @return {Promise}
  */
-const downloadZip = (workspace) => {
+const downloadZip = (workspace, readerFactory, writerFactory) => {
     const invalidCharRegEx = /[<>:""\\\/|?*]/g;
-    const renderer = new ChocoWorkspaceRenderer(workspace, new ChocoWinPngJsPixelWriterFactory(), new ChocoWinPngJsPixelReaderFactory());
+    const renderer = new ChocoWorkspaceRenderer(workspace, writerFactory, readerFactory);
 
     const /** @type {Array.<Promise.<{name:String, reader:FileReader}>>} */ readerPromises = [];
 

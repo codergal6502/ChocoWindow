@@ -4,6 +4,8 @@ import { faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-sv
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import downloadZip from "../../ZipDownloader";
+import { useContext } from "react";
+import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../App";
 
 /**
  * @param {Object} props
@@ -12,6 +14,11 @@ import downloadZip from "../../ZipDownloader";
  * @param {function()} props.onCloseClick
  */
 const WorkspaceSettings = ({ workspace, onWorkspaceChange, onCloseClick }) => {
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                               CONSTANTS                              //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    const readerFactory = useContext(ReaderFactoryForStudio);
+    const writerFactory = useContext(WriterFactoryForStudio);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          STATE AND REF HOOKS                         //
@@ -75,7 +82,7 @@ const WorkspaceSettings = ({ workspace, onWorkspaceChange, onCloseClick }) => {
      * 
      */
     const onDownloadAssetButtonClick = () => {
-        downloadZip(workspace);
+        downloadZip(workspace, readerFactory, writerFactory);
     }
 
     /**
