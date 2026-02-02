@@ -1,59 +1,138 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <script type="module">
-            import { ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinSettings } from './ChocoWindow.js';
 
-            // You'll notice console warnings about scale misalignments if you don't set this to
-            // true. In this sample, the purple window's dimensions are not a multiple of the
-            // scale.
-            ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
-            
-            const windowOptions = [
-                {
-                    sourceFileUrl: "window.png"
-                  , tileSize: 20
-                  , corners: { TL: { y: 0, x: 0 }, TR: { y: 0, x: 40 }, BL: { y: 40, x: 0 }, BR: { y: 40, x: 40 } }
-                  , edges: { T: [ { y: 0, x: 20 } ], L: [ { y: 20, x: 0 } ], R: [ { y: 20, x: 40 } ], B: [ { y: 40, x: 20 } ] }
-                  , centerRows: [
-                        [ { y: 20, x: 20 } ]
-                    ]
-                  , substitutableColors: [ { r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 }, { r: 255, g: 102, b: 163 } ]
-                }
-            ].map((wo) => new ChocoWinTileSet(wo));
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/pngjs@7.0.0/browser.js"></script>
+    <script type="module">
+        import { ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinSettings, TileTransformationTypes, ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from './ChocoWindow.js';
 
-            window.onload = (event) => {
-                const generateWindows = () => {
-                    
-                    // Use sparse arrays or method chaining for color substitution.
-                    const blue   = new ChocoWinWindow(windowOptions[0], 1,  20,  20, 400, 300, [,{r: 245, g: 169, b: 184},{ r: 91,  g: 206, b: 250 }])
-                    const pink   = new ChocoWinWindow(windowOptions[0], 2, 540,  20, 640, 240, [,{r: 91,  g: 206, b: 250},{ r: 245, g: 169, b: 184 }])
-                    const purple = new ChocoWinWindow(windowOptions[0], 3,  20, 500, 610, 380).substituteColor(2, { r: 156, g: 89,  b: 209 }).substituteColor(1, {r: 252, g: 244, b: 52 });
-                    const yellow = new ChocoWinWindow(windowOptions[0], 2, 660, 500, 520, 380).substituteColor(2, { r: 252, g: 244, b: 52  }).substituteColor(1, {r: 156, g: 89,  b: 209});
-                    const white  = new ChocoWinWindow(windowOptions[0], 2, 200, 120, 500, 480).substituteColor(2, { r: 255, g: 255, b: 255 }).substituteColor(1, {r: 50,  g: 50,  b: 50 });
-                    const black  = new ChocoWinWindow(windowOptions[0], 2, 470, 200, 500, 480).substituteColor(2, { r: 0,   g: 0,   b: 0   });
+        // You'll notice console warnings about scale misalignments if you don't set this to
+        // true. In this sample, the purple window's dimensions are not a multiple of the
+        // scale.
+        ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
 
-                    const wins = [ blue, pink, purple, yellow, white, black ];
+        const fakeUuid = () => {
+            fakeUuid.i = (fakeUuid.i ?? -1) + 1;
+            return `00000000-0000-0000-0000-${String(fakeUuid.i).padStart(12, '0')}`;
+        }
 
-                    return wins;
-                };
-                
-                const wins = generateWindows(0);
+        window.onload = async (event) => {
+            const readerFactory = new ChocoWinPngJsPixelReaderFactory(png.PNG);
+            const writerFactory = new ChocoWinPngJsPixelWriterFactory(png.PNG);
 
-                Promise.all(wins.map((w) => w.isReady())).then(() => {
-                    const canvas = document.createElement("canvas");
-                    const ctx = canvas.getContext("2d");
+            let blob = await fetch("window.png")
+                .then(r => r.blob());
 
-                    canvas.width = 1200;
-                    canvas.height = 900;
-                    canvas.style.border = "2px dashed #FF9955";
+            let dataUrl = await new Promise(resolve => {
+                let reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
 
-                    wins.forEach((w) => w.drawTo(ctx));
+            const winTileSet = new ChocoWinTileSet({
+                sourceFileUrl: dataUrl,
+                tileSize: 20,
+                regions: [
+                    { priority: 10, tiles: [[{ y: 0, x: 0 }]], bufferTop: 0, bufferLeft: 0 },
+                    { priority: 10, tiles: [[{ y: 0, x: 40 }]], bufferTop: 0, bufferRight: 0 },
+                    { priority: 10, tiles: [[{ y: 40, x: 0 }]], bufferBottom: 0, bufferLeft: 0 },
+                    { priority: 10, tiles: [[{ y: 40, x: 40 }]], bufferBottom: 0, bufferRight: 0 },
+                    { priority: 20, tiles: [[{ y: 0, x: 20 }]], bufferTop: 0, bufferLeft: 20, bufferRight: 20 },
+                    { priority: 20, tiles: [[{ y: 20, x: 0 }]], bufferLeft: 0, bufferTop: 20, bufferBottom: 20 },
+                    { priority: 20, tiles: [[{ y: 20, x: 40 }]], bufferRight: 0, bufferTop: 20, bufferBottom: 20 },
+                    { priority: 20, tiles: [[{ y: 40, x: 20 }]], bufferBottom: 0, bufferLeft: 20, bufferRight: 20 },
+                    { priority: 20, tiles: [[{ y: 20, x: 20 }]], bufferTop: 20, bufferBottom: 20, bufferLeft: 20, bufferRight: 20 },
+                ],
+                substitutableColors: [{ r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 }, { r: 255, g: 102, b: 163 }]
+            });
 
-                    document.body.append(canvas);
-                });
-            }
-        </script>
-    </head>
-    <body></body>
+            const generateWindows = () => {
+                // Use sparse arrays or method chaining for color substitution.
+                const blue = new ChocoWinWindow({
+                    winTileSet: winTileSet,
+                    readerFactory: readerFactory,
+                    tileScale: 1,
+                    x: 20,
+                    y: 20,
+                    w: 400,
+                    h: 300,
+                    colorSubstitutions: [null, { r: 245, g: 169, b: 184 }, { r: 91, g: 206, b: 250 }]
+                })
+
+                const pink = new ChocoWinWindow({
+                    winTileSet: winTileSet,
+                    readerFactory: readerFactory,
+                    tileScale: 2,
+                    x: 540,
+                    y: 20,
+                    w: 640,
+                    h: 240,
+                    colorSubstitutions: [null, { r: 91, g: 206, b: 250 }, { r: 245, g: 169, b: 184 }]
+                })
+
+                const purple = new ChocoWinWindow({
+                    winTileSet: winTileSet,
+                    readerFactory: readerFactory,
+                    tileScale: 3,
+                    x: 20,
+                    y: 500,
+                    w: 610,
+                    h: 380
+                }).substituteColor(2, { r: 156, g: 89, b: 209 }).substituteColor(1, { r: 252, g: 244, b: 52 });
+
+                const yellow = new ChocoWinWindow({
+                    winTileSet: winTileSet,
+                    readerFactory: readerFactory,
+                    tileScale: 2,
+                    x: 660,
+                    y: 500,
+                    w: 520,
+                    h: 380
+                }).substituteColor(2, { r: 252, g: 244, b: 52 }).substituteColor(1, { r: 156, g: 89, b: 209 });
+
+                const white = new ChocoWinWindow({
+                    winTileSet: winTileSet,
+                    readerFactory: readerFactory,
+                    tileScale: 2,
+                    x: 200,
+                    y: 100,
+                    w: 500,
+                    h: 480,
+                }).substituteColor(2, { r: 255, g: 255, b: 255 }).substituteColor(1, { r: 50, g: 50, b: 50 });
+
+                const black = new ChocoWinWindow({
+                    winTileSet: winTileSet,
+                    readerFactory: readerFactory,
+                    tileScale: 2,
+                    x: 470,
+                    y: 200,
+                    w: 500,
+                    h: 480
+                }).substituteColor(2, { r: 0, g: 0, b: 0 });
+                // todo: entirely abandon that canvas writer. it'll never work and pngjs is good enough! Plus that simplified the code
+                // todo: rename e.g. ChocoWinColor to ChocoColor, etc.
+                // const wins = [pink, black];
+                const wins = [blue, pink, purple, yellow, white, black];
+
+                return wins;
+            };
+
+            const wins = generateWindows(0);
+
+            Promise.all(wins.map((w) => w.isReady())).then(() => {
+                const writer = writerFactory.build(1200, 900);
+                wins.forEach((w) => { w.drawTo(writer); });
+
+                const img = document.createElement("img");
+                img.style.border = "2px dashed #FF9955";
+                img.setAttribute("src", writer.makeDataUrl());
+
+                document.body.append(img);
+            });
+        }
+    </script>
+</head>
+
+<body></body>
+
 </html>

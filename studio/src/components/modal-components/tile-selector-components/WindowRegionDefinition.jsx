@@ -4,7 +4,7 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from '../../SettingsModal';
 import './WindowRegionDefinition.css'
 import { ChocoWinAbstractPixelReader, ChocoWinRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
-import { ChocoWinPngJSPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
+import { ChocoWinPngJsPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { AssignableTileInfo } from "../TileSetDefinitionEditor";
@@ -27,7 +27,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
     const DEFAULT_TA_SCALE = 3;
     const BIGGEST_ZOOM_FACTOR = 6;
     const SELECTED_TILE_BLOB_KEY = "SELECTED_TILE_BLOB_KEY";
-    const writerFactory = new ChocoWinPngJSPixelWriterFactory();
+    const writerFactory = new ChocoWinPngJsPixelWriterFactory();
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                    STATE, REF & CONTEXT HOOKS                        //

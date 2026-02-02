@@ -2,11 +2,12 @@ import './GraphicalEditor.css'
 
 import { useRef, useEffect } from 'react';
 
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../ChocoWinPngJsReaderWriter';
 import { ChocoWinTileSet, ChocoWinWindow } from '../ChocoWindow';
 import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from '../ChocoStudio';
 
 import interact from 'interactjs';
+import { useContext } from 'react';
+import { ChocoWinReaderFactory, ChocoWinWriterFactory } from '../App';
 
 /**
  * @param {Object} props
@@ -16,7 +17,8 @@ import interact from 'interactjs';
  * @returns 
  */
 const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs, lastResizeTimestamp }) => {
-    const readerFactory = new ChocoWinPngJsPixelReaderFactory()
+    const readerFactory = useContext(ChocoWinReaderFactory);
+    const writerFactory = useContext(ChocoWinWriterFactory);
     const graphicalEditorDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;
@@ -27,6 +29,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
     }, [ignoreKeyInputs]);
 
     const makeNoWindowActive = () => Array.from(document.getElementsByClassName("chocoWinBoundingBox")).forEach((eachBoundingBox) => { eachBoundingBox.classList.remove("active"); });
+
 
     /**
      * @param {HTMLElement} dd 
@@ -213,7 +216,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
             return new Promise(resolve => {
                 renderWindow.isReady().then(() => {
                     // todo: also rename window to ChocoWindowRenderer, since it's not a window
-                    const writer = new ChocoWinPngJsPixelWriter(studioWindow.w, studioWindow.h);
+                    const writer = writerFactory.build(studioWindow.w, studioWindow.h);
 
                     const styleSheet = styleRef.current.sheet;
                     renderWindow.drawTo(writer);

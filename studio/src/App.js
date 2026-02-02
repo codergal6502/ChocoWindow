@@ -9,10 +9,16 @@ import LayoutPickerModal from './components/LayoutPickerModal';
 import LayoutRenderResult from './components/LayoutRenderResult';
 
 import { ChocoStudioWorkspace } from './ChocoStudio';
-import { ChocoWinSettings } from './ChocoWindow';
+import { ChocoWinPngJsPixelReaderFactory, ChocoWinSettings } from './ChocoWindow';
 import { ChocoWorkspaceRenderer } from './ChocoRender';
 import { ChocoStudioUpgrader } from './ChocoStudioUpgrader';
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJSPixelWriterFactory } from './ChocoWinPngJsReaderWriter';
+import { ChocoWinPngJsPixelWriterFactory } from './ChocoWindow';
+import { PNG } from 'pngjs/browser'
+import { createContext } from 'react';
+import { useContext } from 'react';
+
+export const ChocoWinReaderFactory = createContext(new ChocoWinPngJsPixelReaderFactory(PNG))
+export const ChocoWinWriterFactory = createContext(new ChocoWinPngJsPixelWriterFactory(PNG))
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
@@ -30,6 +36,9 @@ const App = () => {
   const [renderDownloadName, setRenderDownloadName] = useState(null);
 
   const [lastResizeTimestamp, setLastResizeTimestamp] = useState(null);
+
+  const readerFactory = useContext(ChocoWinReaderFactory);
+  const writerFactory = useContext(ChocoWinWriterFactory);
 
   const initialWorkspace = () => {
     try {
@@ -131,7 +140,7 @@ const App = () => {
   }
 
   const onDownloadPngClick = () => {
-    const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(editorWorkspace, new ChocoWinPngJSPixelWriterFactory(), new ChocoWinPngJsPixelReaderFactory());
+    const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(editorWorkspace, writerFactory, readerFactory);
     const layoutId = editorLayoutId || editorWorkspace.layouts[0].id;
     const downloadName = (editorWorkspace.layouts.find((l) => l.id == layoutId)?.name || "window") + ".png";
     setRenderDownloadName(downloadName);

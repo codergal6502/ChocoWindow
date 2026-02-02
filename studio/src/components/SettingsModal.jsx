@@ -9,7 +9,7 @@ import WindowEditor from "./modal-components/WindowEditor.jsx";
 import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 import HowToUseThisTool from "./modal-components/HowToUseThisTool.jsx";
 import WorkspaceSettings from "./modal-components/WorkspaceSettings.jsx";
-import { ChocoWinPngJsPixelReaderFactory } from "../ChocoWinPngJsReaderWriter.js";
+import { ChocoWinPngJsPixelReaderFactory } from "../ChocoWindow.js";
 
 export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheetBlobUrlManager(new ChocoWinPngJsPixelReaderFactory()))
 

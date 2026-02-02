@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/pngjs@7.0.0/browser.js"></script>
+    <script type="module">
+        import { ChocoWinTileSetRegion, ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinSettings, TileTransformationTypes, ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from './ChocoWindow.js';
+
+        // You'll notice console warnings about scale misalignments if you don't set this to
+        // true. In this sample, the purple window's dimensions are not a multiple of the
+        // scale.
+        ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
+
+        const fakeUuid = () => {
+            fakeUuid.i = (fakeUuid.i ?? -1) + 1;
+            return `00000000-0000-0000-0000-${String(fakeUuid.i).padStart(12, '0')}`;
+        }
+
+        window.onload = async (event) => {
+            const readerFactory = new ChocoWinPngJsPixelReaderFactory(png.PNG);
+            const writerFactory = new ChocoWinPngJsPixelWriterFactory(png.PNG);
+
+            const regionTopLeftCorner = new ChocoWinTileSetRegion({
+                priority: 10,
+                bufferLeft: 0, bufferTop: 0,
+                tiles: [
+                    [{ x: 32, y: 96 }, { x: 32, y: 160 }, { x: 32, y: 160 }],
+                    [{ x: 0, y: 160 }, null, { x: 0, y: 416 }],
+                    [{ x: 0, y: 160 }, null, { x: 0, y: 544 }]
+                ]
+            })
+            const regionTopRightCorner = new ChocoWinTileSetRegion({
+                priority: 10,
+                bufferLeft: null, bufferTop: 0, bufferRight: 0, bufferBottom: null,
+                tiles: [
+                    [{ x: 64, y: 224 }]
+                ]
+            })
+            const regionBottomLeftCorner = new ChocoWinTileSetRegion({
+                priority: 10,
+                bufferLeft: 0, bufferTop: null, bufferRight: null, bufferBottom: 0,
+                tiles: [
+                    [{ x: 0, y: 192 }],
+                    [{ x: 0, y: 224 }],
+                ]
+            })
+            const regionBottomRightCorner = new ChocoWinTileSetRegion({
+                priority: 10,
+                bufferLeft: null, bufferTop: null, bufferRight: 0, bufferBottom: 0,
+                tiles: [
+                    [{ x: 32, y: 0 }, { x: 32, y: 512 }, { x: 0, y: 160 }],
+                    [{ x: 96, y: 192 }, { x: 32, y: 160 }, { x: 96, y: 96 }],
+                ]
+            })
+            const regionTopEdge = new ChocoWinTileSetRegion({
+                priority: 20,
+                bufferLeft: 96, bufferTop: 0, bufferRight: 32, bufferBottom: null,
+                tiles: [
+                    [{ x: 32, y: 160 }]
+                ]
+            });
+            const regionLeftEdge = new ChocoWinTileSetRegion({
+                priority: 20,
+                bufferLeft: 0, bufferTop: 96, bufferBottom: 64,
+                tiles: [
+                    [{ x: 0, y: 160 }]
+                ]
+            });
+            const regionRightEdge = new ChocoWinTileSetRegion({
+                priority: 20,
+                bufferRight: 0, bufferTop: 32, bufferBottom: 64,
+                tiles: [
+                    [{ x: 0, y: 160 }]
+                ]
+            });
+            const regionBottomEdge = new ChocoWinTileSetRegion({
+                priority: 20,
+                bufferLeft: 32, bufferRight: 96, bufferBottom: 0,
+                tiles: [
+                    [{ x: 32, y: 192 }],
+                    [{ x: 96, y: 192 }],
+                ]
+            });
+            const regionCenter = new ChocoWinTileSetRegion({
+                priority: 30,
+                bufferLeft: 32, bufferTop: 32, bufferRight: 32, bufferBottom: 64,
+                tiles: [
+                    [{ x: 32, y: 352 }]
+                ]
+            });
+            
+            let blob = await fetch("n64-ui--8-color-rgb.png")
+                .then(r => r.blob());
+
+            let dataUrl = await new Promise(resolve => {
+                let reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+
+            const topLeftWinTileSet = {
+                sourceFileUrl: dataUrl,
+                tileSize: 32,
+                regions: [
+                    regionTopLeftCorner,
+                    regionTopRightCorner,
+                    regionBottomLeftCorner,
+                    regionBottomRightCorner,
+                    regionTopEdge,
+                    regionLeftEdge,
+                    regionRightEdge,
+                    regionBottomEdge,
+                    regionCenter
+                ],
+                substitutableColors: [
+                    new ChocoWinColor("#a768b9"),
+                    new ChocoWinColor("#8f4b9f"),
+                    new ChocoWinColor("#7f3d90"),
+                    new ChocoWinColor("#713483"),
+                    new ChocoWinColor("#612c71"),
+                    new ChocoWinColor("#4e215b"),
+                    new ChocoWinColor("#34153e"),
+                    new ChocoWinColor("#0d0311"),
+                ]
+            };
+
+            const topRightWinTileSets = {
+                sourceFileUrl: dataUrl,
+                tileSize: 32,
+                regions: topLeftWinTileSet.regions.map(r => ({
+                    priority: r.priority,
+                    bufferBottom: r.bufferBottom,
+                    bufferTop: r.bufferTop,
+                    bufferLeft: r.bufferRight,
+                    bufferRight: r.bufferLeft,
+                    tiles: r.tiles.map(row => row.toReversed().map(col => col ? {
+                        id: col.id.replace("00000000-0000", "0000000A-0000"),
+                        x: col.x,
+                        y: col.y,
+                        t: TileTransformationTypes.REFLECT_HORIZONTAL
+                    } : null))
+                })),
+                substitutableColors: topLeftWinTileSet.substitutableColors
+            };
+
+            const bottomLeftWinTileSets = {
+                sourceFileUrl: dataUrl,
+                tileSize: 32,
+                regions: topLeftWinTileSet.regions.map(r => ({
+                    priority: r.priority,
+                    bufferBottom: r.bufferTop,
+                    bufferTop: r.bufferBottom,
+                    bufferLeft: r.bufferLeft,
+                    bufferRight: r.bufferRight,
+                    tiles: r.tiles.toReversed().map(row => row.map(col => col ? {
+                        id: col.id.replace("00000000-0000", "0000000B-0000"),
+                        x: col.x,
+                        y: col.y,
+                        t: TileTransformationTypes.REFLECT_VERTICAL
+                    } : null))
+                })),
+                substitutableColors: topLeftWinTileSet.substitutableColors
+            };
+
+            const bottomRightWinTileSets = {
+                sourceFileUrl: dataUrl,
+                tileSize: 32,
+                regions: topLeftWinTileSet.regions.map(r => ({
+                    priority: r.priority,
+                    bufferBottom: r.bufferTop,
+                    bufferTop: r.bufferBottom,
+                    bufferLeft: r.bufferRight,
+                    bufferRight: r.bufferLeft,
+                    tiles: r.tiles.toReversed().map(row => row.toReversed().map(col => col ? {
+                        id: col.id.replace("00000000-0000", "0000000C-0000"),
+                        x: col.x,
+                        y: col.y,
+                        t: TileTransformationTypes.ROTATE_180
+                    } : null))
+                })),
+                substitutableColors: topLeftWinTileSet.substitutableColors
+            };
+
+            const generateWindows = () => {
+
+                const topLeftWindow = new ChocoWinWindow({
+                    winTileSet: topLeftWinTileSet,
+                    readerFactory: readerFactory,
+                    tileScale: 1,
+                    x: 0,
+                    y: 0,
+                    w: 320 * 2,
+                    h: 256 * 2,
+                });
+
+                const topRightWindow = new ChocoWinWindow({
+                    winTileSet: topRightWinTileSets,
+                    readerFactory: readerFactory,
+                    tileScale: 4,
+                    x: 320 * 2,
+                    y: 0,
+                    w: 320 * 2,
+                    h: 256 * 2,
+                    colorSubstitutions: [
+                        new ChocoWinColor("#434542"),
+                        new ChocoWinColor("#3d3f3c"),
+                        new ChocoWinColor("#2b2c2a"),
+                        new ChocoWinColor("#252725"),
+                        new ChocoWinColor("#222421"),
+                        new ChocoWinColor("#1e201e"),
+                        new ChocoWinColor("#191a18"),
+                        new ChocoWinColor("#000000"),
+                    ],
+                });
+
+                const bottomLeftWindow = new ChocoWinWindow({
+                    winTileSet: bottomLeftWinTileSets,
+                    readerFactory: readerFactory,
+                    tileScale: 3,
+                    x: 0,
+                    y: 256 * 2,
+                    w: 320 * 2,
+                    h: 256 * 2,
+                    colorSubstitutions: [
+                        new ChocoWinColor("#b1b3b0"),
+                        new ChocoWinColor("#959794"),
+                        new ChocoWinColor("#848683"),
+                        new ChocoWinColor("#707370"),
+                        new ChocoWinColor("#5b5d5b"),
+                        new ChocoWinColor("#424441"),
+                        new ChocoWinColor("#2d2f2c"),
+                        new ChocoWinColor("#10120f"),
+                    ],
+                });
+
+                const bottomRightWindow = new ChocoWinWindow({
+                    winTileSet: bottomRightWinTileSets,
+                    readerFactory: readerFactory,
+                    tileScale: 2,
+                    x: 320 * 2,
+                    y: 256 * 2,
+                    w: 320 * 2,
+                    h: 256 * 2,
+                    colorSubstitutions: [
+                        new ChocoWinColor("#b6a85c"),
+                        new ChocoWinColor("#9e8d32"),
+                        new ChocoWinColor("#928223"),
+                        new ChocoWinColor("#877719"),
+                        new ChocoWinColor("#7b6d16"),
+                        new ChocoWinColor("#6f620f"),
+                        new ChocoWinColor("#5c520d"),
+                        new ChocoWinColor("#100f03"),
+                    ],
+                });
+
+                const wins = [topLeftWindow, topRightWindow, bottomLeftWindow, bottomRightWindow];
+
+                return wins;
+            };
+
+            const wins = generateWindows();
+
+            Promise.all(wins.map((w) => w.isReady())).then(() => {
+                const writer = writerFactory.build(320 * 4, 256 * 4);
+                wins.forEach((w) => { w.drawTo(writer); });
+
+                const img = document.createElement("img");
+                img.style.border = "2px dashed #FF9955";
+                const blob = writer.makeBlob();
+                const url = URL.createObjectURL(blob);
+                img.setAttribute("src", url);
+
+                document.body.append(img);
+            });
+        }
+    </script>
+</head>
+
+<body></body>
+
+</html>

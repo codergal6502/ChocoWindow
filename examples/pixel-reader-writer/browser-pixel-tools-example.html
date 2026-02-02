@@ -4,62 +4,9 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/pngjs@7.0.0/browser.js"></script>
     <script type="module">
-        import { ChocoWinAbstractPixelReader, ChocoWinAbstractPixelWriter, ChocoWinRegionPixelReader, ChocoWinRotatePixelReader, ChocoWinReflectionPixelReader, ChocoWinReflectionTypes } from './ChocoWinAbstractPixelReader.js'
-        import { ChocoWinColor, ChocoWinRectangle } from "./ChocoWindow.js";
+        import { ChocoWinColor, ChocoWinRectangle, ChocoWinPngJsPixelWriter, ChocoWinAbstractPixelReader, ChocoWinAbstractPixelWriter, ChocoWinRegionPixelReader, ChocoWinRotatePixelReader, ChocoWinReflectionPixelReader, ChocoWinReflectionTypes, ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from "./ChocoWindow.js";
 
         const PNG = png.PNG;
-
-        class ChocoWinPngJsPixelReader extends ChocoWinAbstractPixelReader {
-            /** @type {Boolean} */ #ready = false;
-            /** @type {PNG} */ #png;
-            /** @type {Promise} */ #imageParsed;
-
-            /**
-             * @param {PNG} png
-             */
-            constructor(png) {
-                super();
-                this.#png = png;
-                this.#imageParsed = new Promise(resolve => {
-                    this.#png.on("parsed", () => {
-                        this.#ready = true;
-                        resolve(this);
-                    });
-                });
-            }
-
-            /**
-             * @return {Number}
-             */
-            get width() {
-                return this.#png.width;
-            }
-
-            /**
-             * @return {Number}
-             */
-            get height() {
-                return this.#png.height;
-            }
-
-            /**
-             * @param {ChocoWinCoordinates} coordinate
-             * @return {ChocoWinColor}
-             */
-            getPixel(coordinate) {
-                if (coordinate.x < 0 || coordinate.x >= this.#png.width) return null;
-                if (coordinate.y < 0 || coordinate.y >= this.#png.height) return null;
-                const i = 4 * (coordinate.x + coordinate.y * this.#png.width);
-                return new ChocoWinColor({ r: this.#png.data[i + 0], g: this.#png.data[i + 1], b: this.#png.data[i + 2], a: this.#png.data[i + 3] });
-            }
-
-            /**
-             * @return {Promise}
-             */
-            isReady() {
-                return this.#imageParsed;
-            }
-        }
 
         class ChocoWinHtmlImagePixelReader extends ChocoWinAbstractPixelReader {
             /** @type {HTMLImageElement} */ #img;
@@ -75,7 +22,7 @@
             constructor(htmlImage) {
                 super();
                 this.#img = htmlImage;
-                
+
                 this.#imageDrawn = new Promise((resolve) => {
                     this.#canvas = document.createElement('canvas');
 
@@ -180,54 +127,27 @@
             }
         }
 
-        class ChocoWinPngJsPixelWriter extends ChocoWinAbstractPixelWriter {
-            /** @type {PNG} */ #png;
-            /** @type {Promise} */ #alwaysResolved;
-
-            /**
-             * @param {Number} width
-             * @param {Number} height
-             */
-            constructor(width, height) {
-                super();
-                this.#png = new PNG();
-                this.#png.width = width;
-                this.#png.height = height;
-                this.#png.data = new Uint8Array(this.#png.width * this.#png.height * 4);
-                this.#alwaysResolved = new Promise((resolve) => resolve(this));
-            }
-
-            writePixel(coordinate, color) {
-                const i = 4 * (coordinate.x + coordinate.y * this.#png.width);
-                this.#png.data[i + 0] = color?.r ?? 0;
-                this.#png.data[i + 1] = color?.g ?? 0;
-                this.#png.data[i + 2] = color?.b ?? 0;
-                this.#png.data[i + 3] = color?.a ?? 0;
-            }
-
-            makeDataUrl() {
-                const buffer = PNG.sync.write(this.#png);
-                const uint8Array = new Uint8Array(buffer);
-                const binaryString = String.fromCharCode(...uint8Array);
-                const base64 = window.btoa(binaryString);
-
-                return `data:image/png;base64,${base64}`;
-            }
-
-            makeBlob() {
-                const buffer = PNG.sync.write(this.#png);
-                const blob = new Blob([buffer], { type: 'image/png' });
-            }
-
-            /**
-             * @return {Promise}
-             */
-            isReady() {
-                return this.#alwaysResolved;
-            }
-        }
-
         window.onload = async (event) => {
+            const readerFactory = new ChocoWinPngJsPixelReaderFactory(png.PNG);
+            const writerFactory = new ChocoWinPngJsPixelWriterFactory(png.PNG);
+
+            let windowBlob = await fetch("window.png")
+                .then(r => r.blob());
+
+            let windowPngDataUrl = await new Promise(resolve => {
+                let reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(windowBlob);
+            });
+
+            let fontBlob = await fetch("font.png")
+                .then(r => r.blob());
+
+            let fontDataUrl = await new Promise(resolve => {
+                let reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(fontBlob);
+            });
 
             const setUpPixelReaderExample = async () => {
                 let /** @type {ChocoWinHtmlImagePixelReader} */ htmlImagePixelReader = null;
@@ -237,7 +157,8 @@
                     const /** @type {Array<ChocoWinColor>} */ colors = [];
                     for (let x = 0; x < width; x++) {
                         for (let y = 0; y < height; y++) {
-                            const color = reader.getPixel({ x, y });
+                            const color = JSON.parse(JSON.stringify(reader.getPixel({ x, y })));
+                            delete color.id;
                             if (!colors.some(c => c.r == color.r && c.g == color.g && c.b == color.b && c.a == color.a)) {
                                 colors.push(color);
                             }
@@ -258,8 +179,7 @@
                         document.getElementById("html-image-palette-div").innerHTML = JSON.stringify(colors);
                     });
 
-                const myPng = new PNG(); // png is what is provided by the CDN.
-                new ChocoWinPngJsPixelReader(myPng)
+                readerFactory.build({ dataUrl: windowPngDataUrl })
                     .isReady()
                     .then(reader => {
                         pngPixelReader = reader;
@@ -267,12 +187,6 @@
                         const colors = generateColorPalette(pngPixelReader, htmlImage.naturalHeight, htmlImage.naturalHeight);
                         document.getElementById("png-js-palette-div").innerHTML = JSON.stringify(colors);
                     });
-
-                await fetch(src)
-                    .then(res => res.body)
-                    .then(body => body.getReader().read())
-                    .then(v => myPng.write(v.value))
-                    .finally(() => { });
 
                 const htmlImagePixelDiv = document.getElementById("html-image-mouse-div");
                 const pngPixelDiv = document.getElementById("png-js-mouse-div");
@@ -284,13 +198,15 @@
 
                     if (htmlImagePixelReader) {
                         const coord = { x, y };
-                        const color = htmlImagePixelReader.getPixel(coord);
+                        const color = JSON.parse(JSON.stringify(htmlImagePixelReader.getPixel(coord)));
+                        delete color.id;
                         htmlImagePixelDiv.innerText = `${JSON.stringify(color)} @ ${JSON.stringify(coord)}`;
                     }
 
                     if (pngPixelReader) {
                         const coord = { x, y };
-                        const color = pngPixelReader.getPixel(coord);
+                        const color = JSON.parse(JSON.stringify(pngPixelReader.getPixel(coord)));
+                        delete color.id;
                         pngPixelDiv.innerText = `${JSON.stringify(color)} @ ${JSON.stringify(coord)}`;
                     }
                 })
@@ -303,7 +219,7 @@
                 let /** @type {ChocoWinHtmlCanvasPixelWriter} */ htmlImagePixelWriter = new ChocoWinHtmlCanvasPixelWriter(width, height);
 
                 const /** @type {HTMLImageElement} */ imageForPngJsWriter = document.getElementById("png-js-writer-img");
-                let /** @type {ChocoWinPngJsPixelWriter} */ pngJsPixelWriter = new ChocoWinPngJsPixelWriter(width, height);
+                let /** @type {ChocoWinPngJsPixelWriter} */ pngJsPixelWriter = writerFactory.build(width, height);
 
                 const low = 64;
                 const high = 196;
@@ -336,117 +252,111 @@
             const setUpTransformationExample = async () => {
                 const myPng = new PNG(); // png is what is provided by the CDN.
 
-                await fetch("font.png")
-                    .then(res => res.body)
-                    .then(body => body.getReader().read())
-                    .then(v => myPng.write(v.value))
-                    .finally(() => {
-                        new ChocoWinPngJsPixelReader(myPng)
-                            .isReady()
-                            .then(baseReader => {
-                                let writer;
-                                const width = 56;
-                                const height = 29;
+                readerFactory.build({ dataUrl: fontDataUrl })
+                    .isReady()
+                    .then(baseReader => {
+                        let writer;
+                        const width = 56;
+                        const height = 29;
 
-                                writer = new ChocoWinPngJsPixelWriter(baseReader.width, baseReader.height);
-                                for (let x = 0; x < baseReader.width; x++) {
-                                    for (let y = 0; y < baseReader.height; y++) {
-                                        const pixel = baseReader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("original-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        for (let x = 0; x < baseReader.width; x++) {
+                            for (let y = 0; y < baseReader.height; y++) {
+                                const pixel = baseReader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("original-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(width, height);
-                                const regionReader = new ChocoWinRegionPixelReader(baseReader, new ChocoWinRectangle({ x: 4, y: 18, width: width, height: height }));
-                                for (let x = 0; x < width; x++) {
-                                    for (let y = 0; y < height; y++) {
-                                        const pixel = regionReader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionReader = new ChocoWinRegionPixelReader(baseReader, new ChocoWinRectangle({ x: 4, y: 18, width: width, height: height }));
+                        for (let x = 0; x < width; x++) {
+                            for (let y = 0; y < height; y++) {
+                                const pixel = regionReader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(height, width);
-                                const regionRotate90Reader = new ChocoWinRotatePixelReader(regionReader, 1);
-                                for (let x = 0; x < height; x++) {
-                                    for (let y = 0; y < width; y++) {
-                                        const pixel = regionRotate90Reader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-rotate-90-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionRotate90Reader = new ChocoWinRotatePixelReader(regionReader, 1);
+                        for (let x = 0; x < height; x++) {
+                            for (let y = 0; y < width; y++) {
+                                const pixel = regionRotate90Reader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-rotate-90-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(width, height);
-                                const regionRotate180Reader = new ChocoWinRotatePixelReader(regionReader, 2);
-                                for (let x = 0; x < width; x++) {
-                                    for (let y = 0; y < height; y++) {
-                                        const pixel = regionRotate180Reader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-rotate-180-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionRotate180Reader = new ChocoWinRotatePixelReader(regionReader, 2);
+                        for (let x = 0; x < width; x++) {
+                            for (let y = 0; y < height; y++) {
+                                const pixel = regionRotate180Reader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-rotate-180-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(height, width);
-                                const regionRotate270Reader = new ChocoWinRotatePixelReader(regionReader, 3);
-                                for (let x = 0; x < height; x++) {
-                                    for (let y = 0; y < width; y++) {
-                                        const pixel = regionRotate270Reader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-rotate-270-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionRotate270Reader = new ChocoWinRotatePixelReader(regionReader, 3);
+                        for (let x = 0; x < height; x++) {
+                            for (let y = 0; y < width; y++) {
+                                const pixel = regionRotate270Reader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-rotate-270-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(width, height);
-                                const regionReflectHorizontalReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.HORIZONTAL);
-                                for (let x = 0; x < width; x++) {
-                                    for (let y = 0; y < height; y++) {
-                                        const pixel = regionReflectHorizontalReader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-reflect-h-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionReflectHorizontalReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.HORIZONTAL);
+                        for (let x = 0; x < width; x++) {
+                            for (let y = 0; y < height; y++) {
+                                const pixel = regionReflectHorizontalReader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-reflect-h-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(width, height);
-                                const regionReflectVerticalReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.VERTICAL);
-                                for (let x = 0; x < width; x++) {
-                                    for (let y = 0; y < height; y++) {
-                                        const pixel = regionReflectVerticalReader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-reflect-v-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionReflectVerticalReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.VERTICAL);
+                        for (let x = 0; x < width; x++) {
+                            for (let y = 0; y < height; y++) {
+                                const pixel = regionReflectVerticalReader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-reflect-v-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(width, height);
-                                const regionReflectPointReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.POINT);
-                                for (let x = 0; x < width; x++) {
-                                    for (let y = 0; y < height; y++) {
-                                        const pixel = regionReflectPointReader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-reflect-p-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionReflectPointReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.POINT);
+                        for (let x = 0; x < width; x++) {
+                            for (let y = 0; y < height; y++) {
+                                const pixel = regionReflectPointReader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-reflect-p-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(height, width);
-                                const regionReflectAscendingReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.ASCENDING);
-                                for (let x = 0; x < height; x++) {
-                                    for (let y = 0; y < width; y++) {
-                                        const pixel = regionReflectAscendingReader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-reflect-a-img").src = writer.makeDataUrl();
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionReflectAscendingReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.ASCENDING);
+                        for (let x = 0; x < height; x++) {
+                            for (let y = 0; y < width; y++) {
+                                const pixel = regionReflectAscendingReader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-reflect-a-img").src = writer.makeDataUrl();
 
-                                writer = new ChocoWinPngJsPixelWriter(height, width);
-                                const regionReflectDescendingReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.DESCENDING);
-                                for (let x = 0; x < height; x++) {
-                                    for (let y = 0; y < width; y++) {
-                                        const pixel = regionReflectDescendingReader.getPixel({ x, y });
-                                        writer.writePixel({ x, y }, pixel);
-                                    }
-                                }
-                                document.getElementById("region-reflect-d-img").src = writer.makeDataUrl();
-                            });
+                        writer = writerFactory.build(baseReader.width, baseReader.height);
+                        const regionReflectDescendingReader = new ChocoWinReflectionPixelReader(regionReader, ChocoWinReflectionTypes.DESCENDING);
+                        for (let x = 0; x < height; x++) {
+                            for (let y = 0; y < width; y++) {
+                                const pixel = regionReflectDescendingReader.getPixel({ x, y });
+                                writer.writePixel({ x, y }, pixel);
+                            }
+                        }
+                        document.getElementById("region-reflect-d-img").src = writer.makeDataUrl();
                     });
             }
 
@@ -474,10 +384,10 @@
 
     <h1>Pixel Writers</h1>
     <h3 style="display: block">HTML Canvas Pixel Writer</h3>
-    
+
     <img id="html-canvas-writer-img" style="width: 180px; height: 180x; display: block; image-rendering: pixelated;" />
     <div id="html-canvas-writer-time-div" style="display: block;">-</div>
-    
+
     <h3 style="display: block">pngjs Pixel Writer</h3>
     <img id="png-js-writer-img" style="width: 180px; height: 180x; display: block; image-rendering: pixelated;" />
     <div id="png-js-writer-time-div" style="display: block;">-</div>
