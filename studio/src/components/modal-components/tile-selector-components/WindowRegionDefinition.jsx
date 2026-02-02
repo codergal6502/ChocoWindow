@@ -3,11 +3,12 @@ import { CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileShee
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { TileSheetBlobUrlDictionary } from '../../SettingsModal';
 import './WindowRegionDefinition.css'
-import { ChocoWinAbstractPixelReader, ChocoWinRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
+import { ChocoWinAbstractPixelReader, ChocoRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
 import { ChocoWinPngJsPixelWriterFactory } from "../../../ChocoWinPngJsReaderWriter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { AssignableTileInfo } from "../TileSetDefinitionEditor";
+import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../../App";
 
 /**
  * Directly modifies the provided tile set definition.
@@ -22,12 +23,13 @@ import { AssignableTileInfo } from "../TileSetDefinitionEditor";
  */
 const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, assignableTileInfo, onRegionResized, onAssignmentMade, onTileAssignmentRetrieved }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    //                        CONSTANTS & GLOBALS                           //
+    //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
     const DEFAULT_TA_SCALE = 3;
     const BIGGEST_ZOOM_FACTOR = 6;
     const SELECTED_TILE_BLOB_KEY = "SELECTED_TILE_BLOB_KEY";
-    const writerFactory = new ChocoWinPngJsPixelWriterFactory();
+    const readerFactory = useContext(ReaderFactoryForStudio);
+    const writerFactory = useContext(WriterFactoryForStudio);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                    STATE, REF & CONTEXT HOOKS                        //
@@ -49,9 +51,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
 
     /** @type {ReturnType<typeof useRef<Map<String, String>>>} */
     const tileBlobUrlMap = useRef(new Map());
-
-    /** @type {ReturnType<typeof useContext<ChocoStudioTileSheetBlobUrlManager>>} */
-    const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
 
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -99,7 +98,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
                     if (tp) {
                         const tileBlobKey = computeTileBlobKey(regionIdentifier, colIndex, rowIndex);
 
-                        let reader = new ChocoWinRegionPixelReader(tileSheetReader, new ChocoWinRectangle({
+                        let reader = new ChocoWinRegionPixelReader(tileSheetReader, new ChocoRectangle({
                             x: tp.xSheetCoordinate,
                             y: tp.ySheetCoordinate,
                             width: tileSize,

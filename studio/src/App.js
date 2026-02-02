@@ -8,7 +8,7 @@ import GraphicalEditor from './components/GraphicalEditor';
 import LayoutPickerModal from './components/LayoutPickerModal';
 import LayoutRenderResult from './components/LayoutRenderResult';
 
-import { ChocoStudioWorkspace } from './ChocoStudio';
+import { ChocoStudioTileSheetBlobUrlManager, ChocoStudioWorkspace } from './ChocoStudio';
 import { ChocoWinPngJsPixelReaderFactory, ChocoWinSettings } from './ChocoWindow';
 import { ChocoWorkspaceRenderer } from './ChocoRender';
 import { ChocoStudioUpgrader } from './ChocoStudioUpgrader';
@@ -17,8 +17,13 @@ import { PNG } from 'pngjs/browser'
 import { createContext } from 'react';
 import { useContext } from 'react';
 
-export const ChocoWinReaderFactory = createContext(new ChocoWinPngJsPixelReaderFactory(PNG))
-export const ChocoWinWriterFactory = createContext(new ChocoWinPngJsPixelWriterFactory(PNG))
+const readerFactoryForStudio = new ChocoWinPngJsPixelReaderFactory(PNG);
+const writerFactoryForStudio = new ChocoWinPngJsPixelWriterFactory(PNG);
+const tileSheetBlobUrlDictionary = new ChocoStudioTileSheetBlobUrlManager(readerFactoryForStudio);
+
+export const ReaderFactoryForStudio = createContext(readerFactoryForStudio);
+export const WriterFactoryForStudio = createContext(writerFactoryForStudio);
+export const TileSheetBlobUrlDictionary = createContext(tileSheetBlobUrlDictionary);
 
 const App = () => {
   ChocoWinSettings.ignoreScaleMisalignmentErrors = true;
@@ -37,8 +42,8 @@ const App = () => {
 
   const [lastResizeTimestamp, setLastResizeTimestamp] = useState(null);
 
-  const readerFactory = useContext(ChocoWinReaderFactory);
-  const writerFactory = useContext(ChocoWinWriterFactory);
+  const readerFactory = useContext(ReaderFactoryForStudio);
+  const writerFactory = useContext(WriterFactoryForStudio);
 
   const initialWorkspace = () => {
     try {

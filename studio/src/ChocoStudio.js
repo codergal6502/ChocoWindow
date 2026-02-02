@@ -1,4 +1,4 @@
-import { ChocoWinAbstractPixelReaderFactory, ChocoWinColor, ChocoWinCoordinates, ChocoWinSettings, ChocoWinTileDrawData, ChocoWinTileSet, pngBase64DataUrlToBlob, TileTransformationTypes } from './ChocoWindow.js';
+import { ChocoWinAbstractPixelReaderFactory, ChocoColor, ChocoCoordinates, ChocoWinSettings, ChocoWinTileDrawData, ChocoWinTileSet, pngBase64DataUrlToBlob, TileTransformationTypes } from './ChocoWindow.js';
 
 /**
  * Provides 
@@ -125,7 +125,7 @@ class ChocoStudioWindowRegionTileAssignment {
             this.xSheetCoordinate = 0;
             this.ySheetCoordinate = 0;
             this.geometricTransformation = TileTransformationTypes.BASE;
-            /** @type {ChocoWinCoordinates[]} */ this.transparencyOverrides = [];
+            /** @type {ChocoCoordinates[]} */ this.transparencyOverrides = [];
         }
         else {
             this.id = arg1.id;
@@ -141,7 +141,7 @@ class ChocoStudioWindowRegionTileAssignment {
             x: this.xSheetCoordinate ?? 0,
             y: this.ySheetCoordinate ?? 0,
             t: this.geometricTransformation ?? TileTransformationTypes.BASE,
-            a: this.transparencyOverrides?.map(c => c ? new ChocoWinCoordinates(c) : null)
+            a: this.transparencyOverrides?.map(c => c ? new ChocoCoordinates(c) : null)
         });
     }
 }
@@ -258,7 +258,7 @@ class ChocoStudioWindowRegionDefinition {
                             x: assignment?.xSheetCoordinate ?? 0,
                             y: assignment?.ySheetCoordinate ?? 0,
                             t: assignment?.geometricTransformation ?? TileTransformationTypes.BASE,
-                            a: assignment?.transparencyOverrides?.map(c => c ? new ChocoWinCoordinates(c) : null)
+                            a: assignment?.transparencyOverrides?.map(c => c ? new ChocoCoordinates(c) : null)
                         }
                     }
                     else {
@@ -286,7 +286,7 @@ class ChocoStudioTileSetDefinition {
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
             // todo: replace this with a map at some point
             /** @type {Object<string, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
-            /** @type {Array.<ChocoWinColor> } */ this.defaultColors = []
+            /** @type {Array.<ChocoColor> } */ this.defaultColors = []
 
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition();
             this.regions[CHOCO_WINDOW_REGIONS.TOP] = new ChocoStudioWindowRegionDefinition();
@@ -315,7 +315,7 @@ class ChocoStudioTileSetDefinition {
             this.regions[CHOCO_WINDOW_REGIONS.BOTTOM] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM]);
             this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT]);
 
-            this.defaultColors = arg1?.defaultColors?.map((c) => new ChocoWinColor(c));
+            this.defaultColors = arg1?.defaultColors?.map((c) => new ChocoColor(c));
         }
     }
 
@@ -338,7 +338,7 @@ class ChocoStudioTileSetDefinition {
                 
                 {priority: 3, bufferLeft: this.tileSize, bufferTop: this.tileSize, bufferRight: this.tileSize, bufferBottom: this.tileSize, tiles: this.regions[CHOCO_WINDOW_REGIONS.CENTER].toChocoWinTileSetRegionTileArray()},
             ],
-            "substitutableColors": this.defaultColors?.map((c) => new ChocoWinColor(c)) ?? []
+            "substitutableColors": this.defaultColors?.map((c) => new ChocoColor(c)) ?? []
         });
     }
 }
@@ -357,14 +357,14 @@ class ChocoStudioPreset {
             /** @type {String} */ this.id = String(crypto.randomUUID());
             /** @type {String} */ this.tileSetDefinitionId = null;
             /** @type {Number} */ this.tileScale = 1;
-            /** @type {Array<ChocoWinColor} */ this.substituteColors = [];
+            /** @type {Array<ChocoColor} */ this.substituteColors = [];
         }
         else {
             this.name = arg1.name;
             this.id = arg1.id;
             this.tileSetDefinitionId = arg1.tileSetDefinitionId
             this.tileScale = Number(arg1.tileScale)
-            this.substituteColors = arg1?.substituteColors?.map((c) => c ? new ChocoWinColor(c) : null) || [];
+            this.substituteColors = arg1?.substituteColors?.map((c) => c ? new ChocoColor(c) : null) || [];
         }
     }
 }
@@ -419,7 +419,7 @@ class ChocoStudioWindow {
             /** @type { Number } */ this.y = Number(arg1.y);
             /** @type { Number } */ this.w = Number(arg1.w);
             /** @type { Number } */ this.h = Number(arg1.h);
-            /** @type { ChocoWinColor } */ this.backgroundColor = arg1.backgroundColor ? new ChocoWinColor(arg1.backgroundColor) : null;
+            /** @type { ChocoColor } */ this.backgroundColor = arg1.backgroundColor ? new ChocoColor(arg1.backgroundColor) : null;
             /** @type { ChocoStudioPreset } */ this.singularPreset = arg1.singularPreset && new ChocoStudioPreset(arg1.singularPreset)
         }
     }

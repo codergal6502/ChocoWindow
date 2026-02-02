@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
 import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../ChocoStudio"
-import { ChocoWinWindow, ChocoWinColor } from "../../ChocoWindow";
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../../ChocoWinPngJsReaderWriter";
+import { ChocoWinWindow, ChocoColor } from "../../ChocoWindow";
+import { useContext } from "react";
+import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../App";
 
 /**
  * @param {Object} props
@@ -11,7 +12,7 @@ import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../..
  * @param {Array<ChocoStudioTileSheet>} props.tileSheets
  * @param {Array<ChocoStudioTileSetDefinition>} props.tileSetDefinitions
  * @param {Boolean} props.isSubordinate
- * @param {ChocoWinColor} props.backgroundColor
+ * @param {ChocoColor} props.backgroundColor
  * @param {function(ChocoStudioPreset):void} props.onPresetChange
  * @param {function(String):void} props.onPresetDelete
  * @param {function():void} props.onReturnToEditor
@@ -21,11 +22,12 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
     //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
     const DEFAULT_TILE_SCALE = 3;
+    const readerFactory = useContext(ReaderFactoryForStudio);
+    const writerFactory = useContext(WriterFactoryForStudio);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          STATE AND REF HOOKS                         //
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    const readerFactoryRef = useRef(new ChocoWinPngJsPixelReaderFactory());
 
     const [name, setName] = useState(preset.name);
     const [tileSetDefinitionId, setTileSetDefinitionId] = useState(preset.tileSetDefinitionId ?? null);
@@ -110,7 +112,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
      */
     const updatePreviewImageBlob = () => {
         if (!previewState?.current) { return; }
-        if (!readerFactoryRef?.current) { return; }
+    
         if (!tileSetDefinition) { return; }
         const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
         if (!tileSheet) { return; }
@@ -122,7 +124,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
             h: 180,
             tileScale: tileScale ?? 1,
             winTileSet: tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
-            readerFactory: readerFactoryRef.current,
+            readerFactory: readerFactory,
             backgroundColor: backgroundColor,
             colorSubstitutions: substituteColors,
         });
@@ -133,7 +135,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
                 return;
             }
 
-            const writer = new ChocoWinPngJsPixelWriter(450, 180);
+            const writer = writerFactory.build(450, 180);
             chocoWin.drawTo(writer);
 
             let blob = writer.makeBlob();
@@ -188,7 +190,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
      */
     const onColorChange = (inputEvent, colorIndex) => {
         let newSubstituteColors = substituteColors.slice();
-        newSubstituteColors[colorIndex] = new ChocoWinColor(inputEvent.target.value);
+        newSubstituteColors[colorIndex] = new ChocoColor(inputEvent.target.value);
         setSubstituteColors(newSubstituteColors);
         setHasChanges(true);
     };

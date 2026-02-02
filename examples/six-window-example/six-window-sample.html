@@ -4,7 +4,7 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/pngjs@7.0.0/browser.js"></script>
     <script type="module">
-        import { ChocoWinWindow, ChocoWinColor, ChocoWinCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinSettings, TileTransformationTypes, ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from './ChocoWindow.js';
+        import { ChocoWinWindow, ChocoColor, ChocoCoordinates, ChocoWinTileSet, ChocoWinTilesetCorners, ChocoWinSettings, TileTransformationTypes, ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from './ChocoWindow.js';
 
         // You'll notice console warnings about scale misalignments if you don't set this to
         // true. In this sample, the purple window's dimensions are not a multiple of the
@@ -110,7 +110,7 @@
                     h: 480
                 }).substituteColor(2, { r: 0, g: 0, b: 0 });
                 // todo: entirely abandon that canvas writer. it'll never work and pngjs is good enough! Plus that simplified the code
-                // todo: rename e.g. ChocoWinColor to ChocoColor, etc.
+                // todo: rename e.g. ChocoColor to ChocoColor, etc.
                 // const wins = [pink, black];
                 const wins = [blue, pink, purple, yellow, white, black];
 

@@ -1,8 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { ChocoStudioTileSetDefinition } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
-import { TileSheetBlobUrlDictionary } from "../../SettingsModal";
 import { AssignableTileInfo } from "../TileSetDefinitionEditor";
+import { TileSheetBlobUrlDictionary } from "../../../App";
 import './PreciseTileSelector.css'
 
 /**

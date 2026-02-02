@@ -3,12 +3,11 @@ import './TileSetDefinitionEditor.css';
 import { useContext, useEffect, useRef, useState } from "react";
 import { PNG } from 'pngjs/browser'
 
-import { ChocoWinAbstractPixelReader, ChocoWinColor, ChocoWinRegionPixelReader, ChocoWinSettings, ChocoWinWindow, TileTransformationTypes, WrapReaderForTileTransformation } from "../../ChocoWindow";
-import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionTileAssignment } from "../../ChocoStudio";
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from '../../ChocoWinPngJsReaderWriter';
+import { ChocoWinAbstractPixelReader, ChocoColor, ChocoWinRegionPixelReader, ChocoWinSettings, ChocoWinWindow, TileTransformationTypes, WrapReaderForTileTransformation } from "../../ChocoWindow";
+import { ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindowRegionDefinition, CHOCO_WINDOW_REGIONS } from "../../ChocoStudio";
 
+import { ReaderFactoryForStudio, TileSheetBlobUrlDictionary, WriterFactoryForStudio } from '../../App';
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { TileSheetBlobUrlDictionary } from '../SettingsModal';
 
 import PreciseTileSelector from './tile-selector-components/PreciseTileSelector';
 import TileTransformationSelector from './tile-selector-components/TileTransformationSelector'
@@ -26,10 +25,10 @@ export class AssignableTileInfo {
 
 /**
  * 
- * @param {ChocoWinColor[]} colors 
- * @returns {ChocoWinColor[]}
+ * @param {ChocoColor[]} colors 
+ * @returns {ChocoColor[]}
  */
-const cloneColors = (colors) => colors?.map(c => new ChocoWinColor(c));
+const cloneColors = (colors) => colors?.map(c => new ChocoColor(c));
 
 /**
  * @param {Object<string, ChocoStudioWindowRegionDefinition>} region 
@@ -60,12 +59,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
     const MAX_COLOR_COUNT = ChocoWinSettings.suggestedMaximumTileSheetColorCount;
+    const readerFactory = useContext(ReaderFactoryForStudio);
+    const writerFactory = useContext(WriterFactoryForStudio);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                         STATE AND REF HOOKS                          //
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    const readerFactoryRef = useRef(new ChocoWinPngJsPixelReaderFactory());
-
     const [name, setName] = useState(tileSetDefinition.name);
     const [tileSheetId, setTileSheetId] = useState(tileSetDefinition.tileSheetId);
     const [tileSheet, setTileSheet] = useState(tileSheets?.find(ts => ts?.id == tileSetDefinition?.tileSheetId));
@@ -77,11 +76,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
     const [previewImageUrl, setPreviewImageUrl] = useState("");
 
-
     const [regions, setRegions] = useState(cloneRegions(tileSetDefinition.regions));
-
-
-
 
     // tile sheet
     const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
@@ -176,7 +171,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         setTileSheetReader(null);
         const tileSheetData = tileSheetBlobUrlDictionary.get(tileSetDefinition.tileSheetId);
         if (tileSheetData?.blob) {
-            const tileSheetReader = readerFactoryRef.current.build({ blob: tileSheetData.blob });
+            const tileSheetReader = readerFactory.build({ blob: tileSheetData.blob });
             tileSheetReader.isReady().then(r => setTileSheetReader(r));
         }
     }, [tileSetDefinition, tileSheetBlobUrlDictionary]);
@@ -296,7 +291,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             then(buffer => png.parse(buffer));
 
         png.on("parsed", () => {
-            const /** @type {Array<ChocoWinColor>} */ colors = [];
+            const /** @type {Array<ChocoColor>} */ colors = [];
             const /** @type {Set<String>} */ colorStrings = new Set();
 
             Object.keys(CHOCO_WINDOW_REGIONS).forEach((whichRegion) => {
@@ -318,7 +313,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                                 const rgbaString = `(${r}, ${g}, ${b}, ${a})`;
                                 if (!colorStrings.has(rgbaString)) {
                                     colorStrings.add(rgbaString);
-                                    colors[colors.length] = new ChocoWinColor({ r, g, b, a });
+                                    colors[colors.length] = new ChocoColor({ r, g, b, a });
                                 }
                             }
                         }
@@ -455,11 +450,11 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             h: 180,
             tileScale: previewTileScale,
             winTileSet: tileSet,
-            readerFactory: readerFactoryRef.current
+            readerFactory: readerFactory
         });
 
         chocoWin.isReady().then(() => {
-            const writer = new ChocoWinPngJsPixelWriter(450, 180);
+            const writer = writerFactory.build(450, 180);
             chocoWin.drawTo(writer);
 
             let blob = writer.makeBlob();

@@ -1,4 +1,4 @@
-import { ChocoWinColor, ChocoWinRectangle } from "./ChocoWindow.js";
+import { ChocoColor, ChocoRectangle } from "./ChocoWindow.js";
 
 /**
  * @interface
@@ -19,8 +19,8 @@ class ChocoWinAbstractPixelReader {
     }
 
     /**
-     * @param {ChocoWinCoordinates} coordinate
-     * @return {ChocoWinColor}
+     * @param {ChocoCoordinates} coordinate
+     * @return {ChocoColor}
      */
     getPixel(coordinate) {
         throw new Error("cannot call methods on abstract class");
@@ -41,8 +41,8 @@ class ChocoWinAbstractPixelReader {
  */
 class ChocoWinAbstractPixelWriter {
     /**
-     * @param {ChocoWinCoordinates} coordinate
-     * @param {ChocoWinColor} color
+     * @param {ChocoCoordinates} coordinate
+     * @param {ChocoColor} color
      */
     writePixel(coordinate, color) {
         throw new Error("cannot call methods on abstract class");
@@ -60,11 +60,11 @@ class ChocoWinAbstractPixelWriter {
 
 class ChocoWinRegionPixelReader extends ChocoWinAbstractPixelReader {
     /** @param {ChocoWinAbstractPixelReader} */ #reader;
-    /** @param {ChocoWinRectangle} */ #region;
+    /** @param {ChocoRectangle} */ #region;
 
     /**
      * @param {ChocoWinAbstractPixelReader} reader
-     * @param {ChocoWinRectangle} region
+     * @param {ChocoRectangle} region
      */
     constructor(reader, region) {
         super();
@@ -87,8 +87,8 @@ class ChocoWinRegionPixelReader extends ChocoWinAbstractPixelReader {
     }
 
     /**
-     * @param {ChocoWinCoordinates} coordinate
-     * @return {ChocoWinColor}
+     * @param {ChocoCoordinates} coordinate
+     * @return {ChocoColor}
      */
     getPixel(coordinate) {
         return this.#reader.getPixel({ x: this.#region.x + coordinate.x, y: this.#region.y + coordinate.y });
@@ -140,8 +140,8 @@ class ChocoWinRotatePixelReader extends ChocoWinAbstractPixelReader {
     }
 
     /**
-     * @param {ChocoWinCoordinates} coordinate
-     * @return {ChocoWinColor}
+     * @param {ChocoCoordinates} coordinate
+     * @return {ChocoColor}
      */
     getPixel(coordinate) {
         switch (this.#rotationCount) {
@@ -220,8 +220,8 @@ class ChocoWinReflectionPixelReader extends ChocoWinAbstractPixelReader {
     }
 
     /**
-     * @param {ChocoWinCoordinates} coordinate
-     * @return {ChocoWinColor}
+     * @param {ChocoCoordinates} coordinate
+     * @return {ChocoColor}
      */
     getPixel(coordinate) {
         let x = coordinate.x;

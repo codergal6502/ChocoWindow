@@ -1,5 +1,5 @@
 import { ChocoStudioTileSetDefinition, ChocoStudioWindowRegionDefinition, ChocoStudioWindowRegionTileAssignment, ChocoStudioWorkspace } from "./ChocoStudio";
-import { ChocoWinCoordinates, TileTransformationTypes } from "./ChocoWindow";
+import { ChocoCoordinates, TileTransformationTypes } from "./ChocoWindow";
 
 const JsonClone = (o) => {
     return JSON.parse(JSON.stringify(o))
@@ -44,7 +44,7 @@ export class ChocoStudioUpgrader {
                             xSheetCoordinate: oldTsp?.x ?? 0,
                             ySheetCoordinate: oldTsp?.y ?? 0,
                             geometricTransformation: oldTsp?.geometricTransformation ?? TileTransformationTypes.BASE,
-                            transparencyOverrides: oldTsp?.transparencyOverrides?.map(c => new ChocoWinCoordinates({x: c.x, y: c.y})) ?? []
+                            transparencyOverrides: oldTsp?.transparencyOverrides?.map(c => new ChocoCoordinates({x: c.x, y: c.y})) ?? []
                         })
                     }
                 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChocoWinAbstractPixelReader, ChocoWinColor, ChocoWinCoordinates } from '../../../ChocoWindow'
+import { ChocoWinAbstractPixelReader, ChocoColor, ChocoCoordinates } from '../../../ChocoWindow'
 import "./PixelTransparencyOverideSelector.css"
 import { AssignableTileInfo } from '../TileSetDefinitionEditor';
 
@@ -17,7 +17,7 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo, onSelectionMade 
     const [readerIsReady, setReaderIsReady] = useState(false);
     const [pixelSize, setPixelSize] = useState(0);
     /** @type {ReturnType<typeof useState<{x: Number, y: Number}[]>} */
-    const [transparentPixels, setTransparentPixels] = useState(assignableTileInfo.transparencyOverrides.map(c => new ChocoWinCoordinates(c)));
+    const [transparentPixels, setTransparentPixels] = useState(assignableTileInfo.transparencyOverrides.map(c => new ChocoCoordinates(c)));
     const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
     const [doNotInvokeCallback, setDoNotInvokeCallback] = useState(false);
     const [clickTimeout, setClickTimeout] = useState(null);
@@ -79,7 +79,7 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo, onSelectionMade 
     // update the selected and display locations when a new assignable tile info comes in
     useEffect(() => {
         setDoNotInvokeCallback(true);
-        setTransparentPixels(assignableTileInfo.transparencyOverrides.map(c => new ChocoWinCoordinates(c)));
+        setTransparentPixels(assignableTileInfo.transparencyOverrides.map(c => new ChocoCoordinates(c)));
     }, [assignableTileInfo])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -93,7 +93,7 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo, onSelectionMade 
     const checkboxOnChange = (e) => {
         const coordinates = { x: e.target.dataset.x, y: e.target.dataset.y }
 
-        const newTransparentPixels = transparentPixels.map(c => new ChocoWinCoordinates(c));
+        const newTransparentPixels = transparentPixels.map(c => new ChocoCoordinates(c));
         if (true == e.target.checked) {
             newTransparentPixels[newTransparentPixels.length] = coordinates;
         }
@@ -113,7 +113,7 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo, onSelectionMade 
 
     /**
      * 
-     * @param {ChocoWinColor} color 
+     * @param {ChocoColor} color 
      */
     const chocoWinColorToRgba = (color) => {
         return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a / 255.0})`

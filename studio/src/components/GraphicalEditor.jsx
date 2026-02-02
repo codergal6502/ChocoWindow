@@ -7,7 +7,7 @@ import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWor
 
 import interact from 'interactjs';
 import { useContext } from 'react';
-import { ChocoWinReaderFactory, ChocoWinWriterFactory } from '../App';
+import { ReaderFactoryForStudio, WriterFactoryForStudio } from '../App';
 
 /**
  * @param {Object} props
@@ -17,8 +17,8 @@ import { ChocoWinReaderFactory, ChocoWinWriterFactory } from '../App';
  * @returns 
  */
 const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreKeyInputs, lastResizeTimestamp }) => {
-    const readerFactory = useContext(ChocoWinReaderFactory);
-    const writerFactory = useContext(ChocoWinWriterFactory);
+    const readerFactory = useContext(ReaderFactoryForStudio);
+    const writerFactory = useContext(WriterFactoryForStudio);
     const graphicalEditorDivRef = useRef(null);
     const styleRef = useRef(null);
     const SNAP_SIZE = 10;

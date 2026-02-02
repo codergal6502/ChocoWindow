@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioWindow } from "../../ChocoStudio"
-import { ChocoWinColor, ChocoWinWindow } from "../../ChocoWindow";
+import { ChocoColor, ChocoWinWindow } from "../../ChocoWindow";
 import PresetEditor from "./PresetEditor";
-import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../../ChocoWinPngJsReaderWriter";
+import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../App";
+import { useContext } from "react";
 
 /**
  * @param {Object} props
@@ -16,19 +17,22 @@ import { ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriter } from "../..
  * @param {function():void} props.onReturnToEditor
  */
 const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindowChange, onWindowDelete, onReturnToEditor }) => {
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    //                               CONSTANTS                              //
+    // // // // // // // // // // // // // // // // // // // // // // // // //
+    const readerFactory = useContext(ReaderFactoryForStudio);
+    const writerFactory = useContext(WriterFactoryForStudio);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          STATE AND REF HOOKS                         //
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    const readerFactoryRef = useRef(new ChocoWinPngJsPixelReaderFactory());
-
     const [name, setName] = useState(window.name)
     const [geometryX, setGeometryX] = useState(window.x);
     const [geometryY, setGeometryY] = useState(window.y);
     const [geometryW, setGeometryW] = useState(window.w);
     const [geometryH, setGeometryH] = useState(window.h);
     const [hasBackgroundColor, setHasBackgroundColor] = useState(!!window.backgroundColor);
-    /** @type {ReturnType<typeof useState<ChocoWinColor>>} */
+    /** @type {ReturnType<typeof useState<ChocoColor>>} */
     const [backgroundColor, setBackgroundColor] = useState(window.backgroundColor);
     const [presetId, setPresetId] = useState(window.presetId);
     /** @type {ReturnType<typeof useState<ChocoStudioPreset>>} */
@@ -45,10 +49,10 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     useEffect(() => {
-        if (previewState && readerFactoryRef && window && presets && tileSheets && tileSetDefinitions) {
+        if (previewState && window && presets && tileSheets && tileSetDefinitions) {
             updatePreviewImageBlob();
         }
-    }, [previewState, readerFactoryRef, window, presets, tileSheets, tileSetDefinitions])
+    }, [previewState, window, presets, tileSheets, tileSetDefinitions])
 
     // revoke the preview blob URL
     useEffect(() => {
@@ -95,10 +99,8 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
 
     const updatePreviewImageBlob = () => {
         if (!previewState?.current) { return; }
-        if (!readerFactoryRef?.current) { return; }
         const preset = presetId ? presets.find((p) => p.id == presetId) : singularPreset;
         if (!preset) { return; }
-        if (!readerFactoryRef?.current) { return; }
 
         const tileSetDefinition = tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId);
         if (!tileSetDefinition) { return; }
@@ -116,7 +118,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
             h: geometryH,
             tileScale: preset.tileScale,
             winTileSet: tileSet,
-            readerFactory: readerFactoryRef.current,
+            readerFactory: readerFactory,
             colorSubstitutions: preset.substituteColors,
             backgroundColor: hasBackgroundColor ? backgroundColor : null
         });
@@ -127,7 +129,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
                 return;
             }
 
-            const writer = new ChocoWinPngJsPixelWriter(geometryW, geometryH);
+            const writer = writerFactory.build(geometryW, geometryH);
             chocoWin.drawTo(writer);
 
             const blob = writer.makeBlob();
@@ -200,7 +202,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
      * @param {HTMLInputElement} inputEvent.target
      */
     const onBackgroundColorChange = (inputEvent) => {
-        setBackgroundColor(new ChocoWinColor(inputEvent.target.value));
+        setBackgroundColor(new ChocoColor(inputEvent.target.value));
         setHasChanges(true);
     }
 

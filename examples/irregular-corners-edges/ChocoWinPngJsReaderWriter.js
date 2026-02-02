@@ -1,4 +1,4 @@
-// import { ChocoWinAbstractPixelReader, ChocoWinAbstractPixelReaderFactory, ChocoWinAbstractPixelWriter, ChocoWinAbstractPixelWriterFactory, ChocoWinColor, pngBase64DataUrlToBlob } from './ChocoWindow.js';
+// import { ChocoWinAbstractPixelReader, ChocoWinAbstractPixelReaderFactory, ChocoWinAbstractPixelWriter, ChocoWinAbstractPixelWriterFactory, ChocoColor, pngBase64DataUrlToBlob } from './ChocoWindow.js';
 
 // export class ChocoWinPngJsPixelReader extends ChocoWinAbstractPixelReader {
 //     /** @type {Boolean} */ #ready = false;
@@ -34,14 +34,14 @@
 //     }
 
 //     /**
-//      * @param {ChocoWinCoordinates} coordinate
-//      * @return {ChocoWinColor}
+//      * @param {ChocoCoordinates} coordinate
+//      * @return {ChocoColor}
 //      */
 //     getPixel(coordinate) {
 //         if (coordinate.x < 0 || coordinate.x >= this.#png.width) return null;
 //         if (coordinate.y < 0 || coordinate.y >= this.#png.height) return null;
 //         const i = 4 * (coordinate.x + coordinate.y * this.#png.width);
-//         return new ChocoWinColor({ r: this.#png.data[i + 0], g: this.#png.data[i + 1], b: this.#png.data[i + 2], a: this.#png.data[i + 3] });
+//         return new ChocoColor({ r: this.#png.data[i + 0], g: this.#png.data[i + 1], b: this.#png.data[i + 2], a: this.#png.data[i + 3] });
 //     }
 
 //     /**

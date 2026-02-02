@@ -4,6 +4,8 @@ import { ChocoWinPngJsPixelWriter } from '../../../ChocoWinPngJsReaderWriter';
 import "./TileTransformationSelector.css"
 import { ERR_LOCAL_FILE_HEADER_NOT_FOUND } from '@zip.js/zip.js';
 import { AssignableTileInfo } from '../TileSetDefinitionEditor';
+import { WriterFactoryForStudio } from '../../../App';
+import { useContext } from 'react';
 
 /**
  * @param {Object} props
@@ -11,6 +13,7 @@ import { AssignableTileInfo } from '../TileSetDefinitionEditor';
  * @param {function({transformationType: string, reader: ChocoWinAbstractPixelReader, blobUrl: String})} props.onSelectionMade
  */
 const TileTransformationSelector = ({ assignableTileInfo: activeTileSheetAssignment, onSelectionMade }) => {
+    const writerFactory = useContext(WriterFactoryForStudio);
     const unique = useRef(crypto.randomUUID());
     const styleRef = useRef(null);
     const tileBlobUrlMap = useRef(new Map());
@@ -78,7 +81,7 @@ const TileTransformationSelector = ({ assignableTileInfo: activeTileSheetAssignm
                 const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
                 return new Promise(resolve => {
                     reader.isReady().then(r => {
-                        const writer = new ChocoWinPngJsPixelWriter(r.width, r.height);
+                        const writer = writerFactory.build(r.width, r.height);
                         writer.writeAll(r);
                         const newUrl = URL.createObjectURL(writer.makeBlob());
 

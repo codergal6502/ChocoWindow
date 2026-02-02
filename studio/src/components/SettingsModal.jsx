@@ -1,4 +1,3 @@
-import { createContext, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, ChocoStudioTileSheetBlobUrlManager } from "../ChocoStudio.js";
@@ -9,9 +8,7 @@ import WindowEditor from "./modal-components/WindowEditor.jsx";
 import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 import HowToUseThisTool from "./modal-components/HowToUseThisTool.jsx";
 import WorkspaceSettings from "./modal-components/WorkspaceSettings.jsx";
-import { ChocoWinPngJsPixelReaderFactory } from "../ChocoWindow.js";
-
-export const TileSheetBlobUrlDictionary = createContext(new ChocoStudioTileSheetBlobUrlManager(new ChocoWinPngJsPixelReaderFactory()))
+import { useState } from "react";
 
 /**
  * @param {Object} props

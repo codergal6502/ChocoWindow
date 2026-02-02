@@ -4,7 +4,7 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/pngjs@7.0.0/browser.js"></script>
     <script type="module">
-        import { ChocoWinColor, ChocoWinRectangle, ChocoWinPngJsPixelWriter, ChocoWinAbstractPixelReader, ChocoWinAbstractPixelWriter, ChocoWinRegionPixelReader, ChocoWinRotatePixelReader, ChocoWinReflectionPixelReader, ChocoWinReflectionTypes, ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from "./ChocoWindow.js";
+        import { ChocoColor, ChocoRectangle, ChocoWinPngJsPixelWriter, ChocoWinAbstractPixelReader, ChocoWinAbstractPixelWriter, ChocoWinRegionPixelReader, ChocoWinRotatePixelReader, ChocoWinReflectionPixelReader, ChocoWinReflectionTypes, ChocoWinPngJsPixelReaderFactory, ChocoWinPngJsPixelWriterFactory } from "./ChocoWindow.js";
 
         const PNG = png.PNG;
 
@@ -63,13 +63,13 @@
             }
 
             /**
-             * @param {ChocoWinCoordinates} coordinate
-             * @return {ChocoWinColor}
+             * @param {ChocoCoordinates} coordinate
+             * @return {ChocoColor}
              */
             getPixel(coordinate) {
                 if (!this.#ready) { return null; }
                 const i = 4 * (coordinate.x + coordinate.y * this.#imageData.width);
-                return new ChocoWinColor({ r: this.#imageData.data[i + 0], g: this.#imageData.data[i + 1], b: this.#imageData.data[i + 2], a: this.#imageData.data[i + 3] });
+                return new ChocoColor({ r: this.#imageData.data[i + 0], g: this.#imageData.data[i + 1], b: this.#imageData.data[i + 2], a: this.#imageData.data[i + 3] });
             }
 
             /**
@@ -154,7 +154,7 @@
                 let /** @type {ChocoWinPngPixelReader} */ pngPixelReader = null;
 
                 const generateColorPalette = (/** @type {ChocoWinHtmlImagePixelReader} */ reader, /** @type {Number} */ width, /** @type {Number} */ height) => {
-                    const /** @type {Array<ChocoWinColor>} */ colors = [];
+                    const /** @type {Array<ChocoColor>} */ colors = [];
                     for (let x = 0; x < width; x++) {
                         for (let y = 0; y < height; y++) {
                             const color = JSON.parse(JSON.stringify(reader.getPixel({ x, y })));
@@ -269,7 +269,7 @@
                         document.getElementById("original-img").src = writer.makeDataUrl();
 
                         writer = writerFactory.build(baseReader.width, baseReader.height);
-                        const regionReader = new ChocoWinRegionPixelReader(baseReader, new ChocoWinRectangle({ x: 4, y: 18, width: width, height: height }));
+                        const regionReader = new ChocoWinRegionPixelReader(baseReader, new ChocoRectangle({ x: 4, y: 18, width: width, height: height }));
                         for (let x = 0; x < width; x++) {
                             for (let y = 0; y < height; y++) {
                                 const pixel = regionReader.getPixel({ x, y });
