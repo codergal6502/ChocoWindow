@@ -3,9 +3,9 @@ import { CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileShee
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { ChocoWinAbstractPixelReader, ChocoRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { faCircleXmark, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { AssignableTileInfo } from "../TileSetDefinitionEditor";
-import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../../App";
+import { WriterFactoryForStudio } from "../../../App";
 import './WindowRegionDefinition.css'
 
 /**
@@ -16,17 +16,17 @@ import './WindowRegionDefinition.css'
  * @param {ChocoStudioTileSetDefinition} props.tileSetDefinition
  * @param {AssignableTileInfo} props.assignableTileInfo
  * @param {function({regionIdentifier: String, colCount: number, rowCount: number})} props.onRegionResized
- * @param {function({regionIdentifier: String, colIndex: number, rowIndex: number, info: AssignableTileInfo})} props.onAssignmentMade
+ * @param {function({regionIdentifier: String, colIndex: number, rowIndex: number})} props.onAssignmentMade
+ * @param {function({regionIdentifier: String, colIndex: number, rowIndex: number})} props.onAssignmentCleared
  * @param {function(AssignableTileInfo)} props.onTileAssignmentRetrieved
  */
-const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, assignableTileInfo, onRegionResized, onAssignmentMade, onTileAssignmentRetrieved }) => {
+const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, assignableTileInfo, onRegionResized, onAssignmentMade, onAssignmentCleared, onTileAssignmentRetrieved }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
     const DEFAULT_TA_SCALE = 3;
     const BIGGEST_ZOOM_FACTOR = 6;
     const SELECTED_TILE_BLOB_KEY = "SELECTED_TILE_BLOB_KEY";
-    const readerFactory = useContext(ReaderFactoryForStudio);
     const writerFactory = useContext(WriterFactoryForStudio);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -44,8 +44,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
     const [assignmentTileScale, setAssignmentTileScale] = useState(DEFAULT_TA_SCALE);
     const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
     const [selectedTile, setSelectedTile] = useState({ colIndex: 0, rowIndex: 0 });
-    const [tileAssignments, setTileAssignments] = useState([]);
-    const [isAssignThisReady, setIsAssignThisReady] = useState(false);
 
     /** @type {ReturnType<typeof useRef<Map<String, String>>>} */
     const tileBlobUrlMap = useRef(new Map());
@@ -70,12 +68,20 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
      * @param {string} ruleText 
      */
     const replaceRule = (styleSheet, selectorText, ruleText) => {
+        removeRule(styleSheet, selectorText);
+
+        styleSheet.insertRule(ruleText);
+    }
+
+    /**
+     * @param {CSSStyleSheet} styleSheet 
+     * @param {string} selectorText 
+     */
+    const removeRule = (styleSheet, selectorText) => {
         /** @type {CSSStyleRule[]} */
         const ruleArray = Array.from(styleSheet.cssRules);
         const oldRuleIndex = ruleArray.findIndex(r => r.selectorText == selectorText);
         if (oldRuleIndex >= 0) { styleSheet.deleteRule(oldRuleIndex) };
-
-        styleSheet.insertRule(ruleText);
     }
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -93,9 +99,10 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
                 for (let colIndex = 0; colIndex < region.colCount; colIndex++) {
                     const tp = region.get(rowIndex, colIndex);
 
-                    if (tp) {
-                        const tileBlobKey = computeTileBlobKey(regionIdentifier, colIndex, rowIndex);
+                    const tileBlobKey = computeTileBlobKey(regionIdentifier, colIndex, rowIndex);
+                    const selectorText = `label.region-tile-radio.${tileBlobKey}`;
 
+                    if (tp) {
                         let reader = new ChocoWinRegionPixelReader(tileSheetReader, new ChocoRectangle({
                             x: tp.xSheetCoordinate,
                             y: tp.ySheetCoordinate,
@@ -115,11 +122,13 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
                             const tileUrl = URL.createObjectURL(writer.makeBlob());
                             tileBlobUrlMap.current.set(tileBlobKey, tileUrl);
 
-                            const selectorText = `label.region-tile-radio.${tileBlobKey}`;
                             const ruleText = `${selectorText} { background-image: url(${tileUrl}); }`;
 
                             replaceRule(styleSheet, selectorText, ruleText);
                         })
+                    }
+                    else {
+                        removeRule(styleSheet, selectorText);
                     }
                 }
             }
@@ -129,7 +138,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
     // set the URL for the "assign this" tile
     useEffect(() => {
         if (styleRef?.current && tileBlobUrlMap?.current && assignableTileInfo?.transformedReader?.isReady) {
-            setIsAssignThisReady(false);
+
             assignableTileInfo.transformedReader.isReady().then(/** @param {ChocoWinAbstractPixelReader} r */ r => {
                 if (!styleRef.current) return;
                 const tileBlobKey = SELECTED_TILE_BLOB_KEY;
@@ -148,7 +157,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
                 const ruleText = `${selectorText} { background-image: url(${tileUrl}); }`;
 
                 replaceRule(styleSheet, selectorText, ruleText);
-                setIsAssignThisReady(true);
             })
         }
     }, [tileBlobUrlMap, styleRef, assignableTileInfo])
@@ -178,43 +186,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
         };
     }, [])
 
-    // assign the selected tile to the region position
-    useEffect(() => {
-        return;
-        // if (lastAssignThisButtonClickTime && isAssignThisReady && styleRef?.current && tileBlobUrlMap?.current) {
-        //     const tileBlobKey = computeTileBlobKey(regionIdentifier, selectedTile.colIndex, selectedTile.rowIndex);
-        //     /** @type {ChocoWinAbstractPixelReader} */ const reader = AssignableTileInfo.transformedReader;
-        //     const writer = writerFactory.build(reader.width, reader.height);
-        //     writer.writeAll(reader);
-
-        //     if (tileBlobUrlMap.current.has(tileBlobKey)) {
-        //         URL.revokeObjectURL(tileBlobUrlMap.current.get(tileBlobKey));
-        //     }
-
-        //     const tileUrl = URL.createObjectURL(writer.makeBlob());
-        //     tileBlobUrlMap.current.set(tileBlobKey, tileUrl);
-
-        //     const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
-
-        //     const selectorText = `label.region-tile-radio.${tileBlobKey}`;
-        //     const ruleText = `${selectorText} { background-image: url(${tileUrl}); }`;
-
-        //     replaceRule(styleSheet, selectorText, ruleText);
-
-        //     const region = tileSetDefinition.regions[regionIdentifier];
-        //     if (!region[selectedTile.rowIndex]) { region[selectedTile.rowIndex] = []; }
-
-        //     region.set(selectedTile.colIndex, selectedTile.rowIndex, new ChocoStudioWindowRegionTileAssignment({
-        //         xSheetCoordinate: AssignableTileInfo.x,
-        //         ySheetCoordinate: AssignableTileInfo.y,
-        //         geometricTransformation: AssignableTileInfo.geometricTransformation,
-        //         transparencyOverrides: AssignableTileInfo.transparencyOverrides,
-        //     }));
-
-        //     onChangeMade(tileSetDefinition);
-        // }
-    }, [isAssignThisReady, styleRef, tileBlobUrlMap])
-
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -233,22 +204,6 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
             colIndex: Math.min(selectedTile.colIndex, tileSetDefinition.regions[identifier].colCount - 1),
             rowIndex: Math.min(selectedTile.rowIndex, tileSetDefinition.regions[identifier].rowCount - 1),
         })
-        // TODO!!! rename TileSetDefinition....tileSheet~~Position~~ to assigments, and x/y to tileSheetPixelX, tileSheetPixelY
-        setTileAssignments(
-            Array.from(tileSetDefinition.regions[identifier].colCount).map((_, x) => {
-                return Array.from(tileSetDefinition.regions[identifier].rowCount).map((_, y) => {
-                    const oldAssignment = tileSetDefinition.regions[identifier].get(x, y);
-                    const assignment = {
-                        x: oldAssignment?.x ?? 0,
-                        y: oldAssignment?.y ?? 0,
-                        geometricTransformation: oldAssignment?.geometricTransformation ?? [],
-                        transparencyOverrides: oldAssignment?.transparencyOverrides ?? []
-                    };
-
-                    return assignment;
-                })
-            })
-        )
     }
 
     /**
@@ -300,6 +255,15 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
     }
 
     /**
+     * @param {object} args
+     * @param {Number} args.rowIndex 
+     * @param {Number} args.colIndex 
+     */
+    const onClearRegionTileAssignmentButtonClick = ({ rowIndex, colIndex }) => {
+        onAssignmentCleared({ regionIdentifier, colIndex, rowIndex });
+    }
+
+    /**
      * @param {Object} e 
      * @param {HTMLButtonElement} e.target
      */
@@ -308,14 +272,16 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
 
         const rta = tileSetDefinition.regions[regionIdentifier].get(selectedTile.rowIndex, selectedTile.colIndex);
 
-        const /** @type {AssignableTileInfo} */ outboundTileAssignment = {
-            xSheetCoordinate: rta.xSheetCoordinate,
-            ySheetCoordinate: rta.ySheetCoordinate,
-            geometricTransformation: rta.geometricTransformation,
-            transparencyOverrides: rta?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? [],
-        }
+        if (rta) {
+            const /** @type {AssignableTileInfo} */ outboundTileAssignment = {
+                xSheetCoordinate: rta.xSheetCoordinate,
+                ySheetCoordinate: rta.ySheetCoordinate,
+                geometricTransformation: rta.geometricTransformation,
+                transparencyOverrides: rta?.transparencyOverrides?.map(t => ({ x: t.x, y: t.y })) ?? [],
+            }
 
-        onTileAssignmentRetrieved(outboundTileAssignment);
+            onTileAssignmentRetrieved(outboundTileAssignment);
+        }
     }
 
     /**
@@ -333,7 +299,7 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
     return (<>
         <h3 className="mb-1 text-xl font-bold">Window Region Definition {helpVisibile || <a href="#" onClick={toggleHelp} className="text-xs font-normal text-blue-900 dark:text-blue-100 py-1 hover:underline italic">show help</a>}</h3>
         {helpVisibile && <p className="mb-2 text-sm mx-6">
-            <span><span className="italic">First,</span> select a window region to define tiles for. <span className="italic">Second,</span> click on the tile location in the selected region. <span className="italic">Third,</span> change the tile selection, transformation, and transparent pixels below.</span>
+            <span><span className="italic">First,</span> select a window region to define tiles for. <span className="italic">Second,</span> click on the tile location in the selected region. <span className="italic">Third,</span> change the tile selection, transformation, and transparent pixels below. <span className="italic">Finally</span>, assign the configured tile to the location.</span>
             &nbsp;<a href="#" onClick={toggleHelp} className="text-xs text-blue-900 dark:text-blue-100 py-1 hover:underline italic">hide help</a>
         </p>}
 
@@ -379,49 +345,51 @@ const WindowRegionDefinition = ({ tileSetDefinition, tileSheetReader, tileSize, 
                 '--tile-sheet-scale': assignmentTileScale,
             }}
         >
-            <h4 className="mb-1 font-bold">Tile Assignment</h4>
             <style ref={styleRef} />
             <div className="grid grid-cols-6">
-                <div className="assign-this-tile-container self-center">
-                    <div className="assign-this-tile"></div>
+                <div>
+                    <h4 className="mb-1 font-bold">Configured Tile</h4>
+                    <div className="assign-this-tile-container self-center">
+                        <div className="assign-this-tile"></div>
+                    </div>
                 </div>
                 <div className="self-center justify-self-center">
                     <button className="block" onClick={onAssignTileButtonClick}>
                         <FontAwesomeIcon icon={faRightFromBracket} className="text-3xl" />
-                        <span className="sr-only">Assign to Region  Tile</span>
+                        <span className="sr-only">Assign to Region Tile</span>
                     </button>
                     <button className="block" onClick={onRetrieveTileButtonClick}>
                         <FontAwesomeIcon icon={faRightFromBracket} flip="horizontal" className="text-3xl" />
-                        <span className="sr-only">Assign to Region  Tile</span>
+                        <span className="sr-only">Retrieve to Configuration</span>
                     </button>
                 </div>
-                <div className="region-tile-container col-span-4 self-center">
-                    {
-                        Array.from({ length: regionRowCount || 1 }).map((_, rowIndex) =>
-                            Array.from({ length: regionColCount || 1 }).map((_, colIndex) =>
-                                <label
-                                    className={`${computeTileBlobKey(regionIdentifier, colIndex, rowIndex)} region-tile-radio ${(selectedTile.colIndex == colIndex && selectedTile.rowIndex == rowIndex) ? "region-tile-selected" : ""}`}
-                                    style={{
-                                        "--tile-sheet-top-pixel-x": `${tileAssignments?.[colIndex]?.[rowIndex]?.x ?? 0}px`,
-                                        "--tile-sheet-top-pixel-y": `${tileAssignments?.[colIndex]?.[rowIndex]?.y ?? 0}px`,
-                                    }}
-                                    key={`transparency-pixel-${colIndex}-${rowIndex}`}
-                                >
-                                    <input
-                                        name="selected-region-tile"
-                                        className='sr-only'
-                                        type="radio"
-                                        onChange={regionTileRadioOnChange} data-col-index={colIndex} data-row-index={rowIndex}
-                                        checked={selectedTile.colIndex == colIndex && selectedTile.rowIndex == rowIndex}
-                                    />
-                                </label>
-                            ))
-                    }
+                <div className="col-span-3 self-center">
+                    <h4 className="mb-1 font-bold">Tile Assignments</h4>
+                    <div className="region-tile-container">
+                        {
+                            Array.from({ length: regionRowCount || 1 }).map((_, rowIndex) =>
+                                Array.from({ length: regionColCount || 1 }).map((_, colIndex) =>
+                                    <label
+                                        className={`${computeTileBlobKey(regionIdentifier, colIndex, rowIndex)} region-tile-radio ${(selectedTile.colIndex == colIndex && selectedTile.rowIndex == rowIndex) ? "region-tile-selected" : ""}`}
+                                        key={`transparency-pixel-${colIndex}-${rowIndex}`}
+                                    >
+                                        <input
+                                            name="selected-region-tile"
+                                            className='sr-only'
+                                            type="radio"
+                                            onChange={regionTileRadioOnChange} data-col-index={colIndex} data-row-index={rowIndex}
+                                            checked={selectedTile.colIndex == colIndex && selectedTile.rowIndex == rowIndex}
+                                        />
+                                        <button onClick={() => onClearRegionTileAssignmentButtonClick({ rowIndex, colIndex })}>
+                                            <FontAwesomeIcon icon={faCircleXmark} />
+                                        </button>
+                                    </label>
+                                ))
+                        }
+                    </div>
                 </div>
             </div>
         </div>
-
-
     </>)
 }
 

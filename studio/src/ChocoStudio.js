@@ -162,7 +162,7 @@ class ChocoStudioWindowRegionDefinition {
             this.id = arg1.id
             this.#colCount = Number(arg1.colCount);
             this.#rowCount = Number(arg1.rowCount);
-            this.internalArray = arg1.internalArray.map(row => row.map(a => new ChocoStudioWindowRegionTileAssignment(a)))
+            this.internalArray = arg1.internalArray.map(row => row.map(a => a ? new ChocoStudioWindowRegionTileAssignment(a) : a))
             this.#resizeArray();
         }
         else {
@@ -211,7 +211,7 @@ class ChocoStudioWindowRegionDefinition {
     set(rowIndex, colIndex, assigment) {
         if (0 <= rowIndex && rowIndex < this.#rowCount) {
             if (0 <= colIndex && colIndex < this.#colCount) {
-                this.internalArray[rowIndex][colIndex] = new ChocoStudioWindowRegionTileAssignment(assigment);
+                this.internalArray[rowIndex][colIndex] = assigment ? new ChocoStudioWindowRegionTileAssignment(assigment) : null;
             }
         }
     }

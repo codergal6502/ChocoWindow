@@ -271,18 +271,24 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         setHasChanges(true);
     };
 
-
-
-
-
-
+    /**
+     * @param {Object} args 
+     * @param {String} args.regionIdentifier
+     * @param {number} args.colIndex
+     * @param {number} args.rowIndex
+     */
+    const onAssignmentCleared = ({ regionIdentifier, colIndex, rowIndex }) => {
+        const newRegions = cloneRegions(regions);
+        newRegions[regionIdentifier].set(rowIndex, colIndex, null);
+        setRegions(newRegions);
+        setHasChanges(true);
+    };
 
     /**
      * 
      */
     const onGenerateColorPaletteButtonClick = () => {
         const png = new PNG();
-
 
         tileSheetBlobUrlDictionary.
             get(tileSheetId).
@@ -549,6 +555,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                 assignableTileInfo={assignableTileInfo}
                 onRegionResized={onRegionResized}
                 onAssignmentMade={onAssignmentMade}
+                onAssignmentCleared={onAssignmentCleared}
                 onTileAssignmentRetrieved={onTileAssignmentRetrieved}
             />
             <PreciseTileSelector
