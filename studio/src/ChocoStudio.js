@@ -73,6 +73,38 @@ class ChocoStudioTileSheetBlobUrlManager {
         const blob = pngBase64DataUrlToBlob(dataUrl);
         return this.setBlob(tileSheetId, blob);
     }
+
+    /**
+     * @param {String} tileSheetId
+     * @param {ChocoStudioTileSheet[]} tileSheets
+     */
+    ensureTileSheetBlob(tileSheetId, tileSheets) {
+        let tileSheetData = this.get(tileSheetId);
+
+        if (!tileSheetData) {
+            tileSheetData = this.setFromTileSheetIdAndArray(tileSheetId, tileSheets);
+        }
+
+        return tileSheetData;
+    }
+
+    /**
+     * @param {String} tileSheetId
+     * @param {ChocoStudioTileSheet[]} tileSheets
+     */
+    setFromTileSheetIdAndArray(tileSheetId, tileSheets) {
+        const tileSheet = tileSheets.find(ts => ts.id == tileSheetId);
+        return this.setFromTileSheet(tileSheet);
+    }
+
+    /**
+     * @param {ChocoStudioTileSheet} tileSheet
+     */
+    setFromTileSheet(tileSheet) {
+        this.setDataUrl(tileSheet.id, tileSheet.imageDataUrl);
+
+        return this.get(tileSheet.id);
+    }
 }
 
 class ChocoStudioTileSheet {
@@ -270,6 +302,12 @@ class ChocoStudioWindowRegionDefinition {
     }
 }
 
+const CHOCO_REGION_GRANULARITY = Object.freeze({
+    SINGLE_TILE_EDGES: "SINGLE_TILE_EDGES",
+    BASIC_EDGES: "BASIC_EDGES",
+    ARBITRARY_EDGES: "ARBITRARY_EDGES",
+});
+
 class ChocoStudioTileSetDefinition {
     /**
      * Default constructor
@@ -284,6 +322,8 @@ class ChocoStudioTileSetDefinition {
             /** @type {String} */ this.name = "";
             /** @type {String} */ this.tileSheetId = "";
             /** @type {Number} */ this.tileSize = 8; // A reasonable guess!
+            /** @type { String } */ this.granularity = CHOCO_REGION_GRANULARITY.SINGLE_TILE_EDGES;
+
             // todo: replace this with a map at some point
             /** @type {Object<string, ChocoStudioWindowRegionDefinition>} */ this.regions = {}
             /** @type {Array.<ChocoColor> } */ this.defaultColors = []
@@ -303,6 +343,7 @@ class ChocoStudioTileSetDefinition {
             this.name = arg1.name;
             this.tileSheetId = arg1.tileSheetId;
             this.tileSize = arg1.tileSize;
+            this.granularity = arg1.granularity;
 
             this.regions = {};
             this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT] = new ChocoStudioWindowRegionDefinition(arg1.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT]);
@@ -326,17 +367,84 @@ class ChocoStudioTileSetDefinition {
             "sourceFileUrl": sourceFileUrl,
             "tileSize": this.tileSize,
             "regions": [
-                {priority: 1, bufferLeft: 0, bufferTop: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].toChocoWinTileSetRegionTileArray()},
-                {priority: 1, bufferRight: 0, bufferTop: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].toChocoWinTileSetRegionTileArray()},
-                {priority: 1, bufferLeft: 0, bufferBottom: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].toChocoWinTileSetRegionTileArray()},
-                {priority: 1, bufferRight: 0, bufferBottom: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].toChocoWinTileSetRegionTileArray()},
+                { priority: 1, bufferLeft: 0, bufferTop: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].toChocoWinTileSetRegionTileArray() },
+                { priority: 1, bufferRight: 0, bufferTop: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].toChocoWinTileSetRegionTileArray() },
+                { priority: 1, bufferLeft: 0, bufferBottom: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].toChocoWinTileSetRegionTileArray() },
+                { priority: 1, bufferRight: 0, bufferBottom: 0, tiles: this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].toChocoWinTileSetRegionTileArray() },
 
-                {priority: 2, bufferTop: 0, bufferLeft: this.tileSize, bufferRight: this.tileSize, tiles: this.regions[CHOCO_WINDOW_REGIONS.TOP].toChocoWinTileSetRegionTileArray()},
-                {priority: 2, bufferBottom: 0, bufferLeft: this.tileSize, bufferRight: this.tileSize, tiles: this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].toChocoWinTileSetRegionTileArray()},
-                {priority: 2, bufferLeft: 0, bufferTop: this.tileSize, bufferBottom: this.tileSize, tiles: this.regions[CHOCO_WINDOW_REGIONS.LEFT].toChocoWinTileSetRegionTileArray()},
-                {priority: 2, bufferRight: 0, bufferTop: this.tileSize, bufferBottom: this.tileSize, tiles: this.regions[CHOCO_WINDOW_REGIONS.RIGHT].toChocoWinTileSetRegionTileArray()},
-                
-                {priority: 3, bufferLeft: this.tileSize, bufferTop: this.tileSize, bufferRight: this.tileSize, bufferBottom: this.tileSize, tiles: this.regions[CHOCO_WINDOW_REGIONS.CENTER].toChocoWinTileSetRegionTileArray()},
+                {
+                    priority: 2,
+                    bufferTop: 0,
+                    bufferLeft:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].colCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    bufferRight:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].colCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    tiles: this.regions[CHOCO_WINDOW_REGIONS.TOP].toChocoWinTileSetRegionTileArray()
+                },
+                {
+                    priority: 2,
+                    bufferBottom: 0,
+                    bufferLeft:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].colCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    bufferRight:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].colCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    tiles: this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].toChocoWinTileSetRegionTileArray()
+                },
+                {
+                    priority: 2,
+                    bufferLeft: 0,
+                    bufferTop:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].rowCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    bufferBottom:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].rowCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    tiles: this.regions[CHOCO_WINDOW_REGIONS.LEFT].toChocoWinTileSetRegionTileArray()
+                },
+                {
+                    priority: 2,
+                    bufferRight: 0,
+                    bufferTop:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].rowCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    bufferBottom:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].rowCount * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    tiles: this.regions[CHOCO_WINDOW_REGIONS.RIGHT].toChocoWinTileSetRegionTileArray()
+                },
+
+                {
+                    priority: 3,
+                    bufferLeft:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? Math.min(this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].colCount, this.regions[CHOCO_WINDOW_REGIONS.LEFT].colCount, this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].colCount) * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    bufferTop:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? Math.min(this.regions[CHOCO_WINDOW_REGIONS.TOP_LEFT].rowCount, this.regions[CHOCO_WINDOW_REGIONS.TOP].rowCount, this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].rowCount) * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    bufferRight:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? Math.min(this.regions[CHOCO_WINDOW_REGIONS.TOP_RIGHT].colCount, this.regions[CHOCO_WINDOW_REGIONS.RIGHT].colCount, this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].colCount) * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    bufferBottom:
+                        this.granularity == CHOCO_REGION_GRANULARITY.BASIC_EDGES ? Math.min(this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_LEFT].rowCount, this.regions[CHOCO_WINDOW_REGIONS.BOTTOM].rowCount, this.regions[CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT].rowCount) * this.tileSize :
+                        this.granularity == CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES ? (() => {throw "not implemented"})() :
+                        this.tileSize,
+                    tiles: this.regions[CHOCO_WINDOW_REGIONS.CENTER].toChocoWinTileSetRegionTileArray()
+                },
             ],
             "substitutableColors": this.defaultColors?.map((c) => new ChocoColor(c)) ?? []
         });
@@ -486,4 +594,4 @@ class ChocoStudioWorkspace {
 
 
 
-export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment };
+export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, CHOCO_REGION_GRANULARITY, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment };

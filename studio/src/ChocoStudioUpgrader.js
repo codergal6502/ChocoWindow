@@ -1,4 +1,4 @@
-import { ChocoStudioTileSetDefinition, ChocoStudioWindowRegionDefinition, ChocoStudioWindowRegionTileAssignment, ChocoStudioWorkspace } from "./ChocoStudio";
+import { CHOCO_REGION_GRANULARITY, ChocoStudioTileSetDefinition, ChocoStudioWindowRegionDefinition, ChocoStudioWindowRegionTileAssignment, ChocoStudioWorkspace } from "./ChocoStudio";
 import { ChocoCoordinates, TileTransformationTypes } from "./ChocoWindow";
 
 const JsonClone = (o) => {
@@ -15,12 +15,18 @@ export class ChocoStudioUpgrader {
             if (!nextUpgrade) return null;
         }
 
-        return nextUpgrade;
+        if (nextUpgrade.version == "1.1.0") {
+            nextUpgrade = ChocoStudioUpgrader.Attempt_1_1_0UpgradeTo_1_2_0(nextUpgrade);
+
+            if (!nextUpgrade) return null;
+        }
+
+        return new ChocoStudioWorkspace(nextUpgrade);
     }
 
     static Attempt1_0_1UpgradeTo1_1_0(oldWorkspace) {
-        const cloneWorkspace = JsonClone(oldWorkspace);
-        cloneWorkspace.tileSetDefinitions = [];
+        const clonedWorkspace = JsonClone(oldWorkspace);
+        clonedWorkspace.tileSetDefinitions = [];
 
         oldWorkspace.tileSetDefinitions.forEach(oldTsd => {
             const cloneTsd = JsonClone(oldTsd);
@@ -58,10 +64,18 @@ export class ChocoStudioUpgrader {
                 cloneTsd.regions[regionIdentifier] = newRd;
             }
 
-            cloneWorkspace.tileSetDefinitions[cloneWorkspace.tileSetDefinitions.length] = cloneTsd;
+            clonedWorkspace.tileSetDefinitions[clonedWorkspace.tileSetDefinitions.length] = cloneTsd;
         })
 
-        const newWorkspace = new ChocoStudioWorkspace(cloneWorkspace);
-        return newWorkspace;
+        clonedWorkspace.version = "1.1.0";
+
+        return clonedWorkspace;
+    }
+
+    static Attempt_1_1_0UpgradeTo_1_2_0(oldWorkspace) {
+        const clonedWorkspace = JsonClone(oldWorkspace);
+        clonedWorkspace.granularity = CHOCO_REGION_GRANULARITY.BASIC_EDGES;
+
+        return clonedWorkspace;
     }
 }

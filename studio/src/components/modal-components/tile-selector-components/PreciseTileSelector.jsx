@@ -4,6 +4,7 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { AssignableTileInfo } from "../TileSetDefinitionEditor";
 import { TileSheetBlobUrlDictionary } from "../../../App";
 import './PreciseTileSelector.css'
+import { ChocoCoordinates } from "../../../ChocoWindow";
 
 /**
  * @param {object} props 
@@ -46,14 +47,16 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     /** @type {ReturnType<typeof useRef<HTMLStyleElement>>} */
     const preciseSelectorContainerRef = useRef(null);
 
-    const [doNotInvokeCallback, setDoNotInvokeCallback] = useState(false);
-    /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
+    /** @type {ReturnType<typeof useState<ChocoCoordinates>>} */
     const [selectedLocation, setSelectedLocation] = useState({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
-    /** @type {ReturnType<typeof useState<{x: Number, y: Number}>>} */
+    /** @type {ReturnType<typeof useState<ChocoCoordinates>>} */
     const [displayLocation, setDisplayLocation] = useState({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
 
     const [sheetTileSelectionSemiLocked, setSheetTileSelectionSemiLocked] = useState(false);
     const [preciseSelectorScale, setPreciseSelectorScale] = useState(DEFAULT_PTS_SCALE);
+
+    /** @type {ReturnType<typeof useState<number>>} */
+    const [lastManualLocationEntry, setLastManualLocationEntry] = useState(null);
 
     // Approximate Tile Selection
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -94,17 +97,14 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         }
     }, [lastResizeTimestamp, preciseSelectorContainerRef])
 
-    // when a selection is made, call the parent component's callback
-    useEffect(() => {
-        if (!doNotInvokeCallback) {
-            onSelectionMade(selectedLocation)
-        }
-        setDoNotInvokeCallback(false);
-    }, [selectedLocation]);
+    // don't do this; it creates infinite loops
+    // // when a selection is made, call the parent component's callback
+    // useEffect(() => {
+    //     onSelectionMade(selectedLocation)
+    // }, [selectedLocation]);
 
     // update the selected and display locations when a new assignable tile info comes in
     useEffect(() => {
-        setDoNotInvokeCallback(true);
         setSelectedLocation({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
         setDisplayLocation({ x: assignableTileInfo?.xSheetCoordinate ?? 0, y: assignableTileInfo?.ySheetCoordinate ?? 0 });
     }, [assignableTileInfo])
@@ -200,6 +200,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         else {
             setSheetTileSelectionSemiLocked(true);
             setSelectedLocation(displayLocation);
+            onSelectionMade(displayLocation);
         }
     }
 
@@ -240,7 +241,23 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
 
         setDisplayLocation(newSelectedLocation);
         setSelectedLocation(newSelectedLocation);
+        onSelectionMade(newSelectedLocation);
     }
+
+    /**
+     * @param {ChocoCoordinates} newLocation 
+     */
+    const debounceSelectedLocationNumberInputs = (newLocation) => {
+        // Why not use lodash's _.debounce?
+        // See https://www.developerway.com/posts/debouncing-in-react
+        // See https://stackoverflow.com/questions/36294134/lodash-debounce-with-react-input#comment124623824_67941248
+        // See https://stackoverflow.com/a/59184678
+        clearTimeout(lastManualLocationEntry);
+        const timeout = setTimeout(() => {
+            onSelectionMade(newLocation);
+        }, 250);
+        setLastManualLocationEntry(timeout);
+    };
 
     /**
      * @param {object} tileSheetMouseCoordinates 
@@ -253,6 +270,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         const newLocation = { x: x, y: selectedLocation.y };
         setDisplayLocation(newLocation);
         setSelectedLocation(newLocation);
+        debounceSelectedLocationNumberInputs(newLocation);
     }
 
     /**
@@ -265,6 +283,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         const newLocation = { x: selectedLocation.x, y: y };
         setDisplayLocation(newLocation);
         setSelectedLocation(newLocation);
+        debounceSelectedLocationNumberInputs(newLocation);
     }
 
     return (
@@ -326,15 +345,14 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                         </div>
                     </div>
 
-
                     <div className="grid grid-cols-2">
                         <div className="mr-2 my-2">
-                            <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X</label>
-                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetXManualInputChange} value={selectedLocation?.x ?? 0} />
+                            <label htmlFor="94b7a866-c49a-4999-b167-a6f205861b59">Sheet X:</label>
+                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="94b7a866-c49a-4999-b167-a6f205861b59" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetXManualInputChange} value={displayLocation?.x ?? 0} />
                         </div>
                         <div className="ml-2 my-2">
-                            <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y</label>
-                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={selectedLocation?.y ?? 0} />
+                            <label htmlFor="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769">Sheet Y:</label>
+                            <input placeholder="x" min={0} type="Number" autoComplete="off" id="e4be39b9-9af0-4de5-8fa5-64ebc9a6f769" className={TAILWIND_INPUT_CLASS_NAME} onChange={onSheetYManualInputChange} value={displayLocation?.y ?? 0} />
                         </div>
                     </div>
                 </div>

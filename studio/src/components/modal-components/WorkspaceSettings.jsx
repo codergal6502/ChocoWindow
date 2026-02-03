@@ -6,6 +6,8 @@ import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants";
 import downloadZip from "../../ZipDownloader";
 import { useContext } from "react";
 import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../App";
+import { ChocoStudioUpgrader } from "../../ChocoStudioUpgrader";
+import { ChocoWinSettings } from "../../ChocoWindow";
 
 /**
  * @param {Object} props
@@ -105,8 +107,12 @@ const WorkspaceSettings = ({ workspace, onWorkspaceChange, onCloseClick }) => {
             const reader = new FileReader();
             reader.onload = (readerEvent) => {
                 try {
-                    const parsedJson = JSON.parse(readerEvent.target.result)
-                    const newWorkspace = new ChocoStudioWorkspace(parsedJson);
+                    let loadedObject = JSON.parse(readerEvent.target.result)
+
+                    if (loadedObject.version != ChocoWinSettings.CURRENT_VERSION) {
+                        loadedObject = ChocoStudioUpgrader.AttemptUpgrade(loadedObject);
+                    }
+                    const newWorkspace = new ChocoStudioWorkspace(loadedObject);
                     importFileInputRef.current.value = null;
                     onWorkspaceChange(newWorkspace)
                 }

@@ -113,12 +113,6 @@ const TileTransformationSelector = ({ assignableTileInfo: activeTileSheetAssignm
             promises[promises.length] = doTheThing({ transformationType: TileTransformationTypes.REFLECT_VERTICAL, reader: new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.VERTICAL) });
             promises[promises.length] = doTheThing({ transformationType: TileTransformationTypes.REFLECT_ASCENDING, reader: new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.ASCENDING) });
             promises[promises.length] = doTheThing({ transformationType: TileTransformationTypes.REFLECT_DESCENDING, reader: new ChocoWinReflectionPixelReader(reader, ChocoWinReflectionTypes.DESCENDING) });
-
-            // todo: assess this
-            // Promise.all(promises).then(() => {
-            //     // This is needed so that when a new reader is passed in, callback is called with the transformation of that reader.
-            //     onSelectionMade({transformationType: selectedTileTransformation, reader: readerMap.current.get(selectedTileTransformation), blobUrl: tileBlobUrlMap.current.get(selectedTileTransformation)})
-            // });
         }
     }, [styleRef, activeTileSheetAssignment])
 
