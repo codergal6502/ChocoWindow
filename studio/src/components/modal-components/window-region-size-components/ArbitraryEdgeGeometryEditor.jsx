@@ -13,6 +13,7 @@ const CWR = CHOCO_WINDOW_REGIONS;
  * @param {function(ChocoStudioWindowRegionDefinition):void} props.onGeometryChange
  */
 const ArbitraryEdgeGeometryEditor = ({ regionIdentifier, regionDefinition, onGeometryChange }) => {
+    console.log(regionDefinition);
     const [colCount, setColCount] = useState(regionDefinition.colCount);
     const [rowCount, setRowCount] = useState(regionDefinition.rowCount);
 
@@ -25,12 +26,12 @@ const ArbitraryEdgeGeometryEditor = ({ regionIdentifier, regionDefinition, onGeo
     const [lastManualLocationEntry, setLastManualLocationEntry] = useState(null);
     const [helpVisibile, setHelpVisible] = useState(true);
 
-    useEffect(() => { setColCount(makeCountingNumber(regionDefinition.colCount)); }, [regionDefinition.colCount])
-    useEffect(() => { setRowCount(makeCountingNumber(regionDefinition.rowCount)); }, [regionDefinition.rowCount])
-    useEffect(() => { setLeftBuffer(regionDefinition.margin?.left ?? 0); }, [regionDefinition.margin?.left])
-    useEffect(() => { setRightBuffer(regionDefinition.margin?.right ?? 0); }, [regionDefinition.margin?.right])
-    useEffect(() => { setTopBuffer(regionDefinition.margin?.top ?? 0); }, [regionDefinition.margin?.top])
-    useEffect(() => { setBottomBuffer(regionDefinition.margin?.bottom ?? 0); }, [regionDefinition.margin?.bottom])
+    useEffect(() => { setColCount(makeCountingNumber(regionDefinition.colCount)); }, [regionDefinition.colCount, regionIdentifier])
+    useEffect(() => { setRowCount(makeCountingNumber(regionDefinition.rowCount)); }, [regionDefinition.rowCount, regionIdentifier])
+    useEffect(() => { setLeftBuffer(regionDefinition.margin?.left ?? 0); }, [regionDefinition.margin?.left, regionIdentifier])
+    useEffect(() => { setRightBuffer(regionDefinition.margin?.right ?? 0); }, [regionDefinition.margin?.right, regionIdentifier])
+    useEffect(() => { setTopBuffer(regionDefinition.margin?.top ?? 0); }, [regionDefinition.margin?.top, regionIdentifier])
+    useEffect(() => { setBottomBuffer(regionDefinition.margin?.bottom ?? 0); }, [regionDefinition.margin?.bottom, regionIdentifier])
 
     const toggleHelp = () => setHelpVisible(!helpVisibile);
 

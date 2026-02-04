@@ -54,7 +54,7 @@ const cloneRegions = (regions) => Object.fromEntries(
  * @param {Number} props.lastResizeTimestamp
  * @returns {JSX.Element}
  */
-const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDelete, onReturnToEditor }) => {
+const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefinitionChange, onTileSetDefinitionDuplicate, onTileSetDefinitionDelete, onReturnToEditor }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                           NEW CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -636,6 +636,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
         <h3 className="mb-2 mt-4 text-xl">Actions</h3>
         <div className="flex justify-between">
             <button onClick={onReturnToEditor} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
+            <button onClick={() => onTileSetDefinitionDuplicate(tileSetDefinition.id)} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Duplicate Tile Set Definition</button>
             <button onClick={() => onTileSetDefinitionDelete(tileSetDefinition.id)} className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-500">Delete Tile Set Definition</button>
         </div>
     </>

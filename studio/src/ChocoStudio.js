@@ -206,7 +206,7 @@ class ChocoStudioWindowRegionDefinition {
             this.#colCount = 1;
             this.#rowCount = 1;
             this.internalArray = [[new ChocoStudioWindowRegionTileAssignment()]];
-            this.margin = new ChocoSideTuple({top: 0, left: 0, right: 0, height: 0});
+            this.margin = new ChocoSideTuple({ top: 0, left: 0, right: 0, height: 0 });
         }
     }
 
@@ -281,7 +281,8 @@ class ChocoStudioWindowRegionDefinition {
         return {
             rowCount: this.#rowCount,
             colCount: this.#colCount,
-            internalArray: this.internalArray
+            internalArray: this.internalArray,
+            margin: this.margin
         }
     }
 
@@ -597,6 +598,43 @@ class ChocoStudioWorkspace {
     }
 }
 
+/**
+ * 
+ * @param {*} obj 
+ * @param {[]} visited 
+ */
+const doReAssignIdsInPlace = (obj, visited) => {
+    visited = visited ?? [];
 
+    if (visited.includes(obj)) {
+        return;
+    }
 
-export { ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, CHOCO_REGION_GRANULARITY, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment };
+    if (obj && typeof obj === 'object') {
+        visited.push(obj);
+        for (const prop in obj) {
+            // See https://stackoverflow.com/a/16735184.
+            if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+                if (prop === "id") {
+                    if (obj.id) {
+                        obj.id = crypto.randomUUID();
+                    }
+                }
+                else {
+                    doReAssignIdsInPlace(obj[prop], visited);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Recursively goes through the object graph and if any non-null "id" properties
+ * are found, they are assigned a new UUID.
+ * @param {*} obj 
+ */
+const reAssignIdsInPlace = (obj) => {
+    doReAssignIdsInPlace(obj);
+}
+
+export { reAssignIdsInPlace, ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, CHOCO_REGION_GRANULARITY, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment };

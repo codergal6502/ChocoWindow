@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight } from "@fortawesome/free-solid-svg-icons";
-import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, ChocoStudioTileSheetBlobUrlManager } from "../ChocoStudio.js";
+import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, ChocoStudioTileSheetBlobUrlManager, reAssignIdsInPlace } from "../ChocoStudio.js";
 import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
@@ -9,6 +9,7 @@ import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 import HowToUseThisTool from "./modal-components/HowToUseThisTool.jsx";
 import WorkspaceSettings from "./modal-components/WorkspaceSettings.jsx";
 import { useState } from "react";
+import { JsonClone } from "../Utilities.js";
 
 /**
  * @param {Object} props
@@ -147,6 +148,19 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
 
         onWorkspaceChange(modifiedWorkspace);
         setActiveTileSetDefinition(updatedTileSetDefinition);
+    }
+
+    /**
+     * @param {String} id 
+     */
+    const onTileSetDefinitionDuplicate = (id) => {
+        const oldTileSetDefinition = workspace.tileSetDefinitions.find(t => t.id == id);
+        if (oldTileSetDefinition) {
+            const newTileSetDefinition = new ChocoStudioTileSetDefinition(oldTileSetDefinition);
+            reAssignIdsInPlace(newTileSetDefinition);
+            newTileSetDefinition.name = `Copy of ${newTileSetDefinition.name}`;
+            onTileSetDefinitionChange(newTileSetDefinition);
+        }
     }
 
     /**
@@ -435,7 +449,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                                             );
                                         case FormStates.TILE_SET_DEFINITION:
                                             return (!activeTileSetDefinition) ? "" : (
-                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToEditor={() => onReturnToEditor(workspace)} lastResizeTimestamp={lastResizeTimestamp} />
+                                                <TileSetDefinitionEditor key={activeTileSetDefinition.id} tileSetDefinition={activeTileSetDefinition} tileSheets={workspace.tileSheets} onTileSetDefinitionChange={onTileSetDefinitionChange} onTileSetDefinitionDuplicate={onTileSetDefinitionDuplicate} onTileSetDefinitionDelete={onTileSetDefinitionDelete} onReturnToEditor={() => onReturnToEditor(workspace)} lastResizeTimestamp={lastResizeTimestamp} />
                                             );
                                         case FormStates.PRESET:
                                             return (!activePreset) ? "" : (
