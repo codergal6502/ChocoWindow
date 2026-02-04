@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CHOCO_WINDOW_REGIONS } from "../../../ChocoStudio";
-import { isNumber, JsonClone, makeCountingNumber } from "../../../Utilities";
+import { JsonClone, makeCountingNumber } from "../../../Utilities";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 
 export class SingleTileEdgeSize {

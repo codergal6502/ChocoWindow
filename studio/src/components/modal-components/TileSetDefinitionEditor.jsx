@@ -72,7 +72,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [granularity, setGranularity] = useState(tileSetDefinition.granularity);
     const [tileSheetReader, setTileSheetReader] = useState(null);
     const [hasFieldChanges, setHasFieldChanges] = useState(false);
-    
+
     const [regions, setRegions] = useState(cloneRegions(tileSetDefinition.regions));
 
     /** @type {ReturnType<typeof useState<number>>} */
@@ -105,11 +105,12 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
 
     // get the tile sheet reader for the selected tile sheet.
     useEffect(() => {
-        setTileSheetReader(null);
-        let tileSheetData = tileSheetBlobUrlDictionary.ensureTileSheetBlob(tileSheetId, tileSheets);
-
-        const tileSheetReader = readerFactory.build({ blob: tileSheetData.blob });
-        tileSheetReader.isReady().then(r => setTileSheetReader(r));
+        if (tileSheetId && tileSheetBlobUrlDictionary) {
+            setTileSheetReader(null);
+            let tileSheetData = tileSheetBlobUrlDictionary.ensureTileSheetBlob(tileSheetId, tileSheets);
+            const tileSheetReader = readerFactory.build({ blob: tileSheetData.blob });
+            tileSheetReader.isReady().then(r => setTileSheetReader(r));
+        }
     }, [tileSheetId, tileSheetBlobUrlDictionary]);
 
     // debounce text input; for simplicity, all changes are routed through here
@@ -127,7 +128,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
             setLastTileSetDefinitionChangeTimeout(timeout);
         }
     }, [name, tileSheetId, tileSize, granularity, hasFieldChanges])
-    
+
 
 
 

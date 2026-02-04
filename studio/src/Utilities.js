@@ -13,10 +13,22 @@ export const makeCountingNumber = (value) => {
 }
 
 /**
+ * @param {*} value 
+ * @returns {Number}
+ */
+export const makeNaturalNumber = (value) => {
+    let number = Math.round(value);
+    if (number < 0) {
+        number = 0;
+    }
+    return number;
+}
+
+/**
  * @param {*} obj 
  * @returns {Boolean}
  */
-export const isNumber = (obj) => typeof 0 == typeof obj;
+export const isNumber = (obj) => typeof 0 == typeof obj ? true : String(Number(obj)) == String(obj);
 
 /**
  * @param {T} obj 

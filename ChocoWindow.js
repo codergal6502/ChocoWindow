@@ -6,6 +6,68 @@ export class ChocoWinSettings {
     static get CURRENT_VERSION() { return ("1.2.0") };
 }
 
+export class ChocoCoordinates {
+    /**
+     * Default consturctor
+     */
+    /**
+     * Copy constructor, useful for JSON objects.
+     * @param {ChocoCoordinates} arg1
+     */
+    constructor(arg1) {
+        if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y)) {
+            this.x = arg1.x;
+            this.y = arg1.y;
+        }
+        else {
+            /** @type {Number} */ this.x = 0;
+            /** @type {Number} */ this.y = 0;
+        }
+        this.id = arg1?.id ?? crypto.randomUUID();
+    }
+}
+
+export class ChocoRectangle {
+    /**
+     * Default consturctor
+     */
+    /**
+     * Copy constructor, useful for JSON objects.
+     * @param {ChocoRectangle} arg1
+     */
+    constructor(arg1) {
+        if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y) && !isNaN(arg1.width) && !isNaN(arg1.height)) {
+            this.x = arg1.x;
+            this.y = arg1.y;
+            this.width = arg1.width;
+            this.height = arg1.height;
+        }
+        else {
+            /** @type {number} */ this.x = 0;
+            /** @type {number} */ this.y = 0;
+            /** @type {number} */ this.width = 0;
+            /** @type {number} */ this.height = 0;
+        }
+        this.id = arg1?.id ?? crypto.randomUUID();
+    }
+}
+
+export class ChocoSideTuple {
+    /**
+     * 
+     */
+    /**
+     * @param {ChocoSideTuple} arg1 
+     */
+    constructor(arg1) {
+        // null is preferred to undefined
+        this.top = arg1?.top ?? null;
+        this.bottom = arg1?.bottom ?? null;
+        this.left = arg1?.left ?? null;
+        this.right = arg1?.right ?? null;
+    }
+}
+
 export class ChocoColor {
     /**
      * Default consturctor
@@ -49,27 +111,7 @@ export class ChocoColor {
     }
 
     toHexString() { return `#${this.r.toString(16).padStart(2, "0")}${this.g.toString(16).padStart(2, "0")}${this.b.toString(16).padStart(2, "0")}`; }
-}
-
-export class ChocoCoordinates {
-    /**
-     * Default consturctor
-     */
-    /**
-     * Copy constructor, useful for JSON objects.
-     * @param {ChocoCoordinates} arg1
-     */
-    constructor(arg1) {
-        if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y)) {
-            this.x = arg1.x;
-            this.y = arg1.y;
-        }
-        else {
-            /** @type {Number} */ this.x = 0;
-            /** @type {Number} */ this.y = 0;
-        }
-        this.id = arg1?.id ?? crypto.randomUUID();
-    }
+    toRgba() { return `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a / 255.0})`; }
 }
 
 export class ChocoWinTileDrawData {
@@ -92,31 +134,6 @@ export class ChocoWinTileDrawData {
             /** @type {Number} */ this.y = 0;
             /** @type {TileTransformationTypes} */ this.t = TileTransformationTypes.BASE;
             /** @type {ChocoCoordinates[]} */ this.a = [];
-        }
-        this.id = arg1?.id ?? crypto.randomUUID();
-    }
-}
-
-export class ChocoRectangle {
-    /**
-     * Default consturctor
-     */
-    /**
-     * Copy constructor, useful for JSON objects.
-     * @param {ChocoRectangle} arg1
-     */
-    constructor(arg1) {
-        if (arg1 && !isNaN(arg1.x) && !isNaN(arg1.y) && !isNaN(arg1.width) && !isNaN(arg1.height)) {
-            this.x = arg1.x;
-            this.y = arg1.y;
-            this.width = arg1.width;
-            this.height = arg1.height;
-        }
-        else {
-            /** @type {number} */ this.x = 0;
-            /** @type {number} */ this.y = 0;
-            /** @type {number} */ this.width = 0;
-            /** @type {number} */ this.height = 0;
         }
         this.id = arg1?.id ?? crypto.randomUUID();
     }
@@ -216,7 +233,7 @@ export class ChocoWinTileSetRegion {
             this.bufferRight = 0;
             this.bufferTop = 0;
             this.bufferBottom = 0;
-            this.tiles = [[ ]]
+            this.tiles = [[]]
         }
         this.id = arg1?.id ?? crypto.randomUUID();
     }
@@ -247,7 +264,7 @@ export class ChocoWinTileSet {
                 this.substitutableColors = arg1.substitutableColors.map((color) => new ChocoColor(color));
             }
             else {
-                this.substitutableColors = null;    
+                this.substitutableColors = null;
             }
         }
         else {

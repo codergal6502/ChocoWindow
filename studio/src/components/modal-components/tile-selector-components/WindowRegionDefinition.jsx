@@ -7,9 +7,10 @@ import { faCircleXmark, faRightFromBracket } from "@fortawesome/free-solid-svg-i
 import { AssignableTileInfo } from "../TileSetDefinitionEditor";
 import { WriterFactoryForStudio } from "../../../App";
 import './WindowRegionDefinition.css'
-import BasicRegionSizeEditor, { BasicEdgeRegionSize } from "../window-region-size-components/BasicRegionSizeEditor";
+import BasicEdgeSizeEditor, { BasicEdgeRegionSize } from "../window-region-size-components/BasicEdgeSizeEditor";
 import SingleTileEdgeSizeEditor, { SingleTileEdgeSize } from "../window-region-size-components/SingleTileEdgeSizeEditor";
 import { CloneRegionDictionary } from "../../../Utilities";
+import ArbitraryEdgeGeometryEditor from "../window-region-size-components/ArbitraryEdgeGeometryEditor";
 
 /**
  * Directly modifies the provided tile set definition.
@@ -349,7 +350,16 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
         newRegions[regionIdentifier].rowCount = newSingleTileEdgeSize.regions[regionIdentifier].rowCount;
 
         setSingleTileEdgeSizes(newSingleTileEdgeSize);
+        onChanged(newRegions);
+    }
 
+    /**
+     * 
+     * @param {ChocoStudioWindowRegionDefinition} newRegionDefinition 
+     */
+    const onArbitraryEdgeRegionSizeChange = (newRegionDefinition) => {
+        const newRegions = CloneRegionDictionary(regions);
+        newRegions[regionIdentifier] = newRegionDefinition;
         onChanged(newRegions);
     }
 
@@ -397,7 +407,8 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
                 </select>
             </div>
             {(CHOCO_REGION_GRANULARITY.SINGLE_TILE_EDGES == (granularity ?? CHOCO_REGION_GRANULARITY.SINGLE_TILE_EDGES)) && <SingleTileEdgeSizeEditor regionIdentifier={regionIdentifier} singleTileEdgeSizes={singleTileEdgeSizes} onSizeChange={onSingleTileEdgeSizeChange} />}
-            {(CHOCO_REGION_GRANULARITY.BASIC_EDGES == (granularity)) && <BasicRegionSizeEditor regionIdentifier={regionIdentifier} sizes={basicRegionEdgeSizes} onSizeChange={onBasicEdgeRegionSizeChange} />}
+            {(CHOCO_REGION_GRANULARITY.BASIC_EDGES == (granularity)) && <BasicEdgeSizeEditor regionIdentifier={regionIdentifier} sizes={basicRegionEdgeSizes} onSizeChange={onBasicEdgeRegionSizeChange} />}
+            {(CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES == (granularity)) && <ArbitraryEdgeGeometryEditor regionIdentifier={regionIdentifier} regionDefinition={regions[regionIdentifier]} onGeometryChange={onArbitraryEdgeRegionSizeChange} />}
         </div>
 
 
