@@ -28,7 +28,8 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
     //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
     const DEFAULT_TA_SCALE = 3;
-    // const BIGGEST_ZOOM_FACTOR = 6;
+    const BIGGEST_ZOOM_FACTOR = 8;
+    const BIGGEST_SCALED_TILE_SIZE = 80;
     const CONFIGURED_TILE_BLOB_KEY = "SELECTED_TILE_BLOB_KEY";
     const writerFactory = useContext(WriterFactoryForStudio);
 
@@ -41,7 +42,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
     const styleRef = useRef(null);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    //                    STATE, CONTEXT HOOKS                        //
+    //                         STATE, CONTEXT HOOKS                         //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     const [helpVisibile, setHelpVisible] = useState(true);
@@ -50,7 +51,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
     const rowCount = regions[regionIdentifier].rowCount;    
 
     const [assignmentTileScale, setAssignmentTileScale] = useState(DEFAULT_TA_SCALE);
-    // const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
+    const [lastResizeTimestamp, setLastResizeTimestamp] = useState(Date.now());
     const [selectedAssignmentTile, setSelectedAssignmentTile] = useState({ colIndex: 0, rowIndex: 0 });
 
     const [singleTileEdgeSizes, setSingleTileEdgeSizes] = useState(
@@ -125,7 +126,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
     }
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    //                         NEW EFFECT HOOKS                             //
+    //                             EFFECT HOOKS                             //
     // // // // // // // // // // // // // // // // // // // // // // // // //
     useEffect(() => {
         if (regions && tileSheetReader && regionIdentifier && tileBlobUrlMap?.current && styleRef?.current) {
@@ -198,46 +199,34 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
         }
     }, [tileBlobUrlMap, styleRef, assignableTileInfo])
 
+    // resize the tile assignment container
+    useEffect(() => {
+        if (!tileAssignmentContainerRef) return;
+        // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
 
+        const possibleScale = Math.floor(tileAssignmentContainerRef.current.offsetWidth / colCount / tileSize);
+        const assignmentTileScale = Math.min(BIGGEST_ZOOM_FACTOR, possibleScale, BIGGEST_SCALED_TILE_SIZE / tileSize);
+        setAssignmentTileScale(assignmentTileScale);
+    }, [tileAssignmentContainerRef, lastResizeTimestamp])
 
+    // set up resize event handler to force a pixel grid resize
+    useEffect(() => {
+        // See https://www.geeksforgeeks.org/reactjs/react-onresize-event/
+        // See https://react.dev/reference/react/useEffect#parameters
 
+        const onResize = () => {
+            setLastResizeTimestamp(Date.now());
+        }
 
-
-
-    // // // // // // // // // // // // // // // // // // // // // // // // // //
-    // //                             EFFECT HOOKS                             //
-    // // // // // // // // // // // // // // // // // // // // // // // // // //
-
-    // // resize the tile assignment container
-    // useEffect(() => {
-    //     if (!tileAssignmentContainerRef && regionColCount) return;
-    //     // See https://www.w3tutorials.net/blog/problem-with-arbitrary-values-on-tailwind-with-react/.
-
-    //     const possibleScale = Math.floor(tileAssignmentContainerRef.current.offsetWidth / regionColCount / tileSize);
-    //     const assignmentTileScale = Math.min(BIGGEST_ZOOM_FACTOR, possibleScale);
-    //     setAssignmentTileScale(assignmentTileScale);
-    // }, [tileAssignmentContainerRef, lastResizeTimestamp])
-
-    // // set up resize event handler to force a pixel grid resize
-    // useEffect(() => {
-    //     // See https://www.geeksforgeeks.org/reactjs/react-onresize-event/
-    //     // See https://react.dev/reference/react/useEffect#parameters
-
-    //     const onResize = () => {
-    //         setLastResizeTimestamp(Date.now());
-    //     }
-
-    //     window.addEventListener("resize", onResize);
-    //     return () => {
-    //         window.removeEventListener("resize", onResize);
-    //     };
-    // }, [])
+        window.addEventListener("resize", onResize);
+        return () => {
+            window.removeEventListener("resize", onResize);
+        };
+    }, [])
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                            EVENT HANDLERS                            //
     // // // // // // // // // // // // // // // // // // // // // // // // //
-
-
 
     /**
      * @param {Object} e
@@ -272,17 +261,6 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
         }
     }
 
-
-
-
-
-
-
-
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-    //                          NEW EVENT HANDLERS                          //
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-
     const toggleHelp = () => setHelpVisible(!helpVisibile);
 
     /**
@@ -293,12 +271,12 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
         const identifier = e.target.value
         setRegionIdentifier(identifier);
 
-        const colCount = regions[identifier].colCount;
-        const rowCount = regions[identifier].rowCount;
+        const regionColCount = regions[identifier].colCount;
+        const regionRowCount = regions[identifier].rowCount;
 
         setSelectedAssignmentTile({
-            colIndex: Math.min(selectedAssignmentTile.colIndex, colCount - 1),
-            rowIndex: Math.min(selectedAssignmentTile.rowIndex, rowCount - 1),
+            colIndex: Math.min(selectedAssignmentTile.colIndex, regionColCount - 1),
+            rowIndex: Math.min(selectedAssignmentTile.rowIndex, regionRowCount - 1),
         })
     }
 
