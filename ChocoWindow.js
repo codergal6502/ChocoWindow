@@ -92,7 +92,7 @@ export class ChocoColor {
                 this.r = parseInt(arg1.slice(0, 2), 16);
                 this.g = parseInt(arg1.slice(2, 4), 16);
                 this.b = parseInt(arg1.slice(4, 6), 16);
-                this.a = 255;
+                this.a = arg1.length == 8 ? parseInt(arg1.slice(6, 8), 16) : 255;
             }
         }
         else if (arg1 && !isNaN(arg1.r) && !isNaN(arg1.g) && !isNaN(arg1.b)) {
@@ -110,7 +110,23 @@ export class ChocoColor {
         this.id = arg1?.id ?? crypto.randomUUID();
     }
 
-    toHexString() { return `#${this.r.toString(16).padStart(2, "0")}${this.g.toString(16).padStart(2, "0")}${this.b.toString(16).padStart(2, "0")}`; }
+    /**
+     * @param {object} args
+     * @param {boolean} args.includeAlpha
+     * @returns {string}
+     */
+    toHexString({includeAlpha = true} = {includeAlpha: true}) { 
+        if(includeAlpha && isNumber(this.a)) {
+            return `#${this.r.toString(16).padStart(2, "0")}${this.g.toString(16).padStart(2, "0")}${this.b.toString(16).padStart(2, "0")}${this.a.toString(16).padStart(2, "0")}`;
+        }
+        else {
+            return `#${this.r.toString(16).padStart(2, "0")}${this.g.toString(16).padStart(2, "0")}${this.b.toString(16).padStart(2, "0")}`;
+        }
+    }
+
+    /**
+     * @returns {string}
+     */
     toRgba() { return `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a / 255.0})`; }
 }
 
@@ -802,7 +818,7 @@ export class ChocoWinTransparencyOverrideReader extends ChocoWinAbstractTransfor
      * @return {Number}
      */
     get height() {
-        this._reader.height;
+        return this._reader.height;
     }
 
     /**

@@ -1,4 +1,5 @@
-import { ChocoWinAbstractPixelReaderFactory, ChocoColor, ChocoCoordinates, ChocoWinSettings, ChocoWinTileDrawData, ChocoWinTileSet, pngBase64DataUrlToBlob, TileTransformationTypes, ChocoSideTuple } from './ChocoWindow.js';
+import { ChocoWinAbstractPixelReaderFactory, ChocoColor, ChocoCoordinates, ChocoWinSettings, ChocoWinTileDrawData, ChocoWinTileSet, pngBase64DataUrlToBlob, TileTransformationTypes, ChocoSideTuple, ChocoWinAbstractPixelReader, ChocoWinRegionPixelReader, WrapReaderForTileTransformation, ChocoWinTransparencyOverrideReader } from './ChocoWindow.js';
+import { isNumber, makeNaturalNumber } from './Utilities.js';
 
 /**
  * Provides 
@@ -598,6 +599,64 @@ class ChocoStudioWorkspace {
     }
 }
 
+class ChocoStudioComputedColorPalette {
+    /** @type {Promise<ChocoColor[]} */ #promise;
+    /**
+     * @param {object} args 
+     * @param {ChocoWinAbstractPixelReader} args.tileSheetReader 
+     * @param {object.<string, ChocoStudioWindowRegionDefinition>} args.regions
+     * @param {number} args.tileSize
+     * @param {boolean} args.includeFullyTransparent
+     */
+    constructor({ tileSheetReader, regions, tileSize, includeFullyTransparent = false }) {
+        const promise = tileSheetReader.isReady().then((tsr) =>
+            Object.values(regions).map(reg => {
+                const tileReaders = [];
+
+                for (let rowIdx = 0; rowIdx < reg.rowCount; rowIdx++) {
+                    for (let colIdx = 0; colIdx < reg.colCount; colIdx++) {
+                        const ta = reg.get(rowIdx, colIdx);
+                        if (!ta) { continue; }
+                        let tileReader = new ChocoWinRegionPixelReader(tsr, { x: ta.xSheetCoordinate, y: ta.ySheetCoordinate, width: tileSize, height: tileSize });
+                        tileReader = WrapReaderForTileTransformation(tileReader, ta.geometricTransformation);
+                        if (ta.transparencyOverrides.length) {
+                            tileReader = new ChocoWinTransparencyOverrideReader(
+                                tileReader,
+                                ta.transparencyOverrides
+                            );
+                        }
+                        tileReaders.push(tileReader);
+                    }
+                }
+
+                return tileReaders;
+            }).flat()).
+            then(tileReaders => Promise.all(tileReaders.map(tr => tr.isReady()))).
+            then(tileReaders => {
+                const /** @type {Set<string>} */ hexColorSet = new Set();
+
+                for (const tr of tileReaders) {
+                    for (let x = 0; x < tr.width; x++) {
+                        for (let y = 0; y < tr.height; y++) {
+                            const color = tr.getPixel({ x, y });
+                            if (makeNaturalNumber(color.a) > 0 || includeFullyTransparent) {
+                                hexColorSet.add(color.toHexString());
+                            }
+                        }
+                    }
+                }
+
+                return hexColorSet;
+            }).
+            then(hexColorSet => [...hexColorSet].map(hexString => new ChocoColor(hexString)));
+        this.#promise = promise;
+    }
+
+    isReady() {
+        return this.#promise;
+    }
+}
+
 /**
  * 
  * @param {*} obj 
@@ -637,4 +696,4 @@ const reAssignIdsInPlace = (obj) => {
     doReAssignIdsInPlace(obj);
 }
 
-export { reAssignIdsInPlace, ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, CHOCO_REGION_GRANULARITY, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment };
+export { reAssignIdsInPlace, ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, CHOCO_REGION_GRANULARITY, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment, ChocoStudioComputedColorPalette };
