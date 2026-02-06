@@ -1,13 +1,5 @@
-import { useRef, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-svg-icons";
-import { ChocoWinTileSet } from '../ChocoWindow.js';
+import { useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
-import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
-import PresetEditor from "./modal-components/PresetEditor.jsx";
-import LayoutEditor from "./modal-components/LayoutEditor.jsx";
-import WindowEditor from "./modal-components/WindowEditor.jsx";
 
 const LayoutPickerModal = ({ workspace, currentLayoutId, isModalHidden, onReturnToEditor }) => {
     const [selection, setSelection] = useState(null);

@@ -128,21 +128,24 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
         }
     }
 
-    let lastKeydownTimeStamp = 0;
+    let lastKeydownTimeStampRef = useRef(0);
 
     const checkIgnore = () => ignoreKeyInputsRef?.current;
 
     useEffect(() => { // empty-dependency useEffect for on load
-        if (graphicalEditorDivRef.current) { graphicalEditorDivRef.current.onclick = (e) => { if (e.target == graphicalEditorDivRef.current) { makeNoWindowActive(); } } }
+        if (graphicalEditorDivRef.current) { graphicalEditorDivRef.current.onclick = (e) => { if (e.target === graphicalEditorDivRef.current) { makeNoWindowActive(); } } }
 
         resizeEditorDiv();
 
         const keydownListener = (/** @type {KeyboardEvent} */ e) => {
             if (checkIgnore()) { return; }
-            if (e.timeStamp == lastKeydownTimeStamp) { return; }
-            lastKeydownTimeStamp = e.timeStamp;
+            if (e.timeStamp === lastKeydownTimeStampRef.current) { return; }
+            lastKeydownTimeStampRef.current = e.timeStamp;
 
             switch (e.key) {
+                default: {
+                    break;
+                }
                 case 'Escape': {
                     makeNoWindowActive();
                     break;
@@ -225,7 +228,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                     const newRule = `#${chocoWindowDivId} { background-image: url(${imageData}) }`;
 
                     /** @type {Array<CSSStyleRule>} */ const ruleArray = Array.from(styleSheet.cssRules);
-                    const oldRuleInx = ruleArray.findIndex((r) => r.selectorText == `#${chocoWindowDivId}`);
+                    const oldRuleInx = ruleArray.findIndex((r) => r.selectorText === `#${chocoWindowDivId}`);
 
                     if (oldRuleInx >= 0) {
                         styleSheet.deleteRule(oldRuleInx);
@@ -297,7 +300,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                             e.target.style.left = chocoWinDiv.style.left;
 
                             if (workspace) {
-                                const studioWindow = workspace.windows.filter((w) => chocoWinDiv.dataset.studioWindowId == w.id)[0];
+                                const studioWindow = workspace.windows.filter((w) => chocoWinDiv.dataset.studioWindowId === w.id)[0];
 
                                 studioWindow.x = Math.round(newLeft);
                                 studioWindow.y = Math.round(newTop);
@@ -377,7 +380,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                             chocoWinDiv.style.left = e.target.style.left;
                             chocoWinDiv.style.width = e.target.style.width;
 
-                            const studioWindow = workspace.windows.find((w) => `win-${w.id}` == e.target.dataset.chocoWinId);
+                            const studioWindow = workspace.windows.find((w) => `win-${w.id}` === e.target.dataset.chocoWinId);
                             const chocoWindowDivId = `win-${studioWindow.id}`;
 
                             studioWindow.w = Math.round(chocoWinDiv.style.width.replace("px", ""));
@@ -388,13 +391,13 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
 
                             if (onWorkspaceChange) onWorkspaceChange(workspace);
 
-                            const preset = workspace.presets.find((ps) => ps.id == studioWindow.presetId) ?? studioWindow.singularPreset;
+                            const preset = workspace.presets.find((ps) => ps.id === studioWindow.presetId) ?? studioWindow.singularPreset;
                             if (!preset) return;
 
-                            const tileSetDefintiion = workspace.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
+                            const tileSetDefintiion = workspace.tileSetDefinitions.find((tsd) => tsd.id === preset.tileSetDefinitionId);
                             if (!tileSetDefintiion) return;
 
-                            const tileSheet = workspace.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
+                            const tileSheet = workspace.tileSheets.find((ts) => ts.id === tileSetDefintiion.tileSheetId);
                             if (!tileSheet) return;
 
                             const tileSet = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);
@@ -415,15 +418,13 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
             const /** @type { ChocoStudioWorkspace } */ ws = workspace;
             graphicalEditorDivRef.current.style.width = `${ws.width}px`;
             graphicalEditorDivRef.current.style.height = `${ws.height}px`;
-            const /** @type { ChocoStudioLayout } */ layout = ws.layouts.filter((l) => editorLayoutId == l.id)[0] || ws.layouts[0];
+            const /** @type { ChocoStudioLayout } */ layout = ws.layouts.filter((l) => editorLayoutId === l.id)[0] || ws.layouts[0];
 
             if (graphicalEditorDivRef.current && styleRef.current && layout) {
                 document.querySelectorAll("[data-studio-window-id], [data-choco-win-id]").forEach((el) => el.remove());
-                const /** @type {CSSStyleSheet} */ styleSheet = styleRef.current.sheet;
-                let rules = new Array(styleSheet.cssRules);
 
                 layout.windowIds.forEach((windowId) => {
-                    const studioWindow = ws.windows.find((w) => w.id == windowId);
+                    const studioWindow = ws.windows.find((w) => w.id === windowId);
                     const chocoWindowDivId = `win-${studioWindow.id}`;
 
                     if (document.getElementById(chocoWindowDivId)) {
@@ -431,7 +432,6 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                     }
 
                     const canvas = document.createElement("canvas");
-                    const ctx = canvas.getContext("2d", { willReadFrequently: true });
                     canvas.width = studioWindow.w;
                     canvas.height = studioWindow.h;
 
@@ -478,13 +478,13 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
                     boundingBoxDiv.onclick = makeChocoWinBoundingBoxActive;
 
                     if (studioWindow) {
-                        const preset = studioWindow.presetId ? ws.presets.find((ps) => ps.id == studioWindow.presetId) : studioWindow.singularPreset;
+                        const preset = studioWindow.presetId ? ws.presets.find((ps) => ps.id === studioWindow.presetId) : studioWindow.singularPreset;
                         if (!preset) return;
 
-                        const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id == preset.tileSetDefinitionId);
+                        const tileSetDefintiion = ws.tileSetDefinitions.find((tsd) => tsd.id === preset.tileSetDefinitionId);
                         if (!tileSetDefintiion) return;
 
-                        const tileSheet = ws.tileSheets.find((ts) => ts.id == tileSetDefintiion.tileSheetId);
+                        const tileSheet = ws.tileSheets.find((ts) => ts.id === tileSetDefintiion.tileSheetId);
                         if (!tileSheet) return;
 
                         const tileSet = tileSetDefintiion.toChocoWinTileSet(tileSheet.imageDataUrl);

@@ -10,7 +10,7 @@ import { ChocoWinAbstractPixelReaderFactory, ChocoWinAbstractPixelWriterFactory 
  * @return {Promise}
  */
 const downloadZip = (workspace, readerFactory, writerFactory) => {
-    const invalidCharRegEx = /[<>:""\\\/|?*]/g;
+    const invalidCharRegEx = /[<>:""\\/|?*]/g;
     const renderer = new ChocoWorkspaceRenderer(workspace, writerFactory, readerFactory);
 
     const /** @type {Array.<Promise.<{name:String, reader:FileReader}>>} */ readerPromises = [];
@@ -52,7 +52,7 @@ const downloadZip = (workspace, readerFactory, writerFactory) => {
         return zipFileWriter.getData();
     }).then((zipBlob) => {
         const link = document.createElement("a");
-        link.download = `${workspace.workspaceName.replaceAll(/[<>:""\\\/|?*]/g, '-')}.zip`;
+        link.download = `${workspace.workspaceName.replaceAll(/[<>:""\\/|?*]/g, '-')}.zip`;
         link.href = URL.createObjectURL(zipBlob);
         document.body.appendChild(link);
         link.click();

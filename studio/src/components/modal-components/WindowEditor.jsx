@@ -99,13 +99,13 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
 
     const updatePreviewImageBlob = () => {
         if (!previewState?.current) { return; }
-        const preset = presetId ? presets.find((p) => p.id == presetId) : singularPreset;
+        const preset = presetId ? presets.find((p) => p.id === presetId) : singularPreset;
         if (!preset) { return; }
 
-        const tileSetDefinition = tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId);
+        const tileSetDefinition = tileSetDefinitions.find((ts) => ts.id === preset.tileSetDefinitionId);
         if (!tileSetDefinition) { return; }
 
-        const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
+        const tileSheet = tileSheets.find((ts) => ts.id === tileSetDefinition.tileSheetId);
         if (!tileSheet) { return; }
 
         const tileSet = tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl);
@@ -193,7 +193,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
      * @param {HTMLInputElement} inputEvent.target
     */
     const onHasBackgroundColorChange = (inputEvent) => {
-        setHasBackgroundColor(String(true) == inputEvent.target.value);
+        setHasBackgroundColor(String(true) === inputEvent.target.value);
         setHasChanges(true)
     }
 

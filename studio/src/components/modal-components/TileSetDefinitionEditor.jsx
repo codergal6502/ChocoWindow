@@ -82,7 +82,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     const [assignableTileInfo, setAssignableTileInfo] = useState(null)
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    //                        NEW UTILITY FUNCTIONS                         //
+    //                          UTILITY FUNCTIONS                           //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     /**
@@ -98,7 +98,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     }
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    //                              NEW EFFECTS                             //
+    //                                EFFECTS                               //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
     // get the tile sheet reader for the selected tile sheet.
@@ -112,26 +112,6 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
     }, [tileSheetId, tileSheetBlobUrlDictionary]);
 
     // debounce text input; for simplicity, all changes are routed through here
-    useEffect(() => {
-        if (hasFieldChanges) {
-            // Why not use lodash's _.debounce?
-            // See https://www.developerway.com/posts/debouncing-in-react
-            // See https://stackoverflow.com/questions/36294134/lodash-debounce-with-react-input#comment124623824_67941248
-            // See https://stackoverflow.com/a/59184678
-            clearTimeout(lastTileSetDefinitionChangeTimeout);
-            const timeout = setTimeout(() => {
-                setHasFieldChanges(false);
-                uponTileSetDefinitionChange();
-            }, 100);
-            setLastTileSetDefinitionChangeTimeout(timeout);
-        }
-    }, [name, tileSheetId, tileSize, granularity, hasFieldChanges])
-
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-    //                               EFFECTS                                //
-    // // // // // // // // // // // // // // // // // // // // // // // // //
-
-    // debounce text input
     useEffect(() => {
         if (hasFieldChanges) {
             // Why not use lodash's _.debounce?

@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleRight } from "@fortawesome/free-solid-svg-icons";
-import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, ChocoStudioTileSheetBlobUrlManager, reAssignIdsInPlace } from "../ChocoStudio.js";
+import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, reAssignIdsInPlace } from "../ChocoStudio.js";
 import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
 import PresetEditor from "./modal-components/PresetEditor.jsx";
 import LayoutEditor from "./modal-components/LayoutEditor.jsx";
@@ -9,7 +9,6 @@ import TileSheetEditor from "./modal-components/TileSheetEditor.jsx";
 import HowToUseThisTool from "./modal-components/HowToUseThisTool.jsx";
 import WorkspaceSettings from "./modal-components/WorkspaceSettings.jsx";
 import { useState } from "react";
-import { JsonClone } from "../Utilities.js";
 
 /**
  * @param {Object} props
@@ -91,7 +90,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
      */
     const onTileSheetChange = (updatedTileSheet) => {
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        let idx = modifiedWorkspace.tileSheets.findIndex((ts) => ts.id == updatedTileSheet.id);
+        let idx = modifiedWorkspace.tileSheets.findIndex((ts) => ts.id === updatedTileSheet.id);
 
         if (idx < 0) idx = modifiedWorkspace.tileSheets.length;
         modifiedWorkspace.tileSheets[idx] = updatedTileSheet;
@@ -107,7 +106,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
         setFormState(FormStates.SETTINGS);
 
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.tileSheets.findIndex((ts) => ts.id == id);
+        const idx = modifiedWorkspace.tileSheets.findIndex((ts) => ts.id === id);
 
         if (idx >= 0) {
             modifiedWorkspace.tileSheets.splice(idx, 1);
@@ -141,7 +140,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
      */
     const onTileSetDefinitionChange = (updatedTileSetDefinition) => {
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        let idx = modifiedWorkspace.tileSetDefinitions.findIndex((tsd) => tsd.id == updatedTileSetDefinition.id);
+        let idx = modifiedWorkspace.tileSetDefinitions.findIndex((tsd) => tsd.id === updatedTileSetDefinition.id);
 
         if (idx < 0) idx = modifiedWorkspace.tileSetDefinitions.length;
         modifiedWorkspace.tileSetDefinitions[idx] = updatedTileSetDefinition;
@@ -154,7 +153,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
      * @param {String} id 
      */
     const onTileSetDefinitionDuplicate = (id) => {
-        const oldTileSetDefinition = workspace.tileSetDefinitions.find(t => t.id == id);
+        const oldTileSetDefinition = workspace.tileSetDefinitions.find(t => t.id === id);
         if (oldTileSetDefinition) {
             const newTileSetDefinition = new ChocoStudioTileSetDefinition(oldTileSetDefinition);
             reAssignIdsInPlace(newTileSetDefinition);
@@ -170,7 +169,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
         setFormState(FormStates.SETTINGS);
 
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.tileSetDefinitions.findIndex((p) => p.id == id);
+        const idx = modifiedWorkspace.tileSetDefinitions.findIndex((p) => p.id === id);
 
         if (idx >= 0) {
             modifiedWorkspace.tileSetDefinitions.splice(idx, 1);
@@ -204,7 +203,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
      */
     const onPresetChange = (/** @type {ChocoStudioPreset} */ updatedPreset) => {
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        let idx = modifiedWorkspace.presets.findIndex((p) => p.id == updatedPreset.id);
+        let idx = modifiedWorkspace.presets.findIndex((p) => p.id === updatedPreset.id);
 
         if (idx < 0) idx = modifiedWorkspace.presets.length;
 
@@ -221,7 +220,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
         setFormState(FormStates.SETTINGS);
 
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.presets.findIndex((p) => p.id == id);
+        const idx = modifiedWorkspace.presets.findIndex((p) => p.id === id);
 
         if (idx >= 0) {
             modifiedWorkspace.presets.splice(idx, 1);
@@ -255,7 +254,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
      */
     const onLayoutChange = (updatedLayout) => {
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        let idx = modifiedWorkspace.layouts.findIndex((p) => p.id == updatedLayout.id);
+        let idx = modifiedWorkspace.layouts.findIndex((p) => p.id === updatedLayout.id);
 
         if (idx < 0) idx = modifiedWorkspace.layouts.length;
 
@@ -272,7 +271,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
         setFormState(FormStates.SETTINGS);
 
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.layouts.findIndex((p) => p.id == id);
+        const idx = modifiedWorkspace.layouts.findIndex((p) => p.id === id);
 
         if (idx >= 0) {
             modifiedWorkspace.layouts.splice(idx, 1);
@@ -306,7 +305,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
      */
     const onWindowChange = (updatedWindow) => {
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        let idx = modifiedWorkspace.windows.findIndex((p) => p.id == updatedWindow.id);
+        let idx = modifiedWorkspace.windows.findIndex((p) => p.id === updatedWindow.id);
 
         if (idx < 0) idx = modifiedWorkspace.windows.length;
 
@@ -323,7 +322,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
         setFormState(FormStates.SETTINGS);
 
         const modifiedWorkspace = new ChocoStudioWorkspace(workspace);
-        const idx = modifiedWorkspace.windows.findIndex((p) => p.id == id);
+        const idx = modifiedWorkspace.windows.findIndex((p) => p.id === id);
 
         if (idx >= 0) {
             modifiedWorkspace.windows.splice(idx, 1);
@@ -434,7 +433,7 @@ const SettingsModal = ({ isModalHidden, onReturnToEditor, onWorkspaceChange, wor
                     </div>
 
                     <div className="flex-grow p-6 rounded-lg">
-                        <div className="h-full overflow-y-auto">
+                        <div className="h-full overflow-y-auto relative choco-coloris-container">
                             {
                                 (() => {
                                     switch (formState) {

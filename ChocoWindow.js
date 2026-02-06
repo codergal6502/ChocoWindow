@@ -3,7 +3,7 @@ const isNumber = (foo) => typeof 0 == typeof foo;
 export class ChocoWinSettings {
     static ignoreScaleMisalignmentErrors = false;
     static suggestedMaximumTileSheetColorCount = 8;
-    static get CURRENT_VERSION() { return ("1.2.0") };
+    static get CURRENT_VERSION() { return ("1.3.0") };
 }
 
 export class ChocoCoordinates {
@@ -107,7 +107,6 @@ export class ChocoColor {
             /** @type {number} */ this.b = 0;
             /** @type {number} */ this.a = 255;
         }
-        this.id = arg1?.id ?? crypto.randomUUID();
     }
 
     /**
@@ -260,7 +259,6 @@ export class ChocoWinTileSet {
     /** @type {String} */ name;
     /** @type {Number} */ tileSize;
     /** @type {ChocoWinTileSetRegion[]} */ regions;
-    /** @type {ChocoColor[]} */ substitutableColors;
 
     /**
      * Default consturctor
@@ -276,19 +274,12 @@ export class ChocoWinTileSet {
             this.sourceFileUrl = String(arg1.sourceFileUrl);
             this.tileSize = Number(arg1.tileSize);
             this.regions = arg1.regions.map(r => new ChocoWinTileSetRegion(r));
-            if (arg1.substitutableColors) {
-                this.substitutableColors = arg1.substitutableColors.map((color) => new ChocoColor(color));
-            }
-            else {
-                this.substitutableColors = null;
-            }
         }
         else {
             this.sourceFileUrl = "";
             this.name = "";
             this.tileSize = 0;
             this.regions = [];
-            this.substitutableColors = null;
         }
         this.id = arg1?.id ?? crypto.randomUUID();
     }
@@ -303,7 +294,7 @@ export class ChocoWinWindow {
     /** @type {Number} */ #w;
     /** @type {Number} */ #h;
     /** @type {ChocoColor} */ #backgroundColor;
-    /** @type {ChocoColor[]} */ #colorSubstitutions;
+    /** @type {{defaultColor: ChocoColor, substituteColor: ChocoColor}[]} */ #colorSubstitutions;
 
     /**
      * @param {Object} args
@@ -315,7 +306,7 @@ export class ChocoWinWindow {
      * @param {Number} args.h 
      * @param {ChocoWinAbstractPixelReaderFactory} args.readerFactory
      * @param {ChocoColor} args.backgroundColor
-     * @param {ChocoColor[]} args.colorSubstitutions
+     * @param {{defaultColor: ChocoColor, substituteColor: ChocoColor}[]} args.colorSubstitutions
      */
     constructor({ winTileSet, tileScale, x, y, w, h, readerFactory, backgroundColor = null, colorSubstitutions = [] }) {
         this.id = crypto.randomUUID();
@@ -350,8 +341,8 @@ export class ChocoWinWindow {
     /**
      * @returns {ChocoWinWindow} The same object, for method chaining.
      */
-    substituteColor(/** @type {Number} */ index, /** @type {ChocoColor} */ color) {
-        this.#colorSubstitutions[index] = new ChocoColor(color);
+    substituteColor(/** @type {ChocoColor} */ defaultColor, /** @type {ChocoColor} */ substituteColor) {
+        this.#colorSubstitutions.push({default: new ChocoColor(defaultColor), substitute: new ChocoColor(substituteColor)});
         return this;
     }
 
@@ -377,22 +368,14 @@ export class ChocoWinWindow {
                 if (pixelColor.a === 0 && this.#backgroundColor) {
                     pixelColor = this.#backgroundColor;
                 }
-                else if (this.hasColorSubstitutions() && this.#winTileSet.substitutableColors?.length) {
-                    for (const keyValuePair of Object.entries(this.#colorSubstitutions)) {
-                        /** @type {number} */ const index = keyValuePair[0];
-                        /** @type {ChocoColor} */ const newColor = keyValuePair[1];
-
-                        if (!newColor) {
+                else if (this.hasColorSubstitutions()) {
+                    for (const colorSubstitution of this.#colorSubstitutions) {
+                        if (!colorSubstitution?.defaultColor || !colorSubstitution?.substituteColor) {
                             continue;
                         }
 
-                        /** @type {ChocoColor} */ const oldColor = this.#winTileSet.substitutableColors[index];
-
-                        if (index < 0) continue;
-                        if (index >= this.#winTileSet.substitutableColors.length) continue;
-
-                        if (areColorsExactMatch(oldColor, pixelColor)) {
-                            pixelColor = newColor;
+                        if (areColorsExactMatch(colorSubstitution.defaultColor, pixelColor)) {
+                            pixelColor = colorSubstitution.substituteColor;
                         }
                     }
                 }
@@ -415,14 +398,6 @@ export class ChocoWinWindow {
 
         return;
     }
-
-    // This will be calculated every time a window is instantiated but thankfully
-    // it's not an expensive operation.
-    // If anybody's tile sheet is more than 2^53 pixels in total, something's wrong.
-    // For reference, 1080p is less than 10^21, so that tile sheet would have more
-    // pixels than a 1920x1080 matrix of 1080p displays.
-    // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER.
-    #sillyMaxWidth = Math.sqrt(Number.MAX_SAFE_INTEGER);
 
     #doDrawWindow(/** @type {ChocoWinAbstractPixelWriter} */ writer) {
         const wo = this.#winTileSet;

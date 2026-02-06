@@ -169,7 +169,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                     break;
                 }
                 case SNAP_MODE_OPTIONS.OTHER: {
-                    const snapSize = sheetSnapOtherSize == Number(sheetSnapOtherSize) ? sheetSnapOtherSize : tileSize ?? tileSize;
+                    const snapSize = sheetSnapOtherSize === Number(sheetSnapOtherSize) ? sheetSnapOtherSize : tileSize ?? tileSize;
                     xTileSheetCoordUnscaled = snapSize * Math.floor(xTileSheetCoordUnscaled / snapSize);
                     yTileSheetCoordUnscaled = snapSize * Math.floor(yTileSheetCoordUnscaled / snapSize);
                     break;
@@ -221,7 +221,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
         const newSelectedLocation = { ...selectedLocation };
 
         const thisSnapSize =
-            snapMode == SNAP_MODE_OPTIONS.OTHER
+            snapMode === SNAP_MODE_OPTIONS.OTHER
                 ? precisionSnapOtherSize
                 : tileSize;
 
@@ -265,7 +265,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
      */
     const onSheetXManualInputChange = (e) => {
         const x = Number(e.target.value);
-        if (x != e.target.value) return;
+        if (String(x) !== e.target.value) return;
         if (x < 0) return;
         const newLocation = { x: x, y: selectedLocation.y };
         setDisplayLocation(newLocation);
@@ -278,7 +278,7 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
     */
     const onSheetYManualInputChange = (e) => {
         const y = Number(e.target.value);
-        if (y != e.target.value) return;
+        if (String(y) !== e.target.value) return;
         if (y < 0) return;
         const newLocation = { x: selectedLocation.x, y: y };
         setDisplayLocation(newLocation);
@@ -303,11 +303,11 @@ const PreciseTileSelector = ({ tileSetDefinition, defaultHelpVisible, tileSize, 
                         <option value={SNAP_MODE_OPTIONS.NONE}>Do Not Snap</option>
                     </select>
                 </div>
-                {(snapMode == SNAP_MODE_OPTIONS.OTHER) && <div className="w-full col-span-1">
+                {(snapMode === SNAP_MODE_OPTIONS.OTHER) && <div className="w-full col-span-1">
                     <label htmlFor="e25b0001-957a-4343-a98f-5a560b7e6af6">Approx. Sel. Snap</label>
                     <input type="number" className={TAILWIND_INPUT_CLASS_NAME} id="e25b0001-957a-4343-a98f-5a560b7e6af6" value={sheetSnapOtherSize} onChange={onSheetSnapOtherSizeChange} />
                 </div>}
-                {(snapMode == SNAP_MODE_OPTIONS.OTHER) && <div className="w-full col-span-1">
+                {(snapMode === SNAP_MODE_OPTIONS.OTHER) && <div className="w-full col-span-1">
                     <label htmlFor="ae73a344-0c94-40d1-b7f9-56516099c813">Precise Sel. Snap</label>
                     <input type="number" className={TAILWIND_INPUT_CLASS_NAME} id="ae73a344-0c94-40d1-b7f9-56516099c813" value={precisionSnapOtherSize} onChange={onPrecisionSnapOtherSizeChange} />
                 </div>}

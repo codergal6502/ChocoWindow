@@ -41,7 +41,7 @@ class BooleanMatrix {
             y = makeNaturalNumber(y);
             if (0 <= x && x < this.#tileSize && 0 <= y && y < this.#tileSize) {
                 const idx = this.#xyToIndex(x, y);
-                this.#internalArray[idx] = (value == true);
+                this.#internalArray[idx] = (value === true);
             }
         }
     }
@@ -92,7 +92,7 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo, onSelectionMade 
         if (assignableTileInfo?.transformedReader) {
             setReaderIsReady(false);
             assignableTileInfo.transformedReader.isReady().then((r) => {
-                if (r.width != r.height) {
+                if (r.width !== r.height) {
                     return;
                 }
                 setReaderIsReady(true);
@@ -182,7 +182,7 @@ const PixelTransparencyOverideSelector = ({ assignableTileInfo, onSelectionMade 
                 visitedPixels[x][y] = true;
 
                 const candidateColor = reader.getPixel({ x: x, y: y });
-                if (clickedColor.r == candidateColor.r && clickedColor.g == candidateColor.g && clickedColor.b == candidateColor.b && clickedColor.a == candidateColor.a) {
+                if (clickedColor.r === candidateColor.r && clickedColor.g === candidateColor.g && clickedColor.b === candidateColor.b && clickedColor.a === candidateColor.a) {
                     newCheckedLocations.set(x, y, isChecked);
                     doVisitPixel(x - 1, y);
                     doVisitPixel(x + 1, y);

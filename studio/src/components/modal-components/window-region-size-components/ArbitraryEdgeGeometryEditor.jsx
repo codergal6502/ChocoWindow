@@ -13,7 +13,6 @@ const CWR = CHOCO_WINDOW_REGIONS;
  * @param {function(ChocoStudioWindowRegionDefinition):void} props.onGeometryChange
  */
 const ArbitraryEdgeGeometryEditor = ({ regionIdentifier, regionDefinition, onGeometryChange }) => {
-    console.log(regionDefinition);
     const [colCount, setColCount] = useState(regionDefinition.colCount);
     const [rowCount, setRowCount] = useState(regionDefinition.rowCount);
 
@@ -24,7 +23,6 @@ const ArbitraryEdgeGeometryEditor = ({ regionIdentifier, regionDefinition, onGeo
     const [bottomBuffer, setBottomBuffer] = useState([CWR.BOTTOM_LEFT, CWR.BOTTOM, CWR.BOTTOM_RIGHT].includes(regionIdentifier) ? 0 : [CWR.BOTTOM_LEFT, CWR.BOTTOM, CWR.BOTTOM_RIGHT, CWR.CENTER].includes(regionIdentifier) ? 0 : regionDefinition.margin?.bottom ?? 0);
     /** @type {ReturnType<typeof useState<number>>} */
     const [lastManualLocationEntry, setLastManualLocationEntry] = useState(null);
-    const [helpVisibile, setHelpVisible] = useState(true);
 
     useEffect(() => { setColCount(makeCountingNumber(regionDefinition.colCount)); }, [regionDefinition.colCount, regionIdentifier])
     useEffect(() => { setRowCount(makeCountingNumber(regionDefinition.rowCount)); }, [regionDefinition.rowCount, regionIdentifier])
@@ -32,8 +30,6 @@ const ArbitraryEdgeGeometryEditor = ({ regionIdentifier, regionDefinition, onGeo
     useEffect(() => { setRightBuffer(regionDefinition.margin?.right ?? 0); }, [regionDefinition.margin?.right, regionIdentifier])
     useEffect(() => { setTopBuffer(regionDefinition.margin?.top ?? 0); }, [regionDefinition.margin?.top, regionIdentifier])
     useEffect(() => { setBottomBuffer(regionDefinition.margin?.bottom ?? 0); }, [regionDefinition.margin?.bottom, regionIdentifier])
-
-    const toggleHelp = () => setHelpVisible(!helpVisibile);
 
     /**
      * @param {ChocoCoordinates} newRegionDefinition 

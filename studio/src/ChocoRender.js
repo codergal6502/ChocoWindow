@@ -22,26 +22,26 @@ class ChocoWorkspaceRenderer {
      * @return {Promise<Blob>} A promise to resolve to a bolb.
      */
     #generateCanvas = (layoutId) => {
-        const layout = this.#workspace.layouts.find((l) => layoutId == l.id);
+        const layout = this.#workspace.layouts.find((l) => layoutId === l.id);
         if (!layout) {
             console.error(`No layout with ID ${layoutId}`);
             return;
         }
 
         const wins = layout.windowIds.map((wId) => {
-            const studioWindow = this.#workspace.windows.find((w) => wId == w.id);
-            if (!studioWindow) { console.error(`No window with ID ${wId}.`); return; };
+            const studioWindow = this.#workspace.windows.find((w) => wId === w.id);
+            if (!studioWindow) { console.error(`No window with ID ${wId}.`); return null; };
 
-            const studioPreset = this.#workspace.presets.find((ps) => ps.id == studioWindow.presetId) || studioWindow.singularPreset;
-            if (!studioPreset) { console.error(`No singular preset or preset with ID ${studioWindow.presetId}.`); return; }
+            const studioPreset = this.#workspace.presets.find((ps) => ps.id === studioWindow.presetId) || studioWindow.singularPreset;
+            if (!studioPreset) { console.error(`No singular preset or preset with ID ${studioWindow.presetId}.`); return null; }
 
-            const tileSetDefinition = this.#workspace.tileSetDefinitions.find((tsd) => tsd.id == studioPreset.tileSetDefinitionId);
-            if (!tileSetDefinition) { console.error(`No tile set definition with ID ${studioPreset.tileSetDefinitionId}.`); return; }
+            const tileSetDefinition = this.#workspace.tileSetDefinitions.find((tsd) => tsd.id === studioPreset.tileSetDefinitionId);
+            if (!tileSetDefinition) { console.error(`No tile set definition with ID ${studioPreset.tileSetDefinitionId}.`); return null; }
 
-            const tileSheet = this.#workspace.tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
-            if (!tileSheet) { console.error(`No tile sheet with ID ${tileSetDefinition.tileSheetId}.`); return; }
+            const tileSheet = this.#workspace.tileSheets.find((ts) => ts.id === tileSetDefinition.tileSheetId);
+            if (!tileSheet) { console.error(`No tile sheet with ID ${tileSetDefinition.tileSheetId}.`); return null; }
 
-            if (!this.#readerFactory) { console.error('No reader factory was provided.'); return; }
+            if (!this.#readerFactory) { console.error('No reader factory was provided.'); return null; }
 
             const chocoWindow = new ChocoWinWindow({
                 winTileSet: tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
@@ -52,7 +52,7 @@ class ChocoWorkspaceRenderer {
                 h: studioWindow.h,
                 readerFactory: this.#readerFactory,
                 backgroundColor: studioWindow.backgroundColor,
-                colorSubstitutions: studioPreset.substituteColors,
+                colorSubstitutions: studioPreset.substituteColors.map(sc => ({ default: sc.defaultColor, substitute: sc.substituteColor })),
             });
 
             return chocoWindow;

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../ChocoStudio"
-import { ChocoWinWindow, ChocoColor } from "../../ChocoWindow";
+import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, TEMP_stringifyColorSubstitutions } from "../../ChocoStudio"
+import { ChocoColor, ChocoWinAbstractPixelReader } from "../../ChocoWindow";
 import { useContext } from "react";
-import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../App";
+import { ReaderFactoryForStudio, TileSheetBlobUrlDictionary } from "../../App";
+import TileSetColorPalette from "./TileSetColorPalette";
+import WindowPreview from "./WindowPreview";
 
 /**
  * @param {Object} props
@@ -17,13 +19,13 @@ import { ReaderFactoryForStudio, WriterFactoryForStudio } from "../../App";
  * @param {function(String):void} props.onPresetDelete
  * @param {function():void} props.onReturnToEditor
  */
-const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = false, backgroundColor = null, onPresetChange, onPresetDelete, onReturnToEditor }) => {
+const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = false, onPresetChange, onPresetDelete, onReturnToEditor }) => {
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                               CONSTANTS                              //
     // // // // // // // // // // // // // // // // // // // // // // // // //
     const DEFAULT_TILE_SCALE = 3;
     const readerFactory = useContext(ReaderFactoryForStudio);
-    const writerFactory = useContext(WriterFactoryForStudio);
+    const tileSheetBlobUrlDictionary = useContext(TileSheetBlobUrlDictionary);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          STATE AND REF HOOKS                         //
@@ -32,69 +34,44 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
     const [name, setName] = useState(preset.name);
     const [tileSetDefinitionId, setTileSetDefinitionId] = useState(preset.tileSetDefinitionId ?? null);
     const [tileScale, setTileScale] = useState(preset.tileScale || DEFAULT_TILE_SCALE);
-    const [substituteColors, setSubstituteColors] = useState(preset.substituteColors || []);
+    const [substituteColors, setSubstituteColors] = useState(preset.substituteColors);
     const [hasChanges, setHasChanges] = useState(false);
-    const [lastPresetChangeTimeout, setLastPresetChangeTimeout] = useState(null);
+    const lastPresetChangeTimeoutRef = useRef(0);
 
-    /** @type {ReturnType<typeof useState<String>>} */
-    const [previewImageUrl, setPreviewImageUrl] = useState(null);
+    /** @type {ReturnType<typeof useState<ChocoWinAbstractPixelReader>>} */
+    const [tileSheetReader, setTileSheetReader] = useState(null);
     const [tileSetDefinition, setTileSetDefinition] = useState(tileSetDefinitions.find((ts) => ts.id == preset.tileSetDefinitionId))
-    const previewState = useRef({ url: "", drawInterval: null, stopTimeout: null });
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                               EFFECTS                                //
     // // // // // // // // // // // // // // // // // // // // // // // // //
 
-    // revoke the preview blob URL
-    useEffect(() => {
-        return () => {
-            if (previewState?.current) {
-                URL.revokeObjectURL(previewState.current.url);
-            }
-        }
-    }, [previewState])
-
     // debounce text input; for simplicity, all changes are routed through here
     useEffect(() => {
-        if (hasChanges) {
+        if (hasChanges && lastPresetChangeTimeoutRef) {
             // Why not use lodash's _.debounce?
             // See https://www.developerway.com/posts/debouncing-in-react
             // See https://stackoverflow.com/questions/36294134/lodash-debounce-with-react-input#comment124623824_67941248
             // See https://stackoverflow.com/a/59184678
-            clearTimeout(lastPresetChangeTimeout);
-            const timeout = setTimeout(() => uponPresetChange(), 500);
-            setLastPresetChangeTimeout(timeout);
+            clearTimeout(lastPresetChangeTimeoutRef.current);
+            lastPresetChangeTimeoutRef.current = setTimeout(() => uponPresetChange(), 125);
         }
-    }, [name, tileSetDefinitionId, tileScale, substituteColors, hasChanges])
+    }, [name, tileSetDefinitionId, tileScale, hasChanges, lastPresetChangeTimeoutRef])
 
-    // periodically redraw the preview while the user is repeatedly updating
-    // the state (e.g., dragging the down mouse over a color field) and stop
-    // when the user has stopped updating the state.
+    // get the tile sheet reader for the selected tile sheet.
     useEffect(() => {
-        const updatePeriod = 1000;
-        const state = previewState?.current;
-        if (state) {
-            if (!state.drawInterval) {
-                updatePreviewImageBlob();
-
-                state.drawInterval = setInterval(() => {
-                    updatePreviewImageBlob();
-                }, updatePeriod);
-            }
-
-            clearTimeout(state.stopTimeout);
-            state.stopTimeout = setTimeout(() => {
-                clearInterval(state.drawInterval);
-                state.drawInterval = null;
-                updatePreviewImageBlob();
-            }, updatePeriod / 4);
+        if (tileSetDefinition?.tileSheetId && tileSheetBlobUrlDictionary) {
+            setTileSheetReader(null);
+            let tileSheetData = tileSheetBlobUrlDictionary.ensureTileSheetBlob(tileSetDefinition.tileSheetId, tileSheets);
+            const tileSheetReader = readerFactory.build({ blob: tileSheetData.blob });
+            tileSheetReader.isReady().then(r => setTileSheetReader(r));
         }
-    }, [tileScale, substituteColors])
+    }, [tileSetDefinition?.tileSheetId, tileSheetBlobUrlDictionary]);
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
     //                          UTILITY FUNCTIONS                           //
     // // // // // // // // // // // // // // // // // // // // // // // // //
-    
+
     /**
      * 
      */
@@ -103,48 +80,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
         newPreset.name = name;
         newPreset.tileSetDefinitionId = tileSetDefinitionId;
         newPreset.tileScale = tileScale;
-        newPreset.substituteColors = substituteColors;
         onPresetChange(newPreset);
-    }
-
-    /**
-     * 
-     */
-    const updatePreviewImageBlob = () => {
-        if (!previewState?.current) { return; }
-    
-        if (!tileSetDefinition) { return; }
-        const tileSheet = tileSheets.find((ts) => ts.id == tileSetDefinition.tileSheetId);
-        if (!tileSheet) { return; }
-
-        let chocoWin = new ChocoWinWindow({
-            x: 0,
-            y: 0,
-            w: 450,
-            h: 180,
-            tileScale: tileScale ?? 1,
-            winTileSet: tileSetDefinition.toChocoWinTileSet(tileSheet.imageDataUrl),
-            readerFactory: readerFactory,
-            backgroundColor: backgroundColor,
-            colorSubstitutions: substituteColors,
-        });
-
-        chocoWin.isReady().then(() => {
-            if (!previewState?.current) {
-                console.warn("previewState.current falsy after it was truthy");
-                return;
-            }
-
-            const writer = writerFactory.build(450, 180);
-            chocoWin.drawTo(writer);
-
-            let blob = writer.makeBlob();
-            URL.revokeObjectURL(previewState.current.url);
-
-            const newUrl = URL.createObjectURL(blob);
-            previewState.current.url = newUrl;
-            setPreviewImageUrl(newUrl);
-        });
     }
 
     // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -184,26 +120,14 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
     };
 
     /**
-     * @param {object} inputEvent 
-     * @param {HTMLInputElement} inputEvent.target
-     * @param {number} colorIndex 
+     * @param {{defaultColor: ChocoColor, substituteColor: ChocoColor}[]} newColorSubstitutions
      */
-    const onColorChange = (inputEvent, colorIndex) => {
-        let newSubstituteColors = substituteColors.slice();
-        newSubstituteColors[colorIndex] = new ChocoColor(inputEvent.target.value);
-        setSubstituteColors(newSubstituteColors);
-        setHasChanges(true);
-    };
-
-    /**
-     * @param {number} colorIndex 
-     */
-    const onColorResetClick = (colorIndex) => {
-        let newSubstituteColors = substituteColors.slice();
-        delete newSubstituteColors[colorIndex];
-        setSubstituteColors(newSubstituteColors);
-        setHasChanges(true);
-    };
+    const onColorPaletteChange = (newColorSubstitutions) => {
+        setSubstituteColors(newColorSubstitutions);
+        const newPreset = new ChocoStudioPreset(preset);
+        newPreset.substituteColors = newColorSubstitutions.map(cs => ({ defaultColor: cs.defaultColor, substituteColor: cs.substituteColor }));
+        onPresetChange(newPreset);
+    }
 
     return <>
         {
@@ -231,20 +155,9 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
             <input placeholder="Tile Scale" type="number" min={1} max={10} id="59731ce7-1ab4-4ea1-a08e-1bf5a43d1f4e" className={TAILWIND_INPUT_CLASS_NAME} value={tileScale} onChange={onTileScaleChange} />
         </div>
 
-        <h3 className="mb-2 mt-4 text-xl">Color Substitutions</h3>
-        {(tileSetDefinition?.defaultColors?.length > 0) || <p className="mb-2 text-sm italic">No default colors were generated for the selected tile set definition.</p>}
-        {(tileSetDefinition?.defaultColors?.length > 0) && <div className={`grid grid-cols-4 gap-4`}>
-            {tileSetDefinition.defaultColors.map((color, i) => <div key={i}>
-                <div className="text-sm w-full text-center">Color {i + 1}</div>
-                <div className="text-xs w-full text-center">{(substituteColors[i]?.toHexString() ?? color.toHexString())}</div>
-                <div><input className="w-full rounded" type="color" value={substituteColors[i]?.toHexString() ?? color.toHexString()} onChange={(e) => onColorChange(e, i)} /></div>
-                <div><button className="w-full border mt-1 text-sm border-gray-900 bg-gray-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" onClick={(e) => onColorResetClick(i)} >Reset</button></div>
-            </div>)}
-        </div>}
+        <TileSetColorPalette colorSubstitutions={substituteColors} allowModifications={true} regions={tileSetDefinition.regions} tileSize={tileSetDefinition.tileSize} tileSheetReader={tileSheetReader} onChange={onColorPaletteChange} />
 
-        <h3 className="mb-2 mt-4 text-xl">Preview</h3>
-        <div id="tileSetPreviewDiv" ><img alt="Window Preview" src={previewImageUrl} /></div>
-
+        <WindowPreview tileSetDefinition={tileSetDefinition} tileSheets={tileSheets} preset={preset} colorSubstitutions={substituteColors} fixedTileScale={tileScale} />
         {
             isSubordinate || <>
                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>

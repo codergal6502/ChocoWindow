@@ -121,10 +121,10 @@ const BasicEdgeSizeEditor = ({ regionIdentifier, sizes, onSizeChange }) => {
      */
     const onEdgeRowCountChange = (inputEvent) => {
         const newValue = makeCountingNumber(inputEvent.target.value);
-        if (CHOCO_WINDOW_REGIONS.LEFT == regionIdentifier) {
+        if (CHOCO_WINDOW_REGIONS.LEFT === regionIdentifier) {
             uponChange({ leftEdgeRowCount: newValue });
         }
-        else if (CHOCO_WINDOW_REGIONS.RIGHT == regionIdentifier) {
+        else if (CHOCO_WINDOW_REGIONS.RIGHT === regionIdentifier) {
             uponChange({ rightEdgeRowCount: newValue });
         }
     }
@@ -135,10 +135,10 @@ const BasicEdgeSizeEditor = ({ regionIdentifier, sizes, onSizeChange }) => {
      */
     const onEdgeColCountChange = (inputEvent) => {
         const newValue = makeCountingNumber(inputEvent.target.value);
-        if (CHOCO_WINDOW_REGIONS.TOP == regionIdentifier) {
+        if (CHOCO_WINDOW_REGIONS.TOP === regionIdentifier) {
             uponChange({ topEdgeColCount: newValue });
         }
-        else if (CHOCO_WINDOW_REGIONS.BOTTOM == regionIdentifier) {
+        else if (CHOCO_WINDOW_REGIONS.BOTTOM === regionIdentifier) {
             uponChange({ bottomEdgeColCount: newValue });
         }
     }
@@ -161,7 +161,7 @@ const BasicEdgeSizeEditor = ({ regionIdentifier, sizes, onSizeChange }) => {
             <input placeholder="Tile Count" min={1} type="Number" autoComplete="off" id="5c57b383-e614-4e5a-875d-1594f3717390" className={TAILWIND_INPUT_CLASS_NAME} value={sizes.bottomSharedRowCount} onChange={onBottomChange} />
         </div>}
 
-        {CHOCO_WINDOW_REGIONS.CENTER == regionIdentifier && <>
+        {CHOCO_WINDOW_REGIONS.CENTER === regionIdentifier && <>
             <div className="w-full col-span-2">
                 <label htmlFor="15d7ca4c-0c49-4bd5-836c-b9b70ce26d94">Width (tiles)</label>
                 <input
@@ -197,7 +197,7 @@ const BasicEdgeSizeEditor = ({ regionIdentifier, sizes, onSizeChange }) => {
                     type="Number"
                     autoComplete="off"
                     className={TAILWIND_INPUT_CLASS_NAME}
-                    value={CHOCO_WINDOW_REGIONS.LEFT == regionIdentifier ? sizes.leftEdgeRowCount : CHOCO_WINDOW_REGIONS.RIGHT == regionIdentifier ? sizes.rightEdgeRowCount : 1}
+                    value={CHOCO_WINDOW_REGIONS.LEFT === regionIdentifier ? sizes.leftEdgeRowCount : CHOCO_WINDOW_REGIONS.RIGHT === regionIdentifier ? sizes.rightEdgeRowCount : 1}
                     onChange={onEdgeRowCountChange}
                 />
             </div>
@@ -212,17 +212,17 @@ const BasicEdgeSizeEditor = ({ regionIdentifier, sizes, onSizeChange }) => {
                     type="Number"
                     autoComplete="off"
                     className={TAILWIND_INPUT_CLASS_NAME}
-                    value={CHOCO_WINDOW_REGIONS.TOP == regionIdentifier ? sizes.topEdgeColCount : CHOCO_WINDOW_REGIONS.BOTTOM == regionIdentifier ? sizes.bottomEdgeColCount : 1}
+                    value={CHOCO_WINDOW_REGIONS.TOP === regionIdentifier ? sizes.topEdgeColCount : CHOCO_WINDOW_REGIONS.BOTTOM === regionIdentifier ? sizes.bottomEdgeColCount : 1}
                     onChange={onEdgeColCountChange}
                 />
             </div>
         </>}
 
-        {(!helpVisibile) && <a href="#" onClick={toggleHelp} className="w-full col-span-2 text-xs font-normal text-blue-900 dark:text-blue-100 py-1 hover:underline italic">show help</a>}
+        {(!helpVisibile) && <button onClick={toggleHelp} className="w-full col-span-2 text-xs font-normal text-blue-900 dark:text-blue-100 py-1 hover:underline italic">show help</button>}
 
         {helpVisibile && <p className="col-span-11 mb-2 text-sm mx-6">
             All left regions share a common width. All right regions share a common width. All top regions share a common height. All bottom regions share a common height. Top and bottom edges can be arbitrarily wide. Left and right edges can be arbitrarily tall. The center can be of any size.
-            &nbsp;<a href="#" onClick={toggleHelp} className="text-xs text-blue-900 dark:text-blue-100 py-1 hover:underline italic">hide help</a>
+            &nbsp;<button href="#" onClick={toggleHelp} className="text-xs text-blue-900 dark:text-blue-100 py-1 hover:underline italic">hide help</button>
         </p>}
     </>
 }

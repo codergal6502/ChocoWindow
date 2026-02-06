@@ -9,14 +9,20 @@ export class ChocoStudioUpgrader {
     static AttemptUpgrade(obj) {
         let nextUpgrade = obj;
 
-        if (nextUpgrade.version == "1.0.1") {
+        if (nextUpgrade.version === "1.0.1") {
             nextUpgrade = ChocoStudioUpgrader.Attempt1_0_1UpgradeTo1_1_0(nextUpgrade);
 
             if (!nextUpgrade) return null;
         }
 
-        if (nextUpgrade.version == "1.1.0") {
+        if (nextUpgrade.version === "1.1.0") {
             nextUpgrade = ChocoStudioUpgrader.Attempt_1_1_0UpgradeTo_1_2_0(nextUpgrade);
+
+            if (!nextUpgrade) return null;
+        }
+
+        if (nextUpgrade.version === "1.2.0") {
+            nextUpgrade = ChocoStudioUpgrader.Attempt_1_2_0UpgradeTo_1_3_0(nextUpgrade);
 
             if (!nextUpgrade) return null;
         }
@@ -75,6 +81,34 @@ export class ChocoStudioUpgrader {
     static Attempt_1_1_0UpgradeTo_1_2_0(oldWorkspace) {
         const clonedWorkspace = JsonClone(oldWorkspace);
         clonedWorkspace.granularity = CHOCO_REGION_GRANULARITY.BASIC_EDGES;
+
+        return clonedWorkspace;
+    }
+
+    static Attempt_1_2_0UpgradeTo_1_3_0(oldWorkspace) {
+        const clonedWorkspace = JsonClone(oldWorkspace);
+        for (let preset of clonedWorkspace.presets) {
+            const tileSetDefinition = clonedWorkspace.tileSetDefinitions.find(tsd => tsd.id === preset.tileSetDefinitionId);
+
+            if (tileSetDefinition) {
+                for (let colorIndex = preset.substituteColors.length - 1; colorIndex >= 0; colorIndex--) {
+                    const substituteColor = preset.substituteColors[colorIndex];
+                    const defaultColor = tileSetDefinition.defaultColors[colorIndex];
+
+                    if (substituteColor) {
+                        if (defaultColor) {
+                            preset.substituteColors[colorIndex] = {
+                                defaultColor: { r: defaultColor.r, g: defaultColor.g, b: defaultColor.b, a: defaultColor.a },
+                                substituteColor: { r: substituteColor.r, g: substituteColor.g, b: substituteColor.b, a: substituteColor.a },
+                            }
+                        }
+                        else {
+                            preset.substituteColors.pop();
+                        }
+                    }
+                }
+            }
+        }
 
         return clonedWorkspace;
     }

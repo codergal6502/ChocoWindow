@@ -1,18 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDown, faAngleRight, faFloppyDisk, faFolderOpen, faImages } from "@fortawesome/free-solid-svg-icons";
-import { ChocoWinTileSet } from '../ChocoWindow.js';
-import { TAILWIND_INPUT_CLASS_NAME } from "./KitchenSinkConstants.jsx";
-import { ChocoStudioLayout, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioWorkspace } from "../ChocoStudio.js";
-import TileSetDefinitionEditor from "./modal-components/TileSetDefinitionEditor.jsx";
-import PresetEditor from "./modal-components/PresetEditor.jsx";
-import LayoutEditor from "./modal-components/LayoutEditor.jsx";
-import WindowEditor from "./modal-components/WindowEditor.jsx";
+import { useEffect, useRef } from "react";
 
 const LayoutRenderResult = ({ isModalHidden, dataUrl, downloadName, onReturnToEditor }) => {
     const imgRef = useRef(null);
 
-    useEffect(() => { imgRef.current.src = dataUrl; }, [imgRef])
+    useEffect(() => { imgRef.current.src = dataUrl; }, [imgRef, dataUrl])
 
     const onDownloadPngClick = () => {
         const link = document.createElement("a");
@@ -31,7 +22,7 @@ const LayoutRenderResult = ({ isModalHidden, dataUrl, downloadName, onReturnToEd
                         <div className="h-full overflow-y-auto">
                             <h3 className="mb-2 text-xl">Preview</h3>
                             <div className="flex-grow p-6 rounded-lg dark:text-gray-300">
-                                <img style={{ width: "400px" }} ref={imgRef} />
+                                <img alt="Rendered Window" style={{ width: "400px" }} ref={imgRef} />
                             </div>
                             <h3 className="mb-2 mt-4 text-xl">Actions</h3>
                             <div className="flex justify-between">

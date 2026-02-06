@@ -34,11 +34,14 @@ const TileTransformationSelector = ({ assignableTileInfo: activeTileSheetAssignm
 
     // revoke all the transformed tile URLs
     useEffect(() => {
-        return () => {
-            if (tileBlobUrlMap?.current) {
-                tileBlobUrlMap.current.forEach((value) => {
-                    URL.revokeObjectURL(value);
-                });
+        const m = tileBlobUrlMap?.current;
+        if (m) {
+            return () => {
+                if (m) {
+                    m.forEach((value) => {
+                        URL.revokeObjectURL(value);
+                    });
+                }
             }
         }
     }, [])
@@ -92,7 +95,7 @@ const TileTransformationSelector = ({ assignableTileInfo: activeTileSheetAssignm
 
                         const selectorText = `.tile-transformation-${unique.current}-${transformationType}`
 
-                        const oldRuleIndex = Array.from(styleSheet.cssRules).findIndex(r => r.selectorText == selectorText);
+                        const oldRuleIndex = Array.from(styleSheet.cssRules).findIndex(r => r.selectorText === selectorText);
                         if (oldRuleIndex >= 0) { styleSheet.deleteRule(oldRuleIndex) };
 
                         const newRule = `${selectorText} { background-image: url(${newUrl}); }`;
@@ -121,8 +124,8 @@ const TileTransformationSelector = ({ assignableTileInfo: activeTileSheetAssignm
         <h4 className="my-3 font-bold">Tile Transformation</h4>
         <div className="grid grid-cols-2">
             {Object.values(TileTransformationTypes).map((transformationType, idx) =>
-                <label key={idx} className={`flex items-center tile-transformation ${selectedTileTransformation == transformationType ? 'selected' : 'not-selected'}`}>
-                    <input type="radio" name={`tile-transformation-${unique.current}`} className="sr-only" key={idx} value={transformationType} checked={selectedTileTransformation == transformationType} onChange={onSelectTileTransformationChange} />
+                <label key={idx} className={`flex items-center tile-transformation ${selectedTileTransformation === transformationType ? 'selected' : 'not-selected'}`}>
+                    <input type="radio" name={`tile-transformation-${unique.current}`} className="sr-only" key={idx} value={transformationType} checked={selectedTileTransformation === transformationType} onChange={onSelectTileTransformationChange} />
                     <span className={`label-image tile-transformation-${unique.current}-${transformationType}`} />
                     <span className='label-text'>{transformationNameLabels[transformationType]}</span>
                 </label>

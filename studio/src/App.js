@@ -1,6 +1,6 @@
 import './App.css';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import SettingsFloater from './components/SettingsFloater';
 import SettingsModal from './components/SettingsModal';
@@ -16,6 +16,15 @@ import { ChocoWinPngJsPixelWriterFactory } from './ChocoWindow';
 import { PNG } from 'pngjs/browser'
 import { createContext } from 'react';
 import { useContext } from 'react';
+
+import "@melloware/coloris/dist/coloris.css";
+import Coloris from "@melloware/coloris";
+
+Coloris.init();
+Coloris({
+  theme: 'polaroid',
+  themeMode: 'auto',
+});
 
 const readerFactoryForStudio = new ChocoWinPngJsPixelReaderFactory(PNG);
 const writerFactoryForStudio = new ChocoWinPngJsPixelWriterFactory(PNG);
@@ -52,7 +61,7 @@ const App = () => {
         const json = window.atob(b64);
         let obj = JSON.parse(json)
 
-        if (obj.version != ChocoWinSettings.CURRENT_VERSION) {
+        if (obj.version !== ChocoWinSettings.CURRENT_VERSION) {
           const upgraded = ChocoStudioUpgrader.AttemptUpgrade(obj);
           if (!upgraded) {
             alert("Could not upgrade the previous workspace. Please download your previous workspace, after which an empty workspace will be used.");
@@ -68,7 +77,7 @@ const App = () => {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
-            throw "Not continuing.";
+            throw new Error("Not continuing.");
           }
           obj = upgraded;
         }
@@ -147,7 +156,7 @@ const App = () => {
   const onDownloadPngClick = () => {
     const /** @type {ChocoWorkspaceRenderer} */ renderer = new ChocoWorkspaceRenderer(editorWorkspace, writerFactory, readerFactory);
     const layoutId = editorLayoutId || editorWorkspace.layouts[0].id;
-    const downloadName = (editorWorkspace.layouts.find((l) => l.id == layoutId)?.name || "window") + ".png";
+    const downloadName = (editorWorkspace.layouts.find((l) => l.id === layoutId)?.name || "window") + ".png";
     setRenderDownloadName(downloadName);
     renderer.generateLayoutImageBlob(layoutId).then(blob => {
       if (renderResultDataUrl) {
@@ -166,20 +175,21 @@ const App = () => {
     setRenderDownloadName("");
   }
 
-  let resizeTimeout;
+  /** @type {ReturnType< typeof useRef<ReturnType<setTimeout> > } */
+  const resizeTimeoutRef = useRef(null);
   const onResize = () => {
     // This forces any components that need to resize to "get the message" as it were.
     // See https://stackoverflow.com/a/69136763/1102726.
 
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
+    clearTimeout(resizeTimeoutRef.current);
+    resizeTimeoutRef.current = setTimeout(() => {
       setLastResizeTimestamp(Date.now());
     }, 125);
   }
 
   useEffect(() => {
-    window.removeEventListener("resize", onResize);
     window.addEventListener("resize", onResize);
+    return () => { window.removeEventListener("resize", onResize); }
   }, []);
 
   return (

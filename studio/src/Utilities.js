@@ -28,7 +28,7 @@ export const makeNaturalNumber = (value) => {
  * @param {*} obj 
  * @returns {Boolean}
  */
-export const isNumber = (obj) => (typeof 0 == typeof obj) || ((typeof "" == typeof obj) && (String(Number(obj)) == String(obj)));
+export const isNumber = (obj) => (typeof 0 == typeof obj) || ((typeof "" === typeof obj) && (String(Number(obj)) === String(obj)));
 
 /**
  * @param {T} obj 

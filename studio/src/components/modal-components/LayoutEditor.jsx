@@ -76,7 +76,7 @@ const LayoutEditor = ({ layout, windows, onLayoutChange, onLayoutDelete, onRetur
     const onAddWindowClick = () => {
         if (windowSelectRef.current) {
             const value = windowSelectRef.current.value;
-            const window = windows.find((w) => value == w.id);
+            const window = windows.find((w) => value === w.id);
 
             if (window) {
                 /** @type {Array<String>} */ let newWindowIds = windowIds.slice();
@@ -94,7 +94,7 @@ const LayoutEditor = ({ layout, windows, onLayoutChange, onLayoutDelete, onRetur
     const onMoveWindowUpClick = (windowId) => {
         const idx = windowIds.indexOf(windowId);
 
-        if (idx == 0) return;
+        if (idx === 0) return;
 
         let newWindowIds = windowIds.slice();
         newWindowIds[idx] = newWindowIds[idx - 1];
@@ -109,7 +109,7 @@ const LayoutEditor = ({ layout, windows, onLayoutChange, onLayoutDelete, onRetur
     const moveWindowDownClicked = (windowId) => {
         const idx = windowIds.indexOf(windowId);
 
-        if (idx == windowIds.length - 1) return;
+        if (idx === windowIds.length - 1) return;
 
         let newWindowIds = windowIds.slice();
         newWindowIds[idx] = newWindowIds[idx + 1];
@@ -153,7 +153,7 @@ const LayoutEditor = ({ layout, windows, onLayoutChange, onLayoutDelete, onRetur
             <tbody>
                 {
                     windowIds.map((windowId) => {
-                        const window = windows.find((w) => w.id == windowId);
+                        const window = windows.find((w) => w.id === windowId);
                         return (
                             <tr key={windowId} className="even:bg-gray-200 odd:bg-gray-300 dark:even:bg-gray-600 dark:odd:bg-gray-700">
                                 <td className="p-1">
@@ -181,7 +181,7 @@ const LayoutEditor = ({ layout, windows, onLayoutChange, onLayoutDelete, onRetur
                         ref={windowSelectRef}
                     >
                         <option value={null}></option>
-                        {windows.filter((w) => false == windowIds.includes(w.id)).map((w) =>
+                        {windows.filter((w) => false === windowIds.includes(w.id)).map((w) =>
                             <option key={w.id} value={w.id}>{w.name}</option>
                         )}
                     </select>

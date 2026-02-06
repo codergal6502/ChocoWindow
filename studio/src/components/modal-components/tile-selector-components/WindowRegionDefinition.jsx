@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { CHOCO_REGION_GRANULARITY, CHOCO_WINDOW_REGIONS, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionDefinition, ChocoStudioWindowRegionTileAssignment, ChocoStudioWindowRegionTileAssignmentArray } from "../../../ChocoStudio";
+import { CHOCO_REGION_GRANULARITY, CHOCO_WINDOW_REGIONS, ChocoStudioWindowRegionDefinition } from "../../../ChocoStudio";
 import { TAILWIND_INPUT_CLASS_NAME } from "../../KitchenSinkConstants";
 import { ChocoWinAbstractPixelReader, ChocoRectangle, ChocoWinRegionPixelReader, WrapReaderForTileTransformation } from "../../../ChocoWindow";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -121,7 +121,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
     const removeRule = (styleSheet, selectorText) => {
         /** @type {CSSStyleRule[]} */
         const ruleArray = Array.from(styleSheet.cssRules);
-        const oldRuleIndex = ruleArray.findIndex(r => r.selectorText == selectorText);
+        const oldRuleIndex = ruleArray.findIndex(r => r.selectorText === selectorText);
         if (oldRuleIndex >= 0) { styleSheet.deleteRule(oldRuleIndex) };
     }
 
@@ -171,7 +171,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
                 }
             }
         }
-    }, [regions, tileSheetReader, regionIdentifier, tileBlobUrlMap, styleRef]);
+    }, [regions, tileSheetReader, regionIdentifier, tileBlobUrlMap, styleRef, tileSize, writerFactory]);
 
     // set the URL for the "assign this" tile CSS
     useEffect(() => {
@@ -197,7 +197,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
                 replaceRule(styleSheet, selectorText, ruleText);
             })
         }
-    }, [tileBlobUrlMap, styleRef, assignableTileInfo])
+    }, [tileBlobUrlMap, styleRef, assignableTileInfo, writerFactory])
 
     // resize the tile assignment container
     useEffect(() => {
@@ -207,7 +207,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
         const possibleScale = Math.floor(tileAssignmentContainerRef.current.offsetWidth / colCount / tileSize);
         const assignmentTileScale = Math.min(BIGGEST_ZOOM_FACTOR, possibleScale, BIGGEST_SCALED_TILE_SIZE / tileSize);
         setAssignmentTileScale(assignmentTileScale);
-    }, [tileAssignmentContainerRef, lastResizeTimestamp])
+    }, [tileAssignmentContainerRef, lastResizeTimestamp, colCount, tileSize])
 
     // set up resize event handler to force a pixel grid resize
     useEffect(() => {
@@ -234,7 +234,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
      */
     const regionTileRadioOnChange = (e) => {
         const label = e.target.parentElement;
-        const otherLabels = Array.from(label.parentElement.children).filter(l => l != label);
+        const otherLabels = Array.from(label.parentElement.children).filter(l => l !== label);
 
         otherLabels.forEach(l => l.classList.remove("region-tile-selected"));
         label.classList.add("region-tile-selected");
@@ -363,10 +363,10 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
     }
 
     return (<>
-        <h3 className="mb-1 text-xl font-bold">Window Region Definition {helpVisibile || <a href="#" onClick={toggleHelp} className="text-xs font-normal text-blue-900 dark:text-blue-100 py-1 hover:underline italic">show help</a>}</h3>
+        <h3 className="mb-1 text-xl font-bold">Window Region Definition {helpVisibile || <button href="#" onClick={toggleHelp} className="text-xs font-normal text-blue-900 dark:text-blue-100 py-1 hover:underline italic">show help</button>}</h3>
         {helpVisibile && <p className="mb-2 text-sm mx-6">
             <span><span className="italic">First,</span> select a window region to define tiles for. <span className="italic">Second,</span> click on the tile location in the selected region. <span className="italic">Third,</span> change the tile selection, transformation, and transparent pixels below. <span className="italic">Finally</span>, assign the configured tile to the location.</span>
-            &nbsp;<a href="#" onClick={toggleHelp} className="text-xs text-blue-900 dark:text-blue-100 py-1 hover:underline italic">hide help</a>
+            &nbsp;<button onClick={toggleHelp} className="text-xs text-blue-900 dark:text-blue-100 py-1 hover:underline italic">hide help</button>
         </p>}
 
         <div className={`grid grid-cols-12 gap-4`}>
@@ -384,9 +384,9 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
                     <option value={CHOCO_WINDOW_REGIONS.BOTTOM_RIGHT}>Bottom-Right Corner</option>
                 </select>
             </div>
-            {(CHOCO_REGION_GRANULARITY.SINGLE_TILE_EDGES == (granularity ?? CHOCO_REGION_GRANULARITY.SINGLE_TILE_EDGES)) && <SingleTileEdgeSizeEditor regionIdentifier={regionIdentifier} singleTileEdgeSizes={singleTileEdgeSizes} onSizeChange={onSingleTileEdgeSizeChange} />}
-            {(CHOCO_REGION_GRANULARITY.BASIC_EDGES == (granularity)) && <BasicEdgeSizeEditor regionIdentifier={regionIdentifier} sizes={basicRegionEdgeSizes} onSizeChange={onBasicEdgeRegionSizeChange} />}
-            {(CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES == (granularity)) && <ArbitraryEdgeGeometryEditor regionIdentifier={regionIdentifier} regionDefinition={regions[regionIdentifier]} onGeometryChange={onArbitraryEdgeRegionSizeChange} />}
+            {(CHOCO_REGION_GRANULARITY.SINGLE_TILE_EDGES === (granularity ?? CHOCO_REGION_GRANULARITY.SINGLE_TILE_EDGES)) && <SingleTileEdgeSizeEditor regionIdentifier={regionIdentifier} singleTileEdgeSizes={singleTileEdgeSizes} onSizeChange={onSingleTileEdgeSizeChange} />}
+            {(CHOCO_REGION_GRANULARITY.BASIC_EDGES === (granularity)) && <BasicEdgeSizeEditor regionIdentifier={regionIdentifier} sizes={basicRegionEdgeSizes} onSizeChange={onBasicEdgeRegionSizeChange} />}
+            {(CHOCO_REGION_GRANULARITY.ARBITRARY_EDGES === (granularity)) && <ArbitraryEdgeGeometryEditor regionIdentifier={regionIdentifier} regionDefinition={regions[regionIdentifier]} onGeometryChange={onArbitraryEdgeRegionSizeChange} />}
         </div>
 
 
@@ -426,7 +426,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
                             Array.from({ length: rowCount || 1 }).map((_, rowIndex) =>
                                 Array.from({ length: colCount || 1 }).map((_, colIndex) =>
                                     <label
-                                        className={`${computeTileBlobKey(regionIdentifier, colIndex, rowIndex)} region-tile-radio ${(selectedAssignmentTile.colIndex == colIndex && selectedAssignmentTile.rowIndex == rowIndex) ? "region-tile-selected" : ""}`}
+                                        className={`${computeTileBlobKey(regionIdentifier, colIndex, rowIndex)} region-tile-radio ${(selectedAssignmentTile.colIndex === colIndex && selectedAssignmentTile.rowIndex === rowIndex) ? "region-tile-selected" : ""}`}
                                         key={`transparency-pixel-${colIndex}-${rowIndex}`}
                                     >
                                         <input
@@ -434,7 +434,7 @@ const WindowRegionDefinition = ({ regions, tileSize, granularity, tileSheetReade
                                             className='sr-only'
                                             type="radio"
                                             onChange={regionTileRadioOnChange} data-col-index={colIndex} data-row-index={rowIndex}
-                                            checked={selectedAssignmentTile.colIndex == colIndex && selectedAssignmentTile.rowIndex == rowIndex}
+                                            checked={selectedAssignmentTile.colIndex === colIndex && selectedAssignmentTile.rowIndex === rowIndex}
                                         />
                                         <button onClick={() => onClearRegionTileAssignmentButtonClick({ rowIndex, colIndex })}>
                                             <FontAwesomeIcon icon={faCircleXmark} />
