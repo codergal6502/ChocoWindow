@@ -468,14 +468,14 @@ class ChocoStudioPreset {
             /** @type {String} */ this.id = String(crypto.randomUUID());
             /** @type {String} */ this.tileSetDefinitionId = null;
             /** @type {Number} */ this.tileScale = 1;
-            /** @type {Array<{defaultColor: ChocoColor, substituteColor: ChocoColor}} */ this.substituteColors = [];
+            /** @type {Array<{defaultColor: ChocoColor, substituteColor: ChocoColor}} */ this.colorSubstitutions = [];
         }
         else {
             this.name = arg1.name;
             this.id = arg1.id;
             this.tileSetDefinitionId = arg1.tileSetDefinitionId
             this.tileScale = Number(arg1.tileScale)
-            this.substituteColors = arg1?.substituteColors?.map((c) => c ? { defaultColor: new ChocoColor(c.defaultColor), substituteColor: new ChocoColor(c.substituteColor) } : null) || [];
+            this.colorSubstitutions = arg1?.colorSubstitutions?.map((c) => c ? { defaultColor: new ChocoColor(c.defaultColor), substituteColor: new ChocoColor(c.substituteColor) } : null) || [];
         }
     }
 }

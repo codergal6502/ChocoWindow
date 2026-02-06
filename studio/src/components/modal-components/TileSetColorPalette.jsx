@@ -32,16 +32,16 @@ const TileSetColorPalette = ({ tileSheetReader, regions, tileSize, allowModifica
      * @param {{defaultColor: ChocoColor, substituteColor: ChocoColor}} colorSubstitution 
      */
     const handleColorSubstitution = (colorSubstitution) => {
-        const newSubstituteColors = colorSubstitutions.map(sc => ({ defaultColor: new ChocoColor(sc.defaultColor), substituteColor: new ChocoColor(sc.substituteColor) }));
+        const newColorSubstitutions = colorSubstitutions.map(sc => ({ defaultColor: new ChocoColor(sc.defaultColor), substituteColor: new ChocoColor(sc.substituteColor) }));
 
-        let newSpecificSubstitution = newSubstituteColors.find(c => areColorsSame(colorSubstitution.defaultColor, c.defaultColor));
+        let newSpecificSubstitution = newColorSubstitutions.find(c => areColorsSame(colorSubstitution.defaultColor, c.defaultColor));
         if (!newSpecificSubstitution) {
             newSpecificSubstitution = { defaultColor: colorSubstitution.defaultColor };
-            newSubstituteColors.push(newSpecificSubstitution);
+            newColorSubstitutions.push(newSpecificSubstitution);
         }
         newSpecificSubstitution.substituteColor = colorSubstitution.substituteColor;
 
-        onChange(newSubstituteColors);
+        onChange(newColorSubstitutions);
     }
 
     /**
@@ -123,7 +123,7 @@ const TileSetColorPalette = ({ tileSheetReader, regions, tileSize, allowModifica
 
     // update the styles for the color picker backgrounds
     useEffect(() => {
-        if (allowModifications && defaultColors && colorSubstitutions && styleRef?.current) {
+        if (defaultColors && styleRef?.current) {
             const styleSheet = styleRef.current.sheet;
             while (styleSheet.cssRules.length) {
                 styleSheet.deleteRule(0);
@@ -143,17 +143,17 @@ const TileSetColorPalette = ({ tileSheetReader, regions, tileSize, allowModifica
      * @param {ChocoColor} defaultColor 
      */
     const onResetClicked = (defaultColor) => {
-        const newSubstituteColors = colorSubstitutions.map(sc => ({
+        const newColorSubstitutions = colorSubstitutions.map(sc => ({
             defaultColor: new ChocoColor(sc.defaultColor),
             substituteColor: new ChocoColor(sc.substituteColor)
         }));
 
         let index;
-        while (0 <= (index = newSubstituteColors.findIndex(c => areColorsSame(defaultColor, c.defaultColor)))) {
-            newSubstituteColors.splice(index, 1);
+        while (0 <= (index = newColorSubstitutions.findIndex(c => areColorsSame(defaultColor, c.defaultColor)))) {
+            newColorSubstitutions.splice(index, 1);
         }
 
-        onChange(newSubstituteColors);
+        onChange(newColorSubstitutions);
     }
 
     return (defaultColors && <>
@@ -165,18 +165,21 @@ const TileSetColorPalette = ({ tileSheetReader, regions, tileSize, allowModifica
             {defaultColors.map((defaultColor, i) =>
                 <div key={i}>
                     <div className={`text-sm w-full text-center`}>Color {i + 1}: <span className="text-sm italic font-mono">{defaultColor.toHexString({ includeAlpha: true })}</span></div>
-                    <div className={`rounded-lg flex justify-center color-gradient-${i}`}>
-                        <button
-                            className="w-1/2 text-sm rounded-md text-shadow-lg bg-[#88888888] border outline-[#22222288] dark:outline-[#BBBBBB88] text-center m-2 p-1"
-                            onClick={() => onResetClicked(defaultColor)}
-                        >Reset</button>
-                        <input
-                            data-original-color={defaultColor.toHexString()}
-                            data-index={i}
-                            className="w-1/2 text-sm rounded-md text-shadow-lg bg-[#88888888] border outline-[#22222288] dark:outline-[#BBBBBB88] text-center m-2 p-1"
-                            value={getSubstituteColor(defaultColor).toHexString({ includeAlpha: true })}
-                            onChange={(e) => { onDirectColorChange(e.target); }}
-                            data-coloris />
+                    <div className={`min-h-8 rounded-lg flex justify-center color-gradient-${i}`}>
+                        {allowModifications && <>
+                            <button
+                                className="w-1/2 text-sm rounded-md text-shadow-lg bg-[#88888888] border outline-[#22222288] dark:outline-[#BBBBBB88] text-center m-2 p-1"
+                                onClick={() => onResetClicked(defaultColor)}
+                            >Reset</button>
+                            <input
+                                data-original-color={defaultColor.toHexString()}
+                                data-index={i}
+                                className="w-1/2 text-sm rounded-md text-shadow-lg bg-[#88888888] border outline-[#22222288] dark:outline-[#BBBBBB88] text-center m-2 p-1"
+                                value={getSubstituteColor(defaultColor).toHexString({ includeAlpha: true })}
+                                onChange={(e) => { onDirectColorChange(e.target); }}
+                                data-coloris
+                            />
+                        </>}
                     </div>
                 </div>
             )}

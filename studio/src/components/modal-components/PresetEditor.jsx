@@ -34,7 +34,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
     const [name, setName] = useState(preset.name);
     const [tileSetDefinitionId, setTileSetDefinitionId] = useState(preset.tileSetDefinitionId ?? null);
     const [tileScale, setTileScale] = useState(preset.tileScale || DEFAULT_TILE_SCALE);
-    const [substituteColors, setSubstituteColors] = useState(preset.substituteColors);
+    const [colorSubstitutions, setColorSubstitutions] = useState(preset.colorSubstitutions);
     const [hasChanges, setHasChanges] = useState(false);
     const lastPresetChangeTimeoutRef = useRef(0);
 
@@ -106,7 +106,7 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
 
         setTileSetDefinitionId(newTileSetDefinitionId);
         setTileSetDefinition(selectedTileSetDefinition);
-        setSubstituteColors([]);
+        setColorSubstitutions([]);
         setHasChanges(true);
     };
 
@@ -123,9 +123,9 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
      * @param {{defaultColor: ChocoColor, substituteColor: ChocoColor}[]} newColorSubstitutions
      */
     const onColorPaletteChange = (newColorSubstitutions) => {
-        setSubstituteColors(newColorSubstitutions);
+        setColorSubstitutions(newColorSubstitutions);
         const newPreset = new ChocoStudioPreset(preset);
-        newPreset.substituteColors = newColorSubstitutions.map(cs => ({ defaultColor: cs.defaultColor, substituteColor: cs.substituteColor }));
+        newPreset.colorSubstitutions = newColorSubstitutions.map(cs => ({ defaultColor: cs.defaultColor, substituteColor: cs.substituteColor }));
         onPresetChange(newPreset);
     }
 
@@ -155,9 +155,9 @@ const PresetEditor = ({ preset, tileSheets, tileSetDefinitions, isSubordinate = 
             <input placeholder="Tile Scale" type="number" min={1} max={10} id="59731ce7-1ab4-4ea1-a08e-1bf5a43d1f4e" className={TAILWIND_INPUT_CLASS_NAME} value={tileScale} onChange={onTileScaleChange} />
         </div>
 
-        <TileSetColorPalette colorSubstitutions={substituteColors} allowModifications={true} regions={tileSetDefinition.regions} tileSize={tileSetDefinition.tileSize} tileSheetReader={tileSheetReader} onChange={onColorPaletteChange} />
+        {tileSetDefinition && <TileSetColorPalette colorSubstitutions={colorSubstitutions} allowModifications={true} regions={tileSetDefinition.regions} tileSize={tileSetDefinition.tileSize} tileSheetReader={tileSheetReader} onChange={onColorPaletteChange} />}
 
-        <WindowPreview tileSetDefinition={tileSetDefinition} tileSheets={tileSheets} preset={preset} colorSubstitutions={substituteColors} fixedTileScale={tileScale} />
+        <WindowPreview tileSetDefinition={tileSetDefinition} tileSheets={tileSheets} preset={preset} colorSubstitutions={colorSubstitutions} fixedTileScale={tileScale} />
         {
             isSubordinate || <>
                 <h3 className="mb-2 mt-4 text-xl">Actions</h3>

@@ -56,7 +56,7 @@ export class ChocoStudioUpgrader {
                             xSheetCoordinate: oldTsp?.x ?? 0,
                             ySheetCoordinate: oldTsp?.y ?? 0,
                             geometricTransformation: oldTsp?.geometricTransformation ?? TileTransformationTypes.BASE,
-                            transparencyOverrides: oldTsp?.transparencyOverrides?.map(c => new ChocoCoordinates({x: c.x, y: c.y})) ?? []
+                            transparencyOverrides: oldTsp?.transparencyOverrides?.map(c => new ChocoCoordinates({ x: c.x, y: c.y })) ?? []
                         })
                     }
                 }
@@ -95,8 +95,33 @@ export class ChocoStudioUpgrader {
                     const substituteColor = preset.substituteColors[colorIndex];
                     const defaultColor = tileSetDefinition.defaultColors[colorIndex];
 
-                    if (substituteColor) {
-                        if (defaultColor) {
+                    if (substituteColor && defaultColor) {
+                        preset.substituteColors[colorIndex] = {
+                            defaultColor: { r: defaultColor.r, g: defaultColor.g, b: defaultColor.b, a: defaultColor.a },
+                            substituteColor: { r: substituteColor.r, g: substituteColor.g, b: substituteColor.b, a: substituteColor.a },
+                        }
+                    }
+                    else {
+                        preset.substituteColors.pop();
+                    }
+                }
+            }
+
+            preset.colorSubstitutions = preset.substituteColors.filter(sc => sc);
+            delete preset.substituteColors;
+        }
+
+        for (let window of clonedWorkspace.windows) {
+            const preset = window.singularPreset
+            if (preset) {
+                const tileSetDefinition = clonedWorkspace.tileSetDefinitions.find(tsd => tsd.id === preset.tileSetDefinitionId);
+
+                if (tileSetDefinition) {
+                    for (let colorIndex = preset.substituteColors.length - 1; colorIndex >= 0; colorIndex--) {
+                        const substituteColor = preset.substituteColors[colorIndex];
+                        const defaultColor = tileSetDefinition.defaultColors[colorIndex];
+
+                        if (substituteColor && defaultColor) {
                             preset.substituteColors[colorIndex] = {
                                 defaultColor: { r: defaultColor.r, g: defaultColor.g, b: defaultColor.b, a: defaultColor.a },
                                 substituteColor: { r: substituteColor.r, g: substituteColor.g, b: substituteColor.b, a: substituteColor.a },
@@ -107,6 +132,9 @@ export class ChocoStudioUpgrader {
                         }
                     }
                 }
+
+                preset.colorSubstitutions = preset.substituteColors.filter(sc => sc);
+                delete preset.substituteColors;
             }
         }
 

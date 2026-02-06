@@ -52,7 +52,7 @@ class ChocoWorkspaceRenderer {
                 h: studioWindow.h,
                 readerFactory: this.#readerFactory,
                 backgroundColor: studioWindow.backgroundColor,
-                colorSubstitutions: studioPreset.substituteColors.map(sc => ({ default: sc.defaultColor, substitute: sc.substituteColor })),
+                colorSubstitutions: studioPreset.colorSubstitutions.map(sc => ({ default: sc.defaultColor, substitute: sc.substituteColor })),
             });
 
             return chocoWindow;

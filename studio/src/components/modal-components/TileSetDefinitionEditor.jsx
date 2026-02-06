@@ -342,7 +342,7 @@ const TileSetDefinitionEditor = ({ tileSetDefinition, tileSheets, onTileSetDefin
                     </div>
             }
 
-            {tileSheetReader && <TileSetColorPalette tileSheetReader={tileSheetReader} regions={regions} tileSize={tileSize} allowModifications={false} />}
+            <TileSetColorPalette tileSheetReader={tileSheetReader} regions={regions} tileSize={tileSize} />
 
             <WindowPreview tileSetDefinition={tileSetDefinition} tileSheets={tileSheets} />
         </>}

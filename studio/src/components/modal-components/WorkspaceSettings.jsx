@@ -109,7 +109,7 @@ const WorkspaceSettings = ({ workspace, onWorkspaceChange, onCloseClick }) => {
                 try {
                     let loadedObject = JSON.parse(readerEvent.target.result)
 
-                    if (loadedObject.version != ChocoWinSettings.CURRENT_VERSION) {
+                    if (loadedObject.version !== ChocoWinSettings.CURRENT_VERSION) {
                         loadedObject = ChocoStudioUpgrader.AttemptUpgrade(loadedObject);
                     }
                     const newWorkspace = new ChocoStudioWorkspace(loadedObject);

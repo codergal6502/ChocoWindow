@@ -119,7 +119,7 @@ const WindowEditor = ({ window, presets, tileSheets, tileSetDefinitions, onWindo
             tileScale: preset.tileScale,
             winTileSet: tileSet,
             readerFactory: readerFactory,
-            colorSubstitutions: preset.substituteColors,
+            colorSubstitutions: preset.colorSubstitutions,
             backgroundColor: hasBackgroundColor ? backgroundColor : null
         });
 

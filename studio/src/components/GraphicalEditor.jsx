@@ -205,7 +205,7 @@ const GraphicalEditor = ({ workspace, onWorkspaceChange, editorLayoutId, ignoreK
          */
         const drawSingleWindow = ({ preset, studioWindow, tileSet, chocoWindowDivId }) => {
             const renderWindow = new ChocoWinWindow({
-                colorSubstitutions: preset.substituteColors,
+                colorSubstitutions: preset.colorSubstitutions,
                 readerFactory: readerFactory,
                 w: studioWindow.w,
                 h: studioWindow.h,
