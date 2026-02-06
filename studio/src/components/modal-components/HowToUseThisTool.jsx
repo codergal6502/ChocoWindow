@@ -25,6 +25,14 @@ const HowToUseThisTool = ({ workspace, onCloseClick }) => {
                 <ul className="list-[square] pl-10">
                     <li className="mb-2"><span className="font-bold">Tile Size: </span> The size (in pixels) of each tile. Tiles must be square, and all tiles must be the same size.</li>
                     <li className="mb-2">
+                        <p><span className="font-bold">Granularity: </span> How much detail you want to specify for the each region.</p>
+                        <ul className="list-[square] pl-10">
+                            <li className="mb-2"><span className="italic">Single-Tile Edges: </span> Each corner is a single tile. The top and bottom edges or left and right edges are respectively any number of tiles horizontally or vertically to fill the space. The center region can be any number of tiles in size and goes from edge to edge.</li>
+                            <li className="mb-2"><span className="italic">Basic Edges: </span> The top regions (the top edge and both corners) all share a common height as do the bottom regions. The bottom regions similarly share a common height, and similarly for the left and right regions. The center region can be any number of tiles in size and goes from edge to edge.</li>
+                            <li className="mb-2"><span className="italic">Arbitrary Edges: </span> Each region can be any size. Edge regions can have arbitrary margins from either of the sides they span, and the center can have arbitrary margins to any side. This means regions can overlap or not touch.</li>
+                        </ul>
+                    </li>
+                    <li className="mb-2">
                         <p><span className="font-bold">Window Region: </span> When editing the tile set definition, this selects which region of the window you're editing.</p>
                         <ul className="list-[square] pl-10">
                             <li className="mb-2"><span className="italic">Corners: </span> Select the tiles for the chosen corner. Corners do not repeat.</li>
@@ -39,6 +47,12 @@ const HowToUseThisTool = ({ workspace, onCloseClick }) => {
                             <li className="mb-2"><span className="font-bold">Approximate Tile Selection: </span>Click on the approximate location of a tile in the tile sheet to assign it to a location in the window region.</li>
                             <li className="mb-2"><span className="font-bold">Precise Tile Selection: </span>Optionally make the selection more precise by clicking on an adjacent tile or adjusting the position numerically.</li>
                             <li className="mb-2"><span className="font-bold">Tile Assignment: </span>Click on one of the positions to assign the selected tile to that position.</li>
+                        </ul>
+                        <p><span className="font-bold">Tile Transformation: </span>Rotate the tile and specify pixels to be fully transparent.</p>
+                        <ul className="list-[square] pl-10">
+                            <li className="mb-2"><span className="font-bold">Reflection: </span>The tile can be reflected horizontally, vertically, or over either diagonal.</li>
+                            <li className="mb-2"><span className="font-bold">Rotation: </span>The tile can be rotated by 90º, 180º, or 270º.</li>
+                            <li className="mb-2"><span className="font-bold">Transparency: </span>Transparency can be overriden on a pixel-per-pixel basis, either one pixel at a time or by adjacent pixels of the same color.</li>
                         </ul>
                     </li>
                     <li className="mb-2">
@@ -72,17 +86,15 @@ const HowToUseThisTool = ({ workspace, onCloseClick }) => {
         </ul>
         <h3 className="mb-2 text-xl">Known Issues</h3>
         <ul className="list-disc pl-10">
-            <li className="mb-2"><span className="italic">Better Corners: </span>Currently corners can only be a single tile.</li>
             <li className="mb-2"><span className="italic">Preferences for Numerical Limitations: </span>Maximum substitutable color counts and graphical editor snap size should be user settings.</li>
-            <li className="mb-2"><span className="italic">Deleting Components Causes Crashes: </span>Deleting components that are used lower in the workspace configuration, for example presets that are used in windows, can cause crashes.</li>
             <li className="mb-2"><span className="italic">New Workspace: </span>There is no way to start an entirely new workspace.</li>
             <li className="mb-2"><span className="italic">User Interface Feedback: </span>Asynchronous operations should provide an indication that an asynchronous operation is happening until it's done.</li>
-            <li className="mb-2"><span className="italic">Color Inconsistencies: </span>There are some color inconsistencies that arise from using built-in HTML canvas objects. This seems to be limited to exported PNGs.</li>
+            <li className="mb-2"><span className="italic">Graphical Editor: </span>The grapical editor has limited functionality. There are plans to </li>
         </ul>
         <h3 className="mb-2 text-xl">Where is My Data Stored?</h3>
         <p className="mb-2 text-sm">This application runs entirely within your browser. All of your data is stored on your computer within your browser's <a className="underline text-blue-700 dark:text-blue-300" href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage" rel="noreferrer" target="_blank">local storage</a>. It persists across sessions, which means if you use a different computer or a different browser or user account on the same computer, or use a private browsing session, you won't have access to your data. Reseting your browser will delete all the data stored in the application. Export your workspace often to back up your workspace.</p>
         <h3 className="mb-2 text-xl">Source Code Repository</h3>
-        <p className="mb-2 text-sm italic">The code for this tool and related tools is available on <a className="underline text-blue-700 dark:text-blue-300" href="https://github.com/codergal6502/ChocoWindow" target="_blank">Git Hub</a> and is released under the <a className="underline text-blue-700 dark:text-blue-300" href="https://www.gnu.org/licenses/gpl-3.0.en.html" rel="noreferrer" target="_blank">GPL 3.0 License</a></p>
+        <p className="mb-2 text-sm italic">The code for this tool and related tools and examples is available on <a className="underline text-blue-700 dark:text-blue-300" href="https://github.com/codergal6502/ChocoWindow" target="_blank">Git Hub</a> and is released under the <a className="underline text-blue-700 dark:text-blue-300" href="https://www.gnu.org/licenses/gpl-3.0.en.html" rel="noreferrer" target="_blank">GPL 3.0 License</a></p>
         <div className="flex justify-between">
             <button onClick={() => onCloseClick(workspace)} className="bg-teal-500 text-white font-bold py-2 px-4 rounded hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-500">Close</button>
         </div>
