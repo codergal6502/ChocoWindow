@@ -1,7 +1,7 @@
 import "@melloware/coloris/dist/coloris.css";
 
-import { useEffect, useRef, useState } from "react";
-import { areColorsSame, ChocoStudioComputedColorPalette, ChocoStudioWindowRegionDefinition, TEMP_stringifyColorSubstitutions } from "../../ChocoStudio";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { areColorsSame, ChocoStudioComputedColorPalette, ChocoStudioWindowRegionDefinition } from "../../ChocoStudio";
 import { ChocoColor, ChocoWinAbstractPixelReader } from "../../ChocoWindow";
 import Coloris from "@melloware/coloris";
 
@@ -21,8 +21,23 @@ const TileSetColorPalette = ({ tileSheetReader, regions, tileSize, allowModifica
     const styleRef = useRef(null);
     /** @type {ReturnType<typeof useRef<ReturnType<typeof setTimeout>>>} */
     const debounceTimeoutRef = useRef(null);
-    /** @type {ReturnType<typeof useRef<HTMLElement>>} */
-    const divRef = useRef(null);
+
+    const colorDivRefCallback = useCallback(() => {
+        const colorisHandler = (event) => {
+            const colorSubstitution = {
+                defaultColor: new ChocoColor(event.detail.currentEl.dataset.originalColor),
+                substituteColor: new ChocoColor(event.detail.color)
+            };
+            debounceColorPicker(colorSubstitution);
+        };
+
+        document.addEventListener('coloris:pick', colorisHandler);
+
+        return () => {
+            document.removeEventListener('coloris:pick', colorisHandler);
+            Coloris({ parent: null });
+        }
+    })
 
     // without these two, colorSubstitutions in handleColorSubstitution is always one render behind.
     const [colorisFixColorSubstitute, setColorisFixColorSubstitute] = useState();
@@ -67,31 +82,6 @@ const TileSetColorPalette = ({ tileSheetReader, regions, tileSize, allowModifica
             }, 125);
         }
     };
-
-    // set up the coloris:pick handler.
-    useEffect(() => {
-        const colorisHandler = (event) => {
-            const colorSubstitution = {
-                defaultColor: new ChocoColor(event.detail.currentEl.dataset.originalColor),
-                substituteColor: new ChocoColor(event.detail.color)
-            };
-            debounceColorPicker(colorSubstitution);
-        };
-
-        document.addEventListener('coloris:pick', colorisHandler);
-
-        return () => {
-            document.removeEventListener('coloris:pick', colorisHandler);
-            Coloris({ parent: null });
-        }
-    }, [])
-
-    // check for the div containing the color inputs every rerender
-    useEffect(() => {
-        if (divRef.current) {
-            Coloris({ parent: divRef.current.closest('.choco-coloris-container') });
-        }
-    } /* no dependency array, not even an empty one */)
 
     /**
      * @param {ChocoColor} defaultColor 
@@ -159,9 +149,7 @@ const TileSetColorPalette = ({ tileSheetReader, regions, tileSize, allowModifica
     return (defaultColors && <>
         <style ref={styleRef} />
         <h3 className="mb-2 mt-4 text-xl">Color Palette</h3>
-        {/* See https://stackoverflow.com/a/56541442 */}
-        {/* <div className={`grid grid-cols-3 gap-4`} ref={el => { console.log("div is ", el); divRef.current = el; }}> */}
-        <div className={`grid grid-cols-3 gap-4`} ref={divRef}>
+        <div className={`grid grid-cols-3 gap-4`} ref={colorDivRefCallback}>
             {defaultColors.map((defaultColor, i) =>
                 <div key={i}>
                     <div className={`text-sm w-full text-center`}>Color {i + 1}: <span className="text-sm italic font-mono">{defaultColor.toHexString({ includeAlpha: true })}</span></div>

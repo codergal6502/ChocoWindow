@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { TAILWIND_INPUT_CLASS_NAME } from "../KitchenSinkConstants"
-import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet, TEMP_stringifyColorSubstitutions } from "../../ChocoStudio"
+import { ChocoStudioPreset, ChocoStudioTileSetDefinition, ChocoStudioTileSheet } from "../../ChocoStudio"
 import { ChocoColor, ChocoWinAbstractPixelReader } from "../../ChocoWindow";
 import { useContext } from "react";
 import { ReaderFactoryForStudio, TileSheetBlobUrlDictionary } from "../../App";

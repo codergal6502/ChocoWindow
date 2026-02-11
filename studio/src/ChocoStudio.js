@@ -700,6 +700,4 @@ const areColorsSame = (c1, c2) => {
     return c1 && c2 && c1.r === c2.r && c1.g === c2.g && c1.b === c2.b && c1.a === c2.a;
 }
 
-export const TEMP_stringifyColorSubstitutions = (colorSubstitutions) => colorSubstitutions?.map((cs, i) => `[${i}]: ${cs.defaultColor.toHexString()}~>${cs.substituteColor.toHexString()}`)?.join(", ");
-
 export { areColorsSame, reAssignIdsInPlace, ChocoStudioWorkspace, ChocoStudioPreset, ChocoStudioWindow, ChocoStudioLayout, ChocoStudioVariable, ChocoStudioTileSheet, ChocoStudioTileSetDefinition, CHOCO_WINDOW_REGIONS, CHOCO_REGION_GRANULARITY, ChocoStudioWindowRegionDefinition, ChocoStudioTileSheetBlobUrlManager, ChocoStudioWindowRegionTileAssignment, ChocoStudioComputedColorPalette };
